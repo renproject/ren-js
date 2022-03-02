@@ -23,11 +23,11 @@ loadDotEnv();
 const randomElement = <T>(array: T[]): T =>
     array[Math.floor(Math.random() * array.length)];
 
-describe("RenJS Gateway Transaction", () => {
+describe("Random H2H", () => {
     it("Random H2H", async function () {
         this.timeout(100000000000);
 
-        const network = RenNetwork.Mainnet;
+        const network = RenNetwork.Testnet;
 
         const ethereum = new Ethereum({
             network,
@@ -110,7 +110,7 @@ describe("RenJS Gateway Transaction", () => {
                 console.log(
                     `[${printChain(gateway.params.from.chain)}⇢${printChain(
                         gateway.params.to.chain,
-                    )}]: Submitting to ${printChain(gateway.params.to.chain, {
+                    )}]: Submitting to ${printChain(gateway.params.from.chain, {
                         pad: false,
                     })}`,
                 );
@@ -148,7 +148,22 @@ describe("RenJS Gateway Transaction", () => {
                             while (true) {
                                 try {
                                     console.log(`Submitting to RenVM`);
-                                    // tx.renVM.eventEmitter.on("progress", console.log);
+                                    tx.renVM.eventEmitter.on(
+                                        "progress",
+                                        (progress) =>
+                                            console.log(
+                                                `[${printChain(
+                                                    gateway.params.from.chain,
+                                                )}⇢${printChain(
+                                                    gateway.params.to.chain,
+                                                )}][${tx.hash.slice(
+                                                    0,
+                                                    6,
+                                                )}]: RenVM status: ${
+                                                    progress.response?.txStatus
+                                                }`,
+                                            ),
+                                    );
                                     await tx.renVM.submit();
                                     await tx.renVM.wait();
                                     break;
@@ -181,6 +196,12 @@ describe("RenJS Gateway Transaction", () => {
                             }
 
                             await tx.out.wait();
+
+                            console.log(
+                                `[${printChain(from.chain)}⇢${printChain(
+                                    to.chain,
+                                )}][${tx.hash.slice(0, 6)}] Done.`,
+                            );
 
                             resolve();
                         })().catch(reject);

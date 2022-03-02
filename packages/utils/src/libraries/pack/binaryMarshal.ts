@@ -1,12 +1,11 @@
 import BigNumber from "bignumber.js";
 
-import { fromBase64, toNBytes } from "../../internal/common";
+import { extractError, fromBase64, toNBytes } from "../../internal/common";
 import { isPackListType, isPackStructType } from "./common";
 import {
     PackListType,
     PackPrimitive,
     PackStructType,
-    PackType,
     PackTypeDefinition,
     TypedPackValue,
 } from "./types";
@@ -18,7 +17,8 @@ import {
  * implementation.
  * (https://github.com/renproject/pack/blob/e0f417fbbd472eccd99e4bf304b19dc04a31a950/kind.go#L19)
  */
-export const marshalPackType = (type: PackType): number => {
+export const encodePackType = (type: PackTypeDefinition): number => {
+    // Primitive types.
     switch (type) {
         case "nil":
             return 0;
@@ -57,23 +57,29 @@ export const marshalPackType = (type: PackType): number => {
         // KindBytes65 is the kind of all 65-byte arrays.
         case PackPrimitive.Bytes65:
             return 13;
-
-        // KindStruct is the kind of all struct values. It is abstract, because it does
-        // not specify the fields in the struct.
-        case "struct":
-            return 20;
-        // KindList is the kind of all list values. It is abstract, because it does
-        // not specify the type of the elements in the list.
-        case "list":
-            return 21;
     }
+
+    // Complex types.
+    if (typeof type === "object" && Object.keys(type).length === 1) {
+        switch (Object.keys(type)[0]) {
+            // KindStruct is the kind of all struct values. It is abstract, because it does
+            // not specify the fields in the struct.
+            case "struct":
+                return 20;
+            // KindList is the kind of all list values. It is abstract, because it does
+            // not specify the type of the elements in the list.
+            case "list":
+                return 21;
+        }
+    }
+
     throw new Error(`Unknown type ${String(type)}.`);
 };
 
 /**
  * Convert a JavaScript number to a big-endian Buffer of the provided length.
  */
-export const marshalUint = (
+export const encodeUint = (
     value: BigNumber | string | number,
     bits: number,
 ): Buffer => {
@@ -89,7 +95,7 @@ export const marshalUint = (
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         if (error instanceof Error) {
-            error.message = `Unable to marshal uint${bits} '${String(
+            error.message = `Unable to encode uint${bits} '${String(
                 value,
             )}': ${String(error.message)}`;
         }
@@ -97,36 +103,36 @@ export const marshalUint = (
     }
 };
 
-export const marshalU =
+export const encodeU =
     (bits: number) =>
     (value: BigNumber | string | number): Buffer =>
-        marshalUint(value, bits);
-export const marshalU8 = marshalU(8);
-export const marshalU16 = marshalU(16);
-export const marshalU32 = marshalU(32);
-export const marshalU64 = marshalU(64);
-export const marshalU128 = marshalU(128);
-export const marshalU256 = marshalU(256);
+        encodeUint(value, bits);
+export const encodeU8 = encodeU(8);
+export const encodeU16 = encodeU(16);
+export const encodeU32 = encodeU(32);
+export const encodeU64 = encodeU(64);
+export const encodeU128 = encodeU(128);
+export const encodeU256 = encodeU(256);
 
 export const withLength = (value: Buffer): Buffer =>
-    Buffer.concat([marshalU32(value.length), value]);
+    Buffer.concat([encodeU32(value.length), value]);
 
 /**
- * Marshal a string, prefixed by its length.
+ * Encode a string, prefixed by its length.
  */
-export const marshalString = (value: string): Buffer =>
+export const encodeString = (value: string): Buffer =>
     withLength(Buffer.from(value));
 
 /**
- * Marshal a struct type by prefixing the `struct` pack type ID and the number
+ * Encode a struct type by prefixing the `struct` pack type ID and the number
  * of struct entries, and then each field name followed by the field's
- * marshalled type definition.
+ * encoded type definition.
  */
-export const marshalPackStructType = (type: PackStructType): Buffer => {
-    const length = marshalU32(type.struct.length);
+export const encodePackStructType = (type: PackStructType): Buffer => {
+    const length = encodeU32(type.struct.length);
 
     return Buffer.concat([
-        Buffer.from([marshalPackType("struct")]),
+        Buffer.from([encodePackType(type)]),
         length,
         ...type.struct.map((field) => {
             const keys = Object.keys(field);
@@ -139,43 +145,43 @@ export const marshalPackStructType = (type: PackStructType): Buffer => {
             const key = Object.keys(field)[0];
             const fieldType = field[key];
             return Buffer.concat([
-                marshalString(key),
-                marshalPackTypeDefinition(fieldType),
+                encodeString(key),
+                encodePackTypeDefinition(fieldType),
             ]);
         }),
     ]);
 };
 
 /**
- * Marshal a list type by concatenating the `list` pack type ID followed by the
- * marshalled type definition of the list's sub-type.
+ * Encode a list type by concatenating the `list` pack type ID followed by the
+ * encoded type definition of the list's sub-type.
  */
-export const marshalPackListType = (type: PackListType): Buffer =>
+export const encodePackListType = (type: PackListType): Buffer =>
     Buffer.concat([
-        Buffer.from([marshalPackType("list")]),
-        marshalPackTypeDefinition(type.list),
+        Buffer.from([encodePackType(type)]),
+        encodePackTypeDefinition(type.list),
     ]);
 
 /**
- * Marshal a pack type, as defined above for each type.
+ * Encode a pack type, as defined above for each type.
  */
-export const marshalPackTypeDefinition = (type: PackTypeDefinition): Buffer => {
+export const encodePackTypeDefinition = (type: PackTypeDefinition): Buffer => {
     if (isPackStructType(type)) {
-        return marshalPackStructType(type);
+        return encodePackStructType(type);
     } else if (isPackListType(type)) {
-        return marshalPackListType(type);
+        return encodePackListType(type);
     } else if (typeof type === "string") {
-        return Buffer.from([marshalPackType(type)]);
+        return Buffer.from([encodePackType(type)]);
     }
-    throw new Error(`Unable to marshal type ${String(type)}.`);
+    throw new Error(`Unable to encode type ${String(type)}.`);
 };
 
 // === Pack Values =============================================================
 
 /**
- * Marshal a JavaScript value with an associated pack type into a Buffer.
+ * Encode a JavaScript value with an associated pack type into a Buffer.
  */
-export const marshalPackPrimitive = (
+export const encodePackPrimitive = (
     type: PackPrimitive,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
@@ -183,23 +189,23 @@ export const marshalPackPrimitive = (
     switch (type) {
         // Booleans
         case PackPrimitive.Bool:
-            return marshalU8(value ? 1 : 0);
+            return encodeU8(value ? 1 : 0);
         // Integers
         case PackPrimitive.U8:
-            return marshalU8(value);
+            return encodeU8(value);
         case PackPrimitive.U16:
-            return marshalU16(value);
+            return encodeU16(value);
         case PackPrimitive.U32:
-            return marshalU32(value);
+            return encodeU32(value);
         case PackPrimitive.U64:
-            return marshalU64(value);
+            return encodeU64(value);
         case PackPrimitive.U128:
-            return marshalU128(value);
+            return encodeU128(value);
         case PackPrimitive.U256:
-            return marshalU256(value);
+            return encodeU256(value);
         // Strings
         case PackPrimitive.Str: {
-            return marshalString(value);
+            return encodeString(value);
         }
         // Bytes
         case PackPrimitive.Bytes: {
@@ -220,10 +226,10 @@ export const marshalPackPrimitive = (
 };
 
 /**
- * Marshal a pack struct by concatenating the marshalled values of each of the
+ * Encode a pack struct by concatenating the encoded values of each of the
  * pack's fields.
  */
-export const marshalPackStruct = (
+export const encodePackStruct = (
     type: PackStructType,
     value: unknown,
 ): Buffer =>
@@ -247,11 +253,11 @@ export const marshalPackStruct = (
             const key = Object.keys(member)[0];
             const memberType = member[key];
             try {
-                return marshalPackValue(memberType, value[key]);
+                return encodePackValue(memberType, value[key]);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 if (error instanceof Error) {
-                    error.message = `Unable to marshal struct field ${key}: ${String(
+                    error.message = `Unable to encode struct field ${key}: ${String(
                         error.message,
                     )}`;
                 }
@@ -261,10 +267,10 @@ export const marshalPackStruct = (
     );
 
 /**
- * Marshal a pack list by concatenating the marshalled values of each of the
+ * Encode a pack list by concatenating the encoded values of each of the
  * list's values.
  */
-export const marshalListStruct = (
+export const encodeListStruct = (
     type: PackListType,
     value: unknown[],
 ): Buffer => {
@@ -272,10 +278,10 @@ export const marshalListStruct = (
     return Buffer.concat(
         value.map((element, i) => {
             try {
-                return marshalPackValue(subtype, element);
+                return encodePackValue(subtype, element);
             } catch (error: unknown) {
                 if (error instanceof Error) {
-                    error.message = `Unable to marshal array element #${i}: ${String(
+                    error.message = `Unable to encode array element #${i}: ${String(
                         error.message,
                     )}`;
                 }
@@ -286,21 +292,21 @@ export const marshalListStruct = (
 };
 
 /**
- * Marshal a pack value by using the marshalling defined for the provided
+ * Encode a pack value by using the encoding defined for the provided
  * pack type.
  */
-export const marshalPackValue = (
+export const encodePackValue = (
     type: PackTypeDefinition,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
 ): Buffer => {
     if (isPackStructType(type)) {
-        return marshalPackStruct(type, value);
+        return encodePackStruct(type, value);
     } else if (isPackListType(type)) {
-        return marshalListStruct(type, value);
+        return encodeListStruct(type, value);
     } else if (typeof type === "string") {
         if (type === "nil") return Buffer.from([]);
-        return marshalPackPrimitive(type, value);
+        return encodePackPrimitive(type, value);
     }
     throw new Error(
         `Unknown value type ${String(type)}${
@@ -310,11 +316,21 @@ export const marshalPackValue = (
 };
 
 /**
- * Marshal a `{ t, v }` pair by concatenating the pack type-marshalling of `t`
- * followed by the pack value-marshalling of `v`.
+ * Encode a `{ t, v }` pair by concatenating the pack type-encoding of `t`
+ * followed by the pack value-encoding of `v`.
  */
-export const marshalTypedPackValue = ({ t, v }: TypedPackValue): Buffer => {
-    const marshalledType = marshalPackTypeDefinition(t);
-    const marshalledValue = marshalPackValue(t, v);
-    return Buffer.concat([marshalledType, marshalledValue]);
-};
+export function encodeTypedPackValue({ t, v }: TypedPackValue): Buffer {
+    try {
+        const encodedType = encodePackTypeDefinition(t);
+        const encodedValue = encodePackValue(t, v);
+        return Buffer.concat([encodedType, encodedValue]);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            error.message = `Error encoding typed pack value: ${error.message}`;
+            throw error;
+        }
+        throw new Error(
+            `Error encoding typed pack value: ${extractError(error)}`,
+        );
+    }
+}

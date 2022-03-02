@@ -8,6 +8,7 @@ import {
     RenNetwork,
     RenNetworkString,
     RenVMShard,
+    TxStatus,
     utils,
 } from "@renproject/utils";
 
@@ -15,32 +16,112 @@ import {
     ParamsQueryBlock,
     ParamsQueryBlocks,
     ParamsQueryTxs,
-    ParamsSubmitGateway,
     ParamsSubmitTx,
-    ResponseQueryBlock,
-    ResponseQueryBlocks,
-    ResponseQueryConfig,
     ResponseQueryTx,
-    ResponseSubmitGateway,
-    ResponseSubmitTx,
     RPCMethod,
     RPCParams,
     RPCResponses,
     SubmitGatewayInput,
     submitGatewayType,
 } from "./methods";
+import { renVMBlockType } from "./methods/ren_queryBlock";
 import { BlockState } from "./methods/ren_queryBlockState";
-import { HttpProvider, Provider } from "./rpc/jsonRpc";
+import { JsonRpcProvider, Provider } from "./rpc/jsonRpc";
 import { renRpcUrls } from "./rpcUrls";
 import {
+    RenVMBlock,
     RenVMCrossChainTransaction,
     RenVMTransaction,
     RenVMTransactionWithStatus,
-    unmarshalRenVMTransaction,
-} from "./unmarshal";
+} from "./types/core";
+import { unmarshalRenVMTransaction } from "./unmarshal";
 
-export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
-    public readonly logger: Logger;
+export interface RenVMProviderInterface
+    extends Provider<RPCParams, RPCResponses> {
+    getNetwork: () => Promise<string>;
+
+    queryBlock: (blockHeight: number, retry?: number) => Promise<RenVMBlock>;
+
+    queryBlocks: (
+        blockHeight: number,
+        n: number,
+        retry?: number,
+    ) => Promise<RenVMBlock[]>;
+
+    submitTx: (tx: ParamsSubmitTx["tx"], retry?: number) => Promise<void>;
+
+    /**
+     * Queries the result of a RenVM transaction and unmarshals the result into
+     * a [[LockAndMintTransaction]] or [[BurnAndReleaseTransaction]].
+     *
+     * @param txHash The transaction hash in URL-base64.
+     */
+    queryTx: <
+        T extends RenVMTransactionWithStatus = RenVMTransactionWithStatus<RenVMCrossChainTransaction>,
+    >(
+        txHash: string,
+        retries?: number,
+    ) => Promise<T>;
+
+    queryTxs: (
+        {
+            txStatus,
+            offset,
+            limit,
+            latest,
+        }: {
+            // TxStatus specifies the status of transactions that will be returned.
+            txStatus?: TxStatus;
+
+            // Offset specifies the number of transactions that should be skipped. A nil
+            // value can be used to request the default offset.
+            offset?: number;
+
+            // Limit specifies the number of transactions that should be returned. A nil
+            // value can be used to request the default limit.
+            limit?: number;
+
+            // Latest specifies the ordering of returned Txs in the Lightnode.
+            // If true, it will order by the creation time in descending order,
+            // if false (default) it will list the oldest txs first
+            latest?: boolean;
+        },
+        retries?: number,
+    ) => Promise<RenVMTransaction[]>;
+
+    queryBlockState: (contract: string, retry?: number) => Promise<BlockState>;
+
+    submitGateway: (
+        gateway: string,
+        params: {
+            selector: string;
+            gHash: Buffer;
+            gPubKey: Buffer;
+            nHash: Buffer;
+            nonce: Buffer;
+            payload: Buffer;
+            pHash: Buffer;
+            to: string;
+        },
+        retries?: number,
+    ) => Promise<string>;
+
+    /**
+     * selectShard fetches the key for the RenVM shard handling
+     * the provided contract.
+     */
+    selectShard: (asset: string) => Promise<RenVMShard>;
+
+    getConfirmationTarget: (chainName: string) => Promise<number>;
+}
+
+/**
+ * The RenVMProvider implements the Provider interface by inheriting from
+ * JsonRpcProvider, and extends it with helper methods for calling sendMessage,
+ * including marshalling and unmarshalling responses.
+ */
+export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
+    public logger: Logger;
 
     public constructor(
         endpointOrProvider:
@@ -59,91 +140,130 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
         this.logger = logger;
     }
 
+    public getNetwork = async (): Promise<string> => {
+        const renVMConfig = await this.sendMessage(RPCMethod.QueryConfig, {});
+        return renVMConfig.network;
+    };
+
     public queryBlock = async (
         blockHeight: ParamsQueryBlock["blockHeight"],
         retry?: number,
-    ): Promise<ResponseQueryBlock> =>
-        (
-            await this.sendMessage<RPCMethod.QueryBlock>(
-                RPCMethod.QueryBlock,
-                { blockHeight },
-                retry,
-            )
-        ).block;
+    ): Promise<RenVMBlock> =>
+        pack.unmarshal.unmarshalPackStruct(
+            renVMBlockType,
+            (
+                await this.sendMessage<RPCMethod.QueryBlock>(
+                    RPCMethod.QueryBlock,
+                    { blockHeight },
+                    retry,
+                )
+            ).block,
+        );
 
     public queryBlocks = async (
         blockHeight: ParamsQueryBlocks["blockHeight"],
         n: ParamsQueryBlocks["n"],
         retry?: number,
-    ): Promise<ResponseQueryBlocks> =>
-        (
-            await this.sendMessage<RPCMethod.QueryBlocks>(
-                RPCMethod.QueryBlocks,
-                { blockHeight, n },
-                retry,
-            )
-        ).blocks;
-
-    public submitGateway = async (
-        gateway: ParamsSubmitGateway["gateway"],
-        tx: ParamsSubmitGateway["tx"],
-        retry?: number,
-    ): Promise<ResponseSubmitGateway> =>
-        this.sendMessage<RPCMethod.SubmitGateway>(
-            RPCMethod.SubmitGateway,
-            { gateway, tx },
-            retry,
+    ): Promise<RenVMBlock[]> =>
+        pack.unmarshal.unmarshalPackList(
+            { list: renVMBlockType },
+            (
+                await this.sendMessage<RPCMethod.QueryBlocks>(
+                    RPCMethod.QueryBlocks,
+                    { blockHeight, n },
+                    retry,
+                )
+            ).blocks,
         );
 
     public submitTx = async (
         tx: ParamsSubmitTx["tx"],
         retry?: number,
-    ): Promise<ResponseSubmitTx> =>
-        this.sendMessage<RPCMethod.SubmitTx>(
+    ): Promise<void> => {
+        await this.sendMessage<RPCMethod.SubmitTx>(
             RPCMethod.SubmitTx,
             { tx } as ParamsSubmitTx,
             retry,
         );
+    };
 
     public queryTxs = async (
-        tags: ParamsQueryTxs["tags"],
-        page?: number,
-        pageSize?: number,
-        txStatus?: ParamsQueryTxs["txStatus"],
+        {
+            txStatus,
+            offset,
+            limit,
+            latest,
+        }: {
+            // TxStatus specifies the status of transactions that will be returned.
+            txStatus?: TxStatus;
+
+            // Offset specifies the number of transactions that should be skipped. A nil
+            // value can be used to request the default offset.
+            offset?: number;
+
+            // Limit specifies the number of transactions that should be returned. A nil
+            // value can be used to request the default limit.
+            limit?: number;
+
+            // Latest specifies the ordering of returned Txs in the Lightnode.
+            // If true, it will order by the creation time in descending order,
+            // if false (default) it will list the oldest txs first
+            latest?: boolean;
+        },
+        // Retry specifies how many attempts should be made to fetch the
+        // result of the queryTxs.
         retry?: number,
     ): Promise<RenVMTransaction[]> =>
         (
             await this.sendMessage<RPCMethod.QueryTxs>(
                 RPCMethod.QueryTxs,
                 {
-                    tags,
-                    page: (page || 0).toString(),
-                    pageSize: (pageSize || 0).toString(),
-                    txStatus,
+                    ...(utils.isDefined(txStatus)
+                        ? { txStatus: txStatus }
+                        : {}),
+
+                    ...(utils.isDefined(limit)
+                        ? { limit: limit.toString() }
+                        : {}),
+
+                    ...(utils.isDefined(offset)
+                        ? { offset: offset.toString() }
+                        : {}),
+
+                    ...(utils.isDefined(latest) ? { latest: latest } : {}),
                 },
                 retry,
             )
         ).txs.map((tx) => unmarshalRenVMTransaction(tx));
 
-    public queryConfig = async (retry?: number): Promise<ResponseQueryConfig> =>
-        this.sendMessage<RPCMethod.QueryConfig>(
-            RPCMethod.QueryConfig,
-            {},
-            retry,
-        );
-
-    public queryBlockState = utils.memoize(
-        async (contract: string, retry?: number): Promise<BlockState> => {
-            const { state } = await this.sendMessage<RPCMethod.QueryBlockState>(
-                RPCMethod.QueryBlockState,
-                { contract },
-                retry,
+    private _queryBlockState__memoized?: (
+        contract: string,
+        retry?: number,
+    ) => Promise<BlockState>;
+    public queryBlockState = async (
+        contract: string,
+        retry?: number,
+    ): Promise<BlockState> => {
+        this._queryBlockState__memoized =
+            this._queryBlockState__memoized ||
+            utils.memoize(
+                async (
+                    contract_: string,
+                    retry_?: number,
+                ): Promise<BlockState> => {
+                    const { state } =
+                        await this.sendMessage<RPCMethod.QueryBlockState>(
+                            RPCMethod.QueryBlockState,
+                            { contract: contract_ },
+                            retry_,
+                        );
+                    return pack.unmarshal.unmarshalTypedPackValue(state);
+                },
             );
-            return pack.unmarshal.unmarshalTypedPackValue(state);
-        },
-    );
+        return this._queryBlockState__memoized(contract, retry);
+    };
 
-    public submitGatewayDetails = async (
+    public submitGateway = async (
         gateway: string,
         params: {
             selector: string;
@@ -186,7 +306,13 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
             // TODO: Fix types
             in: txIn as unknown as SubmitGatewayInput["in"],
         };
-        await this.submitGateway(gateway, tx, retries);
+
+        await this.sendMessage<RPCMethod.SubmitGateway>(
+            RPCMethod.SubmitGateway,
+            { gateway, tx },
+            retries,
+        );
+
         return gateway;
     };
 
@@ -275,9 +401,6 @@ export class RenVMProvider extends HttpProvider<RPCParams, RPCResponses> {
             gPubKey: utils.toURLBase64(pubKey),
         };
     };
-
-    public getNetwork = async (): Promise<string> =>
-        (await this.queryConfig()).network;
 
     public getConfirmationTarget = async (
         chainName: string,

@@ -1,15 +1,13 @@
 import BigNumber from "bignumber.js";
 
-import { RenVMProvider } from "@renproject/provider";
 import {
     RenVMCrossChainTransaction,
+    RenVMProvider,
     RenVMTransactionWithStatus,
-} from "@renproject/provider/build/main/unmarshal";
+} from "@renproject/provider";
 import {
     Chain,
-    ChainTransaction,
     ChainTransactionProgress,
-    ChainTransactionStatus,
     DefaultTxWaiter,
     ErrorWithCode,
     generateGHash,
@@ -23,7 +21,6 @@ import {
     OutputType,
     RenJSError,
     RenVMShard,
-    TxStatus,
     TxSubmitter,
     TxWaiter,
     utils,
@@ -218,7 +215,10 @@ export class GatewayTransaction<
                 );
             }
 
-            if (await this.toChain.isLockAsset(this.params.asset)) {
+            if (
+                isDepositChain(this.toChain) &&
+                (await this.toChain.isDepositAsset(this.params.asset))
+            ) {
                 if (!tx.out || !tx.out.txid || !tx.out.txid.length) {
                     throw new ErrorWithCode(
                         `Expected release transaction details in RenVM response.`,

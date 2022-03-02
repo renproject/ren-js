@@ -32,12 +32,21 @@ export interface PackListType<
 
 export type PackNilType = "nil";
 
-export type PackType = PackPrimitive | PackNilType | "list" | "struct";
+export type PackTypeDefinition =
+    | PackPrimitive
+    | PackStructType
+    | PackListType
+    | PackNilType;
+
+// export type PackType = PackPrimitive | PackNilType | "list" | "struct";
 
 export type MarshalledPackArray<T> = T[];
 export type MarshalledPackStruct<T extends object> = T;
 
-export type Marshalled<Type extends PackType> = Type extends PackPrimitive.Bool
+export type Marshalled<
+    Type extends PackTypeDefinition,
+    InnerType extends PackTypeDefinition = PackTypeDefinition,
+> = Type extends PackPrimitive.Bool
     ? boolean
     : Type extends PackPrimitive.U8
     ? string
@@ -61,48 +70,44 @@ export type Marshalled<Type extends PackType> = Type extends PackPrimitive.Bool
     ? string
     : Type extends PackNilType
     ? string
-    : Type extends "list"
-    ? any[]
-    : Type extends "struct"
-    ? any
+    : Type extends { list: InnerType }
+    ? Array<Marshalled<InnerType>>
+    : Type extends { struct: Array<{ [key: string]: PackTypeDefinition }> }
+    ? { [k: string]: any }
     : never;
 
-export type Unmarshalled<Type extends PackType> =
-    Type extends PackPrimitive.Bool
-        ? boolean
-        : Type extends PackPrimitive.U8
-        ? BigNumber
-        : Type extends PackPrimitive.U16
-        ? BigNumber
-        : Type extends PackPrimitive.U32
-        ? BigNumber
-        : Type extends PackPrimitive.U64
-        ? BigNumber
-        : Type extends PackPrimitive.U128
-        ? BigNumber
-        : Type extends PackPrimitive.U256
-        ? BigNumber
-        : Type extends PackPrimitive.Str
-        ? string
-        : Type extends PackPrimitive.Bytes
-        ? Buffer
-        : Type extends PackPrimitive.Bytes32
-        ? Buffer
-        : Type extends PackPrimitive.Bytes65
-        ? Buffer
-        : Type extends PackNilType
-        ? undefined
-        : Type extends "list"
-        ? any[]
-        : Type extends "struct"
-        ? any
-        : never;
-
-export type PackTypeDefinition =
-    | PackPrimitive
-    | PackStructType
-    | PackListType
-    | PackNilType;
+export type Unmarshalled<
+    Type extends PackTypeDefinition,
+    InnerType extends PackTypeDefinition = PackTypeDefinition,
+> = Type extends PackPrimitive.Bool
+    ? boolean
+    : Type extends PackPrimitive.U8
+    ? BigNumber
+    : Type extends PackPrimitive.U16
+    ? BigNumber
+    : Type extends PackPrimitive.U32
+    ? BigNumber
+    : Type extends PackPrimitive.U64
+    ? BigNumber
+    : Type extends PackPrimitive.U128
+    ? BigNumber
+    : Type extends PackPrimitive.U256
+    ? BigNumber
+    : Type extends PackPrimitive.Str
+    ? string
+    : Type extends PackPrimitive.Bytes
+    ? Buffer
+    : Type extends PackPrimitive.Bytes32
+    ? Buffer
+    : Type extends PackPrimitive.Bytes65
+    ? Buffer
+    : Type extends PackNilType
+    ? null
+    : Type extends { list: InnerType }
+    ? Array<Unmarshalled<InnerType>>
+    : Type extends { struct: Array<{ [key: string]: PackTypeDefinition }> }
+    ? { [k: string]: any }
+    : never;
 
 export interface TypedPackValue<
     T extends PackTypeDefinition = PackTypeDefinition,

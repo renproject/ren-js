@@ -24,7 +24,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.skip("RenJS Gateway Transaction", () => {
+describe("DAI/to*", () => {
     it("DAI/to*", async function () {
         this.timeout(100000000000);
 

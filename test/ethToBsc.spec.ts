@@ -70,7 +70,7 @@ describe("ETH/toBinanceSmartChain", () => {
         console.log(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
-            )}]: Submitting to ${printChain(gateway.params.to.chain, {
+            )}]: Submitting to ${printChain(gateway.params.from.chain, {
                 pad: false,
             })} - locking ${minimumAmount.toFixed()} ${asset}`,
         );
@@ -105,7 +105,20 @@ describe("ETH/toBinanceSmartChain", () => {
                     while (true) {
                         try {
                             console.log(`Submitting to RenVM`);
-                            tx.renVM.eventEmitter.on("progress", console.log);
+                            tx.renVM.eventEmitter.on("progress", (progress) =>
+                                console.log(
+                                    `[${printChain(
+                                        gateway.params.from.chain,
+                                    )}⇢${printChain(
+                                        gateway.params.to.chain,
+                                    )}][${tx.hash.slice(
+                                        0,
+                                        6,
+                                    )}]: RenVM status: ${
+                                        progress.response?.txStatus
+                                    }`,
+                                ),
+                            );
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;

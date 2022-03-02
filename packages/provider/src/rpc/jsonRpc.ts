@@ -29,7 +29,11 @@ export interface Provider<
     ): SyncOrPromise<Responses[Method]>;
 }
 
-export class HttpProvider<
+/**
+ * The JsonRpcProvider class implements the Provider interface by connecting to
+ * a JSON-RPC endpoint over http/https.
+ */
+export class JsonRpcProvider<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Requests extends { [event: string]: any } = {},
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,10 +44,10 @@ export class HttpProvider<
     public readonly logger: Logger;
 
     /**
-     * Create a new HttpProvider.
+     * Create a new JsonRpcProvider.
      *
      * @param endpointOrProvider A URI for a RenVM JSON-RPC endpoint, or another
-     * HttpProvider to forward calls to.
+     * JsonRpcProvider to forward calls to.
      * @param logger Optionally pass a logger object.
      */
     public constructor(
@@ -125,6 +129,13 @@ export class HttpProvider<
             }
             return response.data.result;
         } catch (error: unknown) {
+            // Emit debug log of the endpoint and payload.
+            try {
+                this.logger.debug(endpoint, JSON.stringify(payload));
+            } catch (_errorInner: unknown) {
+                // Ignore.
+            }
+
             // Re-throw error to avoid internal axios stack-trace.
             throw new Error(utils.extractError(error));
         }

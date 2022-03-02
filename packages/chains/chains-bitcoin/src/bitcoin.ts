@@ -1,5 +1,6 @@
 import { RenNetwork } from "@renproject/utils";
 
+import { Blockchain, BlockchainNetwork } from "./APIs/blockchain";
 import { Blockchair } from "./APIs/blockchair";
 import { Blockstream } from "./APIs/blockstream";
 import { SoChain } from "./APIs/sochain";
@@ -32,6 +33,7 @@ const BitcoinMainnet: BitcoinNetworkConfig = {
         new Blockstream(),
         new Blockchair(),
         { api: new SoChain(), priority: 15 },
+        { api: new Blockchain(BlockchainNetwork.Bitcoin), priority: 20 },
     ],
     // validateAddress: (address: string) =>
     //     validateAddress(address, "BTC", "mainnet"),
@@ -56,6 +58,7 @@ const BitcoinTestnet: BitcoinNetworkConfig = {
     p2shPrefix: Buffer.from([0xc4]),
     providers: [
         new Blockstream({ testnet: true }),
+        { api: new Blockchain(BlockchainNetwork.BitcoinTestnet), priority: 20 },
         // new Blockchair(BlockchairNetwork.BITCOIN_TESTNET),
         // { api: new SoChain(SoChainNetwork.BTCTEST), priority: 15 },
     ],

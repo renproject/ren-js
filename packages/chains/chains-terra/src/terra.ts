@@ -35,7 +35,7 @@ export const TerraMainnet: TerraNetworkConfig = {
     },
     averageConfirmationTime: 6,
 
-    explorer: "https://finder.terra.money/columbus",
+    explorer: "https://finder.terra.money/mainnet",
     apiUrl: "https://fcd.terra.dev",
 };
 
@@ -50,7 +50,7 @@ export const TerraTestnet: TerraNetworkConfig = {
     },
     averageConfirmationTime: 6,
 
-    explorer: "https://finder.terra.money/bombay",
+    explorer: "https://finder.terra.money/testnet",
     apiUrl: "https://bombay-fcd.terra.dev",
 };
 

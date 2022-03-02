@@ -395,7 +395,7 @@ export class Gateway<
                 try {
                     // Submit the gateway details to the submitGateway endpoint.
                     await utils.tryNTimes(async () => {
-                        await this.provider.submitGatewayDetails(
+                        await this.provider.submitGateway(
                             gatewayAddress,
                             gatewayDetails,
                         );

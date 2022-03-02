@@ -141,7 +141,7 @@ export class CombinedAPI implements BitcoinAPI {
             // Filter APIs with `fetchHeight`.
             (api) => api.fetchHeight !== undefined,
             // Call `fetchHeight` on the API.
-            async (api) => notNull(api.fetchHeight)(),
+            (api) => notNull(api.fetchHeight).bind(api)(),
         );
     }
 
@@ -150,7 +150,7 @@ export class CombinedAPI implements BitcoinAPI {
             // Filter APIs with `fetchUTXO`.
             (api) => api.fetchUTXO !== undefined,
             // Call `fetchUTXO` on the API.
-            (api) => notNull(api.fetchUTXO).bind(this)(txid, txindex),
+            (api) => notNull(api.fetchUTXO).bind(api)(txid, txindex),
         );
     }
 

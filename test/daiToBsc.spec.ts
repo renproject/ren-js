@@ -2,6 +2,7 @@
 
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
+import { LogLevel } from "packages/utils/build/main";
 
 import {
     BinanceSmartChain,
@@ -15,7 +16,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.only("DAI/toBinanceSmartChain", () => {
+describe("DAI/toBinanceSmartChain", () => {
     it("DAI/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
@@ -31,6 +32,10 @@ describe.only("DAI/toBinanceSmartChain", () => {
             ...getEVMProvider(BinanceSmartChain as any, network),
         });
 
+        // , {
+        //     logger: console,
+        //     logLevel: LogLevel.Debug,
+        // }
         const renJS = new RenJS(network).withChains(bsc, ethereum);
 
         const gateway = await renJS.gateway({
@@ -96,7 +101,20 @@ describe.only("DAI/toBinanceSmartChain", () => {
                     while (true) {
                         try {
                             console.log(`Submitting to RenVM`);
-                            tx.renVM.eventEmitter.on("progress", console.log);
+                            tx.renVM.eventEmitter.on("progress", (progress) =>
+                                console.log(
+                                    `[${printChain(
+                                        gateway.params.from.chain,
+                                    )}⇢${printChain(
+                                        gateway.params.to.chain,
+                                    )}][${tx.hash.slice(
+                                        0,
+                                        6,
+                                    )}]: RenVM status: ${
+                                        progress.response?.txStatus
+                                    }`,
+                                ),
+                            );
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;

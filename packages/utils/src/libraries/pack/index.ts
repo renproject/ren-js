@@ -1,5 +1,5 @@
+import * as binaryMarshal from "./binaryMarshal";
 import { isPackListType, isPackStructType } from "./common";
-import * as marshal from "./marshal";
 import * as unmarshal from "./unmarshal";
 
 export * from "./types";
@@ -11,6 +11,6 @@ export * from "./types";
 export const pack = {
     isPackStructType,
     isPackListType,
-    marshal,
+    binaryMarshal,
     unmarshal,
 };

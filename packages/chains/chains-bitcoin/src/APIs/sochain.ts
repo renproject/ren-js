@@ -32,13 +32,13 @@ export class SoChain implements BitcoinAPI {
 
     public async fetchHeight(): Promise<string> {
         return (
-            await axios.get<{ blocks: number }>(
+            await axios.get<{ data: { blocks: number } }>(
                 `https://sochain.com/api/v2/get_info/${this.network}`,
                 {
                     timeout: DEFAULT_TIMEOUT,
                 },
             )
-        ).data.blocks.toString();
+        ).data.data.blocks.toString();
     }
 
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {

@@ -139,10 +139,16 @@ export const sendFunds = async (
         },
     );
 
+    const faucetAddress = await account.address(asset);
+    const faucetBalance = await account.getBalance(asset);
+
     console.log(
         `${chalk.blue("[faucet]")} Sending ${chalk.blue(
             amount.toFixed(),
-        )} ${chalk.blue(asset)} to ${chalk.blue(recipient)}`,
+        )} ${chalk.blue(asset)} to ${chalk.blue(
+            recipient,
+        )} (from ${faucetAddress}, balance: ${faucetBalance} ${asset})`,
     );
-    await account.send(recipient, amount, asset);
+    const sent = await account.send(recipient, amount, asset);
+    console.log(`${chalk.blue("[faucet]")} Sent: ${chalk.blue(sent)}`);
 };

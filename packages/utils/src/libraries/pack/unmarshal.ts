@@ -7,7 +7,7 @@
 
 import BigNumber from "bignumber.js";
 
-import { fromBase64 } from "../../internal/common";
+import { extractError, fromBase64 } from "../../internal/common";
 import { isPackListType, isPackStructType } from "./common";
 import {
     PackListType,
@@ -15,13 +15,14 @@ import {
     PackStructType,
     PackTypeDefinition,
     TypedPackValue,
+    Unmarshalled,
 } from "./types";
 
-export const unmarshalPackPrimitive = (
-    type: PackPrimitive,
+export const unmarshalPackPrimitive = <T extends PackPrimitive = PackPrimitive>(
+    type: T,
 
     value: any,
-): any => {
+): Unmarshalled<T> => {
     switch (type) {
         // Booleans
         case PackPrimitive.Bool:
@@ -33,7 +34,7 @@ export const unmarshalPackPrimitive = (
         case PackPrimitive.U64:
         case PackPrimitive.U128:
         case PackPrimitive.U256:
-            return new BigNumber(value);
+            return new BigNumber(value) as Unmarshalled<T>;
         // Strings
         case PackPrimitive.Str:
             return value;
@@ -41,15 +42,16 @@ export const unmarshalPackPrimitive = (
         case PackPrimitive.Bytes:
         case PackPrimitive.Bytes32:
         case PackPrimitive.Bytes65:
-            return fromBase64(value);
+            return fromBase64(value) as Unmarshalled<T>;
     }
+    throw new Error(`Unknown pack type '${type}'.`);
 };
 
 /**
  * Takes a pack struct and converts it to a JavaScript object.
  */
-export const unmarshalPackStruct = (
-    type: PackStructType,
+export const unmarshalPackStruct = <T extends PackStructType = PackStructType>(
+    type: T,
     value: object,
 ): any => {
     const struct = {};
@@ -78,15 +80,17 @@ export const unmarshalPackStruct = (
 /**
  * Unmarshals a pack list.
  */
-export const unmarshalPackList = <T>(type: PackListType, value: T[]): T[] =>
+export const unmarshalPackList = <T>(type: PackListType, value: T[]): any[] =>
     value.map((element) => unmarshalPackValue(type.list, element));
 
 /**
  * Converts the passed-in value to its corresponding JavaScript value based on
  * the passed-in type.
  */
-export const unmarshalPackValue = (
-    type: PackTypeDefinition,
+export const unmarshalPackValue = <
+    T extends PackTypeDefinition = PackTypeDefinition,
+>(
+    type: T,
     value: unknown,
 ): any => {
     if (isPackListType(type)) {
@@ -117,5 +121,16 @@ export const unmarshalPackValue = (
  * Converts a { t, v } pack object, using `t` as a pack type and `v` as a pack
  * value.
  */
-export const unmarshalTypedPackValue = ({ t, v }: TypedPackValue): any =>
-    unmarshalPackValue(t, v);
+export function unmarshalTypedPackValue({ t, v }: TypedPackValue): any {
+    try {
+        return unmarshalPackValue(t, v);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            error.message = `Error unmarshalling typed pack value: ${error.message}`;
+            throw error;
+        }
+        throw new Error(
+            `Error unmarshalling typed pack value: ${extractError(error)}`,
+        );
+    }
+}

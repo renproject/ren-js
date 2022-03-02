@@ -143,8 +143,8 @@ export const generateTransactionHash = (
 ): Buffer => {
     assertType<string>("string", { version, selector });
     return sha256(
-        pack.marshal.marshalString(version),
-        pack.marshal.marshalString(selector),
-        pack.marshal.marshalTypedPackValue(packValue),
+        pack.binaryMarshal.encodeString(version),
+        pack.binaryMarshal.encodeString(selector),
+        pack.binaryMarshal.encodeTypedPackValue(packValue),
     );
 };

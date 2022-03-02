@@ -11,7 +11,11 @@ import { GatewayTransaction } from "./gatewayTransaction";
 
 const defaultTransactionHandler = async (
     tx: TxWaiter | TxSubmitter,
-    retries: number = -1,
+    {
+        retries = 1,
+    }: {
+        retries?: number;
+    } = {},
 ) => {
     while (true) {
         switch (tx.progress.status) {
@@ -22,13 +26,29 @@ const defaultTransactionHandler = async (
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
-                await utils.tryNTimes(async () => {
-                    await tx.submit!();
+                await utils.tryNTimes(async (i: number) => {
+                    try {
+                        tx.submit && (await tx.submit());
+                    } catch (error) {
+                        // Log error every 10 attempts.
+                        if ((i + 1) % 10 === 0) {
+                            console.error(error);
+                        }
+                        throw error;
+                    }
                 }, retries);
                 break;
             case ChainTransactionStatus.Confirming:
-                await utils.tryNTimes(async () => {
-                    await tx.wait();
+                await utils.tryNTimes(async (i: number) => {
+                    try {
+                        await tx.wait();
+                    } catch (error) {
+                        // Log error every 10 attempts.
+                        if ((i + 1) % 10 === 0) {
+                            console.error(error);
+                        }
+                        throw error;
+                    }
                 }, retries);
                 break;
             case ChainTransactionStatus.Reverted:
@@ -55,12 +75,12 @@ const createDepositHandler = (retries = -1) => {
     const fn: ((tx: GatewayTransaction) => Promise<void>) & {
         withRetries: (newRetries: number) => void;
     } = async (tx: GatewayTransaction): Promise<void> => {
-        await defaultTransactionHandler(tx.in, retries);
-        await defaultTransactionHandler(tx.renVM, retries);
+        await defaultTransactionHandler(tx.in, { retries });
+        await defaultTransactionHandler(tx.renVM, { retries });
         for (const setupKey of Object.keys(tx.outSetup || {})) {
-            await defaultTransactionHandler(tx.outSetup[setupKey], retries);
+            await defaultTransactionHandler(tx.outSetup[setupKey], { retries });
         }
-        await defaultTransactionHandler(tx.out, retries);
+        await defaultTransactionHandler(tx.out, { retries });
     };
 
     fn.withRetries = (newRetries: number) => createDepositHandler(newRetries);

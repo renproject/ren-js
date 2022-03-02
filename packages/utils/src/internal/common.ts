@@ -25,7 +25,7 @@ sleep.MINUTES = 60 * sleep.SECONDS;
  * will be retried indefinitely.
  */
 export const tryNTimes = async <T>(
-    fnCall: () => Promise<T>,
+    fnCall: (attempt: number, retries: number) => Promise<T>,
     retries: number,
     timeout: number = 1 * sleep.SECONDS, // in ms
     logger?: Logger,
@@ -41,7 +41,7 @@ export const tryNTimes = async <T>(
     const errorMessages = new Set();
     for (let i = 0; retries === -1 || i < retries; i++) {
         try {
-            return await fnCall();
+            return await fnCall(i, retries);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             // console.error(extractError(error));

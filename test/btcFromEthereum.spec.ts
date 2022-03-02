@@ -56,7 +56,7 @@ describe("BTC/fromEthereum", () => {
         console.log(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
-            )}]: Submitting to ${printChain(gateway.params.to.chain, {
+            )}]: Submitting to ${printChain(gateway.params.from.chain, {
                 pad: false,
             })}`,
         );
@@ -96,7 +96,20 @@ describe("BTC/fromEthereum", () => {
 
                     while (true) {
                         try {
-                            tx.renVM.eventEmitter.on("progress", console.log);
+                            tx.renVM.eventEmitter.on("progress", (progress) =>
+                                console.log(
+                                    `[${printChain(
+                                        gateway.params.from.chain,
+                                    )}⇢${printChain(
+                                        gateway.params.to.chain,
+                                    )}][${tx.hash.slice(
+                                        0,
+                                        6,
+                                    )}]: RenVM status: ${
+                                        progress.response?.txStatus
+                                    }`,
+                                ),
+                            );
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;

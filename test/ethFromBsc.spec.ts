@@ -16,7 +16,7 @@ chai.should();
 
 loadDotEnv();
 
-describe("RenJS Gateway Transaction", () => {
+describe("ETH/fromBinanceSmartChain", () => {
     it("ETH/fromBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
@@ -103,6 +103,20 @@ describe("RenJS Gateway Transaction", () => {
                     while (true) {
                         try {
                             console.log(tx.renVM.tx);
+                            tx.renVM.eventEmitter.on("progress", (progress) =>
+                                console.log(
+                                    `[${printChain(
+                                        gateway.params.from.chain,
+                                    )}⇢${printChain(
+                                        gateway.params.to.chain,
+                                    )}][${tx.hash.slice(
+                                        0,
+                                        6,
+                                    )}]: RenVM status: ${
+                                        progress.response?.txStatus
+                                    }`,
+                                ),
+                            );
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;

@@ -69,49 +69,44 @@ export const getInputAndOutputTypes = async ({
             selector: `${asset}/to${toChain.chain}`,
         };
     } else {
-        throw ErrorWithCode.from(
-            new Error(`Burning and minting is not supported yet.`),
-            RenJSError.NOT_IMPLEMENTED,
-        );
+        if (!isContractChain(toChain)) {
+            throw ErrorWithCode.from(
+                new Error(
+                    `Cannot mint to non-contract chain ${toChain.chain}.`,
+                ),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
+        if (!(await toChain.isMintAsset(asset))) {
+            throw ErrorWithCode.from(
+                new Error(
+                    `Asset '${asset}' is not supported on ${toChain.chain}.`,
+                ),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
 
-        // if (!isContractChain(toChain)) {
-        //     throw ErrorWithCode.from(
-        //         new Error(
-        //             `Cannot mint to non-contract chain ${toChain.chain}.`,
-        //         ),
-        //         RenJSError.PARAMETER_ERROR,
-        //     );
-        // }
-        // if (!(await toChain.isMintAsset(asset))) {
-        //     throw ErrorWithCode.from(
-        //         new Error(
-        //             `Asset '${asset}' is not supported on ${toChain.chain}.`,
-        //         ),
-        //         RenJSError.PARAMETER_ERROR,
-        //     );
-        // }
+        if (!isContractChain(fromChain)) {
+            throw ErrorWithCode.from(
+                new Error(
+                    `Cannot burn from non-contract chain ${fromChain.chain}.`,
+                ),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
+        if (!(await fromChain.isMintAsset(asset))) {
+            throw ErrorWithCode.from(
+                new Error(
+                    `Asset '${asset}' is not supported on ${fromChain.chain}.`,
+                ),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
 
-        // if (!isContractChain(fromChain)) {
-        //     throw ErrorWithCode.from(
-        //         new Error(
-        //             `Cannot burn from non-contract chain ${fromChain.chain}.`,
-        //         ),
-        //         RenJSError.PARAMETER_ERROR,
-        //     );
-        // }
-        // if (!(await fromChain.isMintAsset(asset))) {
-        //     throw ErrorWithCode.from(
-        //         new Error(
-        //             `Asset '${asset}' is not supported on ${fromChain.chain}.`,
-        //         ),
-        //         RenJSError.PARAMETER_ERROR,
-        //     );
-        // }
-
-        // return {
-        //     inputType: InputType.Burn,
-        //     outputType: OutputType.Mint,
-        //     selector: `${asset}/from${fromChain.chain}To${toChain.chain}`,
-        // };
+        return {
+            inputType: InputType.Burn,
+            outputType: OutputType.Mint,
+            selector: `${asset}/from${fromChain.chain}To${toChain.chain}`,
+        };
     }
 };

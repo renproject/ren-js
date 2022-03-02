@@ -9,6 +9,7 @@ import bs58 from "bs58";
 import { RenNetwork } from "@renproject/utils";
 
 import { BitcoinDotCom } from "./APIs/bitcoinDotCom";
+import { Blockchain, BlockchainNetwork } from "./APIs/blockchain";
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { BitcoinBaseChain } from "./base";
 import { decodeBitcoinCashAddress } from "./utils/bchaddrjs";
@@ -37,8 +38,9 @@ const BitcoinCashMainnet: BitcoinNetworkConfig = {
     explorer: StandardBitcoinExplorer("https://explorer.bitcoin.com/bch/"),
     p2shPrefix: Buffer.from([0x05]),
     providers: [
-        new BitcoinDotCom(),
         new Blockchair(BlockchairNetwork.BITCOIN_CASH),
+        { api: new BitcoinDotCom(), priority: 15 },
+        { api: new Blockchain(BlockchainNetwork.BitcoinCash), priority: 20 },
     ],
 };
 
@@ -57,7 +59,10 @@ const BitcoinCashTestnet: BitcoinNetworkConfig = {
     isTestnet: true,
     explorer: StandardBitcoinExplorer("https://explorer.bitcoin.com/tbch/"),
     p2shPrefix: Buffer.from([0xc4]),
-    providers: [new BitcoinDotCom({ testnet: true })],
+    providers: [
+        new Blockchain(BlockchainNetwork.BitcoinCashTestnet),
+        { api: new BitcoinDotCom({ testnet: true }), priority: 15 },
+    ],
 };
 
 export class BitcoinCash extends BitcoinBaseChain {

@@ -1,57 +1,7 @@
-import BigNumber from "bignumber.js";
-
-import {
-    normalizeSignature,
-    pack,
-    TxStatus,
-    TypedPackValue,
-    UrlBase64String,
-} from "@renproject/utils";
+import { normalizeSignature, pack, TypedPackValue } from "@renproject/utils";
 
 import { ResponseQueryTx } from "./methods";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface RenVMTransaction<Input = any, Output = any> {
-    hash: UrlBase64String;
-    version: number;
-    selector: string; // "BTC/fromEthereum",
-    in: Input;
-    out?: Output;
-}
-
-export interface RenVMTransactionWithStatus<
-    Transaction extends RenVMTransaction = RenVMTransaction,
-> {
-    tx: Transaction;
-    txStatus: TxStatus;
-}
-
-export type RenVMCrossChainTransaction = RenVMTransaction<
-    // Input
-    {
-        txid: Buffer;
-        txindex: BigNumber;
-        amount: BigNumber;
-        payload: Buffer;
-        phash: Buffer;
-        to: string;
-        nonce: Buffer;
-        nhash: Buffer;
-        gpubkey: Buffer;
-        ghash: Buffer;
-    },
-    // Output
-    {
-        amount: BigNumber;
-        fees: BigNumber;
-        hash: Buffer;
-        revert: string;
-        sig: Buffer;
-        sighash: Buffer;
-        txid: Buffer;
-        txindex: BigNumber;
-    }
->;
+import { RenVMTransaction } from "./types/core";
 
 export const unmarshalRenVMTransaction = <
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

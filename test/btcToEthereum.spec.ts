@@ -4,14 +4,14 @@ import { config as loadDotEnv } from "dotenv";
 import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import { Ethereum } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
-import { RenNetwork } from "../packages/utils/src";
+import { RenNetwork, utils } from "../packages/utils/src";
 import { getEVMProvider, printChain, sendFunds } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-describe("RenJS Gateway Transaction", () => {
+describe("BTC/toEthereum", () => {
     it("BTC/toEthereum", async function () {
         this.timeout(100000000000);
 
@@ -45,7 +45,17 @@ describe("RenJS Gateway Transaction", () => {
             } (to receive at least ${receivedAmount.toFixed()})`,
         );
 
-        await sendFunds(asset, gateway.gatewayAddress, minimumAmount.times(5));
+        try {
+            await sendFunds(
+                asset,
+                gateway.gatewayAddress,
+                minimumAmount.times(5),
+            );
+        } catch (error) {
+            // console.log(error.request);
+            // console.log(error.response);
+            throw error;
+        }
 
         let foundDeposits = 0;
 
@@ -54,7 +64,68 @@ describe("RenJS Gateway Transaction", () => {
                 (async () => {
                     foundDeposits += 1;
 
-                    await RenJS.defaultDepositHandler(tx);
+                    console.log(
+                        `[${printChain(from.chain)}⇢${printChain(to.chain)}][${
+                            tx.hash
+                        }] Detected:`,
+                        tx.in.progress.transaction?.txidFormatted,
+                    );
+
+                    tx.in.eventEmitter.on("progress", (progress) =>
+                        console.log(
+                            `[${printChain(tx.in.chain)}⇢${printChain(
+                                tx.out.chain,
+                            )}][${tx.hash.slice(0, 6)}]: ${
+                                progress.confirmations || 0
+                            }/${progress.target} confirmations`,
+                        ),
+                    );
+
+                    await tx.in.wait();
+
+                    while (true) {
+                        try {
+                            tx.renVM.eventEmitter.on("progress", (progress) =>
+                                console.log(
+                                    `[${printChain(
+                                        gateway.params.from.chain,
+                                    )}⇢${printChain(
+                                        gateway.params.to.chain,
+                                    )}][${tx.hash.slice(
+                                        0,
+                                        6,
+                                    )}]: RenVM status: ${
+                                        progress.response?.txStatus
+                                    }`,
+                                ),
+                            );
+                            await tx.renVM.submit();
+                            await tx.renVM.wait();
+                            break;
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        } catch (error: any) {
+                            console.error(error);
+                            await utils.sleep(10 * utils.sleep.SECONDS);
+                        }
+                    }
+                    console.log(
+                        `[${printChain(tx.in.chain)}⇢${printChain(
+                            tx.out.chain,
+                        )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
+                            tx.out.chain,
+                            {
+                                pad: false,
+                            },
+                        )}`,
+                    );
+
+                    tx.out.eventEmitter.on("progress", console.log);
+
+                    if (tx.out.submit) {
+                        await tx.out.submit();
+                    }
+
+                    await tx.out.wait();
 
                     foundDeposits -= 1;
 
@@ -65,7 +136,7 @@ describe("RenJS Gateway Transaction", () => {
                             0,
                             6,
                         )}] Done. (${foundDeposits} other deposits remaining)`,
-                        tx.out.status.transaction?.txidFormatted,
+                        tx.out.progress.transaction?.txidFormatted,
                     );
                     if (foundDeposits === 0) {
                         resolve();

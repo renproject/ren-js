@@ -93,6 +93,60 @@ export interface TxSubmitter<
 }
 
 /**
+ * Allow overwriting the `transaction` field of a TxWaiter instance.
+ * This is used so the same TxWaiter instance can paired with different
+ * InputChainTransaction objects that are all extensions of the TxWaiter's
+ * original ChainTransaction object.
+ */
+export class TxWaiterProxy {
+    private _txWaiter: TxWaiter;
+    private _transaction: ChainTransaction;
+    private _eventEmitter: EventEmitterTyped<{
+        progress: [ChainTransactionProgress];
+    }>;
+
+    public constructor(txWaiter: TxWaiter, transaction: ChainTransaction) {
+        this._txWaiter = txWaiter;
+        this._transaction = transaction;
+        this._eventEmitter = eventEmitter();
+
+        txWaiter.eventEmitter.on("progress", (progress) => {
+            this._eventEmitter.emit("progress", {
+                ...progress,
+                transaction: this._transaction,
+            });
+        });
+
+        return new Proxy(this, {
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            get: this.proxyHandler,
+        });
+    }
+
+    /**
+     * Proxy handler to call the promise or eventEmitter methods
+     */
+    public proxyHandler(target: TxWaiterProxy, name: string): unknown {
+        if (name === "transaction") {
+            return target._transaction;
+        }
+
+        if (name === "progress") {
+            return {
+                ...target._txWaiter[name],
+                transaction: target._transaction,
+            };
+        }
+
+        if (name === "eventEmitter") {
+            return target._eventEmitter;
+        }
+
+        return target._txWaiter[name];
+    }
+}
+
+/**
  * The DefaultTxWaiter is a helper for when a chain transaction has already
  * been submitted.
  */

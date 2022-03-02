@@ -14,7 +14,7 @@ chai.should();
 
 loadDotEnv();
 
-describe("BTC/fromEthereum", () => {
+describe.only("BTC/fromEthereum", () => {
     it("BTC/fromEthereum", async function () {
         this.timeout(100000000000);
 

@@ -23,6 +23,7 @@ import {
     RenVMShard,
     TxSubmitter,
     TxWaiter,
+    TxWaiterProxy,
     utils,
 } from "@renproject/utils";
 
@@ -75,7 +76,10 @@ export class GatewayTransaction<
      * // > "QNM87rNDuxx54H7VK7D_NAU0u_mjk09-G25IJZL1QrI"
      * ```
      */
-    public hash: string;
+    private _hash: string | undefined;
+    public get hash(): string {
+        return this._defaultGetter("_hash") || this._hash;
+    }
     public selector: string;
 
     /** See [[RenJS.renVM]]. */
@@ -122,11 +126,6 @@ export class GatewayTransaction<
         this.fromChain = fromChain;
         this.toChain = toChain;
 
-        // Set hash to "" rather than undefined so that it's type is always
-        // `string`. The hash will be set in `_initialize` which should be
-        // called immediately after the constructor.
-        this.hash = "";
-
         const nonce = utils.isDefined(params.nonce)
             ? utils.fromBase64(params.nonce)
             : utils.toNBytes(0, 32);
@@ -137,7 +136,7 @@ export class GatewayTransaction<
         );
 
         if (fromTxWaiter) {
-            this.in = fromTxWaiter;
+            this.in = new TxWaiterProxy(fromTxWaiter, params.fromTx) as any;
         } else {
             this.in = undefined as never;
         }
@@ -258,7 +257,7 @@ export class GatewayTransaction<
             },
             onSignatureReady,
         );
-        this.hash = this.renVM._hash;
+        this._hash = this.renVM._hash;
 
         this.renVM.eventEmitter.on("progress", (status) => {
             this.queryTxResult = status.response;
@@ -315,5 +314,16 @@ export class GatewayTransaction<
         }
 
         return this;
+    }
+
+    /** PRIVATE METHODS */
+
+    private _defaultGetter(name: string) {
+        if (this[name] === undefined) {
+            throw new Error(
+                `Must call 'initialize' before accessing '${name}'.`,
+            );
+        }
+        return this[name];
     }
 }

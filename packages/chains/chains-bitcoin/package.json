@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "3.0.0-alpha.10",
+    "version": "3.0.0-alpha.11",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,7 +43,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/utils": "^3.0.0-alpha.10",
+        "@renproject/utils": "^3.0.0-alpha.11",
         "@types/bchaddrjs": "^0.4.0",
         "@types/bs58": "^4.0.1",
         "@types/bs58check": "2.1.0",

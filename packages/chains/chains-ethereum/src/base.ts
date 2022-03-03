@@ -34,7 +34,10 @@ import {
     TransferWithLogABI,
 } from "./contracts";
 import { LogLockToChainEvent } from "./contracts/typechain/LockGatewayV3";
-import { LogBurnEvent } from "./contracts/typechain/MintGatewayV3";
+import {
+    LogBurnEvent,
+    LogBurnToChainEvent,
+} from "./contracts/typechain/MintGatewayV3";
 import { LogTransferredEvent } from "./contracts/typechain/TransferWithLog";
 import { AbiItem, EthArg } from "./utils/abi";
 import { EVMTxSubmitter } from "./utils/evmTxSubmitter";
@@ -49,6 +52,7 @@ import {
     findMintBySigHash,
     findReleaseBySigHash,
     mapBurnLogToInputChainTransaction,
+    mapBurnToChainLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
     validateAddress,
@@ -222,7 +226,8 @@ export class EthereumBaseChain
 
     public async getOutputPayload(
         asset: string,
-        type: OutputType,
+        inputType: InputType,
+        outputType: OutputType,
         contractCall: EVMPayload,
     ): Promise<{
         to: string;
@@ -242,7 +247,7 @@ export class EthereumBaseChain
             this.network,
             this.signer,
             contractCall,
-            this.getEVMParams(asset, type, {}),
+            this.getEVMParams(asset, inputType, outputType, outputType, {}),
             this.getPayloadHandler,
         );
     }
@@ -475,7 +480,8 @@ export class EthereumBaseChain
     }
 
     public async getOutputTx(
-        type: OutputType,
+        inputType: InputType,
+        outputType: OutputType,
         asset: string,
         contractCall: EVMPayload,
         getParams: () => {
@@ -491,7 +497,7 @@ export class EthereumBaseChain
             ChainTransaction | undefined
         > => {
             const { nHash, sigHash } = getParams();
-            if (type === OutputType.Release) {
+            if (outputType === OutputType.Release) {
                 return await findReleaseBySigHash(
                     this.network,
                     this.provider,
@@ -556,7 +562,14 @@ export class EthereumBaseChain
             payload: contractCall,
             target: confirmationTarget,
             getPayloadHandler: this.getPayloadHandler,
-            getParams: () => this.getEVMParams(asset, type, getParams()),
+            getParams: () =>
+                this.getEVMParams(
+                    asset,
+                    inputType,
+                    outputType,
+                    outputType,
+                    getParams(),
+                ),
             findExistingTransaction,
         });
     }
@@ -566,7 +579,8 @@ export class EthereumBaseChain
      * transaction first if the transaction details have been provided.
      */
     public getInputTx(
-        type: InputType,
+        inputType: InputType,
+        outputType: OutputType,
         asset: string,
         contractCall: EVMPayload,
         getParams: () => {
@@ -621,11 +635,33 @@ export class EthereumBaseChain
         }
 
         const onReceipt = (receipt: ethers.providers.TransactionReceipt) => {
-            if (type === InputType.Burn) {
+            if (inputType === InputType.Burn) {
                 const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
                 filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
                     .map((e) =>
                         mapBurnLogToInputChainTransaction(this.chain, asset, e),
+                    )
+                    .map(onInput);
+
+                // Filter logs that are releases to other chains.
+                const { toChain } = getParams();
+                const filterByRecipientChain = (e: LogBurnToChainEvent) => {
+                    const [_recipientAddress, recipientChain] = e.args;
+                    return recipientChain === toChain;
+                };
+
+                const logBurnToChainABI = findABIMethod(
+                    MintGatewayABI,
+                    "LogBurnToChain",
+                );
+                filterLogs<LogBurnToChainEvent>(receipt.logs, logBurnToChainABI)
+                    .filter(filterByRecipientChain)
+                    .map((e) =>
+                        mapBurnToChainLogToInputChainTransaction(
+                            this.chain,
+                            asset,
+                            e,
+                        ),
                     )
                     .map(onInput);
             } else {
@@ -668,14 +704,22 @@ export class EthereumBaseChain
             payload: contractCall,
             target: confirmationTarget,
             getPayloadHandler: this.getPayloadHandler,
-            getParams: () => this.getEVMParams(asset, type, getParams()),
+            getParams: () =>
+                this.getEVMParams(
+                    asset,
+                    inputType,
+                    outputType,
+                    inputType,
+                    getParams(),
+                ),
             onReceipt: onReceipt,
         });
     }
 
     public async getInSetup(
         asset: string,
-        type: InputType,
+        inputType: InputType,
+        outputType: OutputType,
         contractCall: EVMPayload,
         getParams: () => {
             toChain: string;
@@ -701,7 +745,13 @@ export class EthereumBaseChain
             this.network,
             this.signer,
             contractCall,
-            this.getEVMParams(asset, type, getParams()),
+            this.getEVMParams(
+                asset,
+                inputType,
+                outputType,
+                inputType,
+                getParams(),
+            ),
             this.getPayloadHandler,
         );
 
@@ -714,7 +764,14 @@ export class EthereumBaseChain
                 payload: calls[callKey],
                 target: 1,
                 getPayloadHandler: this.getPayloadHandler,
-                getParams: () => this.getEVMParams(asset, type, getParams()),
+                getParams: () =>
+                    this.getEVMParams(
+                        asset,
+                        inputType,
+                        outputType,
+                        inputType,
+                        getParams(),
+                    ),
             });
         }
         return txSubmitted;
@@ -722,7 +779,8 @@ export class EthereumBaseChain
 
     public async getOutSetup(
         asset: string,
-        type: OutputType,
+        inputType: InputType,
+        outputType: OutputType,
         contractCall: EVMPayload,
         getParams: () => {
             pHash: Buffer;
@@ -746,7 +804,13 @@ export class EthereumBaseChain
             this.network,
             this.signer,
             contractCall,
-            this.getEVMParams(asset, type, getParams()),
+            this.getEVMParams(
+                asset,
+                inputType,
+                outputType,
+                outputType,
+                getParams(),
+            ),
             this.getPayloadHandler,
         );
 
@@ -759,7 +823,14 @@ export class EthereumBaseChain
                 payload: calls[callKey],
                 target: 1,
                 getPayloadHandler: this.getPayloadHandler,
-                getParams: () => this.getEVMParams(asset, type, getParams()),
+                getParams: () =>
+                    this.getEVMParams(
+                        asset,
+                        inputType,
+                        outputType,
+                        outputType,
+                        getParams(),
+                    ),
             });
         }
         return txSubmitted;
@@ -818,7 +889,9 @@ export class EthereumBaseChain
 
     private getEVMParams(
         asset: string,
-        type: InputType | OutputType | "setup",
+        inputType: InputType,
+        outputType: OutputType,
+        transactionType: InputType | OutputType | "setup",
         params: {
             // Input
             toChain?: string;
@@ -838,9 +911,14 @@ export class EthereumBaseChain
     ): EVMParamValues {
         return {
             // Always available
-            [EVMParam.EVM_TRANSACTION_TYPE]: type,
+            [EVMParam.EVM_INPUT_TYPE]: inputType,
+            [EVMParam.EVM_OUTPUT_TYPE]: outputType,
+            [EVMParam.EVM_TRANSACTION_TYPE]: transactionType,
             [EVMParam.EVM_TOKEN_ADDRESS]: async () => {
-                if (type === InputType.Lock || type === OutputType.Release) {
+                if (
+                    transactionType === InputType.Lock ||
+                    transactionType === OutputType.Release
+                ) {
                     return await this.getLockAsset(asset);
                 } else {
                     return await this.getMintAsset(asset);
@@ -869,7 +947,10 @@ export class EthereumBaseChain
                 return utils.fromHex(codeString).length > 0;
             },
             [EVMParam.EVM_GATEWAY]: async () => {
-                if (type === InputType.Lock || type === OutputType.Release) {
+                if (
+                    transactionType === InputType.Lock ||
+                    transactionType === OutputType.Release
+                ) {
                     return await this.getLockGateway(asset);
                 } else {
                     return await this.getMintGateway(asset);

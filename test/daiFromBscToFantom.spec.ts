@@ -3,10 +3,13 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
+import {
+    BinanceSmartChain,
+    Ethereum,
+    Fantom,
+} from "@renproject/chains-ethereum/src";
 import { RenNetwork, utils } from "@renproject/utils/src";
 
-import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
-import { Ethereum } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
 import { getEVMProvider, printChain } from "./testUtils";
 
@@ -14,31 +17,40 @@ chai.should();
 
 loadDotEnv();
 
-describe("BTC/fromEthereum", () => {
-    it("BTC/fromEthereum", async function () {
+describe("DAI/fromBSCtoFantom", () => {
+    it("DAI/fromBSCtoFantom", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
 
-        const asset = Bitcoin.assets.BTC;
-        const ethereum = new Ethereum({
+        const asset = Ethereum.assets.DAI;
+        const bsc = new BinanceSmartChain({
             network,
-            ...getEVMProvider(Ethereum, network),
+            ...getEVMProvider(BinanceSmartChain, network),
         });
-        const bitcoin = new Bitcoin({ network });
+        const fantom = new Fantom({
+            network,
+            ...getEVMProvider(Fantom, network),
+        });
 
-        const renJS = new RenJS(network).withChains(bitcoin, ethereum);
+        const from = bsc.Account({ amount: 0.5, convertToWei: true });
+        // const from = fromClass.FromAccount();
+        const to = fantom.Account();
+
+        const renJS = new RenJS(network, {
+            logger: console,
+        }).withChains(bsc, fantom);
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 0.0005, convertToWei: true }),
-            to: bitcoin.Address("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6"),
+            from,
+            to,
         });
 
         console.log(
             `${gateway.params.asset} balance on ${gateway.params.from.chain}`,
-            (await ethereum.getBalance(gateway.params.asset))
-                .shiftedBy(-bitcoin.assetDecimals(asset))
+            (await bsc.getBalance(gateway.params.asset))
+                .shiftedBy(-18)
                 .toFixed(),
         );
 
@@ -62,18 +74,11 @@ describe("BTC/fromEthereum", () => {
         );
 
         gateway.in.eventEmitter.on("progress", console.log);
-        gateway.in.eventEmitter.on("progress", (status) =>
-            console.log(
-                `[${printChain(gateway.params.from.chain)}⇢${printChain(
-                    gateway.params.to.chain,
-                )}]: ${status.confirmations || 0}/${
-                    status.target
-                } confirmations`,
-            ),
-        );
-
-        await gateway.in.submit();
-
+        await gateway.in.submit({
+            txConfig: {
+                gasLimit: 1000000,
+            },
+        });
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
 
@@ -81,21 +86,26 @@ describe("BTC/fromEthereum", () => {
             gateway.on("transaction", (tx) => {
                 (async () => {
                     console.log(
-                        `[${printChain(tx.params.fromTx.chain)}⇢${printChain(
-                            tx.params.to.chain,
+                        `[${printChain(tx.in.chain)}⇢${printChain(
+                            tx.out.chain,
                         )}]: RenVM hash: ${tx.hash}`,
+                    );
+
+                    tx.in.eventEmitter.on("progress", (status) =>
+                        console.log(
+                            `[${printChain(tx.in.chain)}⇢${printChain(
+                                tx.out.chain,
+                            )}][${tx.hash.slice(0, 6)}]: ${
+                                status.confirmations || 0
+                            }/${status.target} confirmations`,
+                        ),
                     );
 
                     await tx.in.wait();
 
-                    console.log(
-                        `[${printChain(tx.params.fromTx.chain)}⇢${printChain(
-                            tx.params.to.chain,
-                        )}][${tx.hash.slice(0, 6)}]: Submitting to RenVM`,
-                    );
-
                     while (true) {
                         try {
+                            console.log(tx.renVM.tx);
                             tx.renVM.eventEmitter.on("progress", (progress) =>
                                 console.log(
                                     `[${printChain(
@@ -120,10 +130,10 @@ describe("BTC/fromEthereum", () => {
                         }
                     }
                     console.log(
-                        `[${printChain(tx.params.fromTx.chain)}⇢${printChain(
-                            tx.params.to.chain,
+                        `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                            gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
-                            tx.params.to.chain,
+                            gateway.params.to.chain,
                         )}`,
                     );
 
@@ -131,7 +141,9 @@ describe("BTC/fromEthereum", () => {
 
                     if (tx.out.submit) {
                         await tx.out.submit({
-                            txConfig: {},
+                            txConfig: {
+                                gasLimit: 1000000,
+                            },
                         });
                     }
 

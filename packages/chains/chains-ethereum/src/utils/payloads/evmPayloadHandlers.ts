@@ -19,7 +19,13 @@ import { EvmNetworkConfig } from "../types";
 
 export enum EVMParam {
     // Always available
+
+    EVM_INPUT_TYPE = "__EVM_INPUT_TYPE__",
+    EVM_OUTPUT_TYPE = "__EVM_OUTPUT_TYPE__",
+    // For output transactions, the same as EVM_OUTPUT_TYPE, and for input
+    // transactions the same as EVM_INPUT_TYPE.
     EVM_TRANSACTION_TYPE = "__EVM_TRANSACTION_TYPE__",
+
     EVM_TOKEN_ADDRESS = "__EVM_TOKEN_ADDRESS__",
     EVM_TOKEN_DECIMALS = "__EVM_TOKEN_DECIMALS__",
     EVM_GATEWAY_IS_DEPOSIT_ASSET = "__EVM_GATEWAY_IS_DEPOSIT_ASSET__",
@@ -48,6 +54,8 @@ export enum EVMParam {
 
 export type EVMParamValues = {
     // Always available.
+    [EVMParam.EVM_INPUT_TYPE]: "lock" | "burn";
+    [EVMParam.EVM_OUTPUT_TYPE]: "mint" | "release";
     [EVMParam.EVM_TRANSACTION_TYPE]:
         | "setup"
         | "lock"
@@ -218,7 +226,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         for (const arg of args) {
             if (arg.value === undefined) {
                 throw ErrorWithCode.from(
-                    new Error(`Parameter '${arg.name}' is undefined.`),
+                    new Error(`Payload parameter '${arg.name}' is undefined.`),
                     RenJSError.PARAMETER_ERROR,
                 );
             }
@@ -422,26 +430,59 @@ const getContractFromAccount = async (
                 );
             }
 
-            return {
-                chain: network.selector,
-                type: "contract",
-                params: {
-                    to: EVMParam.EVM_GATEWAY,
-                    method: "burn",
-                    params: [
-                        {
-                            type: "bytes" as const,
-                            name: "to",
-                            value: EVMParam.EVM_TO_ADDRESS_BYTES,
-                        },
-                        {
-                            type: "uint256" as const,
-                            name: "amount",
-                            value: amount,
-                        },
-                    ],
-                },
-            };
+            if (evmParams[EVMParam.EVM_OUTPUT_TYPE] === "mint") {
+                return {
+                    chain: network.selector,
+                    type: "contract",
+                    params: {
+                        to: EVMParam.EVM_GATEWAY,
+                        method: "burnWithPayload",
+                        params: [
+                            {
+                                name: "recipientAddress",
+                                type: "string" as const,
+                                value: EVMParam.EVM_TO_ADDRESS,
+                            },
+                            {
+                                name: "recipientChain",
+                                type: "string" as const,
+                                value: EVMParam.EVM_TO_CHAIN,
+                            },
+                            {
+                                name: "recipientPayload",
+                                type: "bytes" as const,
+                                value: Buffer.from([]),
+                            },
+                            {
+                                name: "amount",
+                                type: "uint256" as const,
+                                value: amount,
+                            },
+                        ],
+                    },
+                };
+            } else {
+                return {
+                    chain: network.selector,
+                    type: "contract",
+                    params: {
+                        to: EVMParam.EVM_GATEWAY,
+                        method: "burn",
+                        params: [
+                            {
+                                type: "bytes" as const,
+                                name: "to",
+                                value: EVMParam.EVM_TO_ADDRESS_BYTES,
+                            },
+                            {
+                                type: "uint256" as const,
+                                name: "amount",
+                                value: amount,
+                            },
+                        ],
+                    },
+                };
+            }
         case OutputType.Mint:
             // if (
             //     payload.params.address.toLowerCase() !==

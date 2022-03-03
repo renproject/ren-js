@@ -20,6 +20,7 @@ import { TypedEvent } from "../contracts/typechain/common";
 import { LogLockToChainEvent } from "../contracts/typechain/LockGatewayV3";
 import {
     LogBurnEvent,
+    LogBurnToChainEvent,
     LogMintEvent,
 } from "../contracts/typechain/MintGatewayV3";
 import { LogTransferredEvent } from "../contracts/typechain/TransferWithLog";
@@ -48,6 +49,27 @@ export const mapBurnLogToInputChainTransaction = (
         asset,
         amount: amount.toString(),
         toRecipient: to,
+        nonce: utils.toURLBase64(utils.toNBytes(burnNonce.toString(), 32)),
+    };
+};
+
+export const mapBurnToChainLogToInputChainTransaction = (
+    chain: string,
+    asset: string,
+    event: LogBurnToChainEvent,
+): InputChainTransaction => {
+    const [
+        recipientAddress,
+        _recipientChain,
+        _recipientPayload,
+        amount,
+        burnNonce,
+    ] = event.args;
+    return {
+        ...txHashToChainTransaction(chain, event.transactionHash),
+        asset,
+        amount: amount.toString(),
+        toRecipient: recipientAddress,
         nonce: utils.toURLBase64(utils.toNBytes(burnNonce.toString(), 32)),
     };
 };

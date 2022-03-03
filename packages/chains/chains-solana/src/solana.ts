@@ -251,7 +251,8 @@ export class Solana
 
     public async getOutputPayload(
         asset: string,
-        _type: OutputType,
+        _inputType: InputType,
+        _outputType: OutputType,
         contractCall: SolanaToPayload,
     ): Promise<{
         to: string;
@@ -277,7 +278,8 @@ export class Solana
      * submit its signature to the mint chain to finalize the mint.
      */
     public async getOutputTx(
-        _type: OutputType,
+        _inputType: InputType,
+        _outputType: OutputType,
         asset: string,
         contractCall: SolanaToPayload,
         params: () => {
@@ -612,7 +614,8 @@ export class Solana
      * transaction first if the transaction details have been provided.
      */
     public async getInputTx(
-        _type: InputType,
+        _inputType: InputType,
+        _outputType: OutputType,
         asset: string,
         contractCall: SolanaFromPayload,
         getParams: () => {
@@ -824,7 +827,8 @@ export class Solana
 
     public async getOutSetup(
         asset: string,
-        _type: OutputType,
+        _inputType: InputType,
+        _outputType: OutputType,
         _contractCall: SolanaToPayload,
     ): Promise<{
         [key: string]: TxSubmitter | TxWaiter;

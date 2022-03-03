@@ -21,6 +21,7 @@ import {
     OutputType,
     RenJSError,
     RenVMShard,
+    TxStatus,
     TxSubmitter,
     TxWaiter,
     TxWaiterProxy,
@@ -165,7 +166,8 @@ export class GatewayTransaction<
 
         const payload = await this.toChain.getOutputPayload(
             asset,
-            this.outputType as any,
+            this.inputType,
+            this.outputType,
             to,
         );
 
@@ -260,6 +262,20 @@ export class GatewayTransaction<
         this._hash = this.renVM._hash;
 
         this.renVM.eventEmitter.on("progress", (status) => {
+            // Check if status.response's txStatus is outdated.
+            if (
+                this.queryTxResult &&
+                this.queryTxResult.txStatus === TxStatus.TxStatusDone &&
+                status.response &&
+                status.response.txStatus !== TxStatus.TxStatusDone
+            ) {
+                console.warn(
+                    "RenVM transaction emitted outdated progress event.",
+                    this.queryTxResult,
+                    status.response,
+                );
+                return;
+            }
             this.queryTxResult = status.response;
         });
 
@@ -286,6 +302,7 @@ export class GatewayTransaction<
                 ...this.outSetup,
                 ...(await this.toChain.getOutSetup(
                     asset,
+                    this.inputType,
                     this.outputType,
                     to,
                     getOutputParams,
@@ -303,6 +320,7 @@ export class GatewayTransaction<
             });
         } else if (isContractChain(this.toChain)) {
             this.out = await this.toChain.getOutputTx(
+                this.inputType,
                 this.outputType,
                 this.params.asset,
                 this.params.to,

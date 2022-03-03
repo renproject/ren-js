@@ -179,7 +179,8 @@ export interface DepositChain<
     /** Return toPayload in standard to/payload format. */
     getOutputPayload: (
         asset: string,
-        type: OutputType.Release,
+        inputType: InputType,
+        outputType: OutputType,
         toPayload: ToPayload,
     ) => SyncOrPromise<{
         to: string;
@@ -211,7 +212,8 @@ export interface ContractChain<
 
     getInSetup?: (
         asset: string,
-        type: InputType,
+        inputType: InputType,
+        outputType: OutputType,
         contractCall: FromContractCall,
         getParams: () => {
             toChain: string;
@@ -228,7 +230,8 @@ export interface ContractChain<
 
     getOutSetup?: (
         asset: string,
-        type: OutputType,
+        inputType: InputType,
+        outputType: OutputType,
         contractCall: ToContractCall,
         getParams: () => {
             pHash: Buffer;
@@ -249,7 +252,8 @@ export interface ContractChain<
      * in the transaction.
      */
     getInputTx: (
-        type: InputType,
+        inputType: InputType,
+        outputType: OutputType,
         asset: string,
         contractCall: FromContractCall,
         params: () => {
@@ -271,7 +275,8 @@ export interface ContractChain<
      * a pre-check, the sigHash and signature will not be set.
      */
     getOutputTx: (
-        type: OutputType,
+        inputType: InputType,
+        outputType: OutputType,
         asset: string,
         contractCall: ToContractCall,
         params: () => {
@@ -290,7 +295,8 @@ export interface ContractChain<
 
     getOutputPayload: (
         asset: string,
-        type: OutputType,
+        inputType: InputType,
+        outputType: OutputType,
         contractCall: ToContractCall,
     ) => SyncOrPromise<{
         to: string;

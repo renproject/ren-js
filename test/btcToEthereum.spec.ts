@@ -29,7 +29,7 @@ describe("BTC/toEthereum", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 1,
+            nonce: 2,
         });
 
         const minimumAmount = gateway.fees.minimumAmount.shiftedBy(

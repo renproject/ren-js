@@ -285,8 +285,8 @@ export class Gateway<
             })(),
             this.toChain.getOutputPayload(
                 asset,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                this.outputType as any,
+                this.inputType,
+                this.outputType,
                 to,
             ),
         ]);
@@ -473,6 +473,7 @@ export class Gateway<
 
             this.in = await this.fromChain.getInputTx(
                 this.inputType,
+                this.outputType,
                 asset,
                 from,
                 () => ({
@@ -499,6 +500,7 @@ export class Gateway<
                 ...(await this.fromChain.getInSetup(
                     asset,
                     this.inputType,
+                    this.outputType,
                     from,
                     () => ({
                         toChain: to.chain,

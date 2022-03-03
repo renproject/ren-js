@@ -7,6 +7,7 @@ import {
     DepositChain,
     ErrorWithCode,
     InputChainTransaction,
+    InputType,
     OutputType,
     RenJSError,
     utils,
@@ -74,7 +75,8 @@ export abstract class BitcoinBaseChain
 
     public getOutputPayload(
         asset: string,
-        _type: OutputType.Release,
+        _inputType: InputType,
+        _outputType: OutputType,
         toPayload: BitcoinReleasePayload,
     ): {
         to: string;

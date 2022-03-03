@@ -8,18 +8,14 @@ import {
     DepositChain,
     ErrorWithCode,
     InputChainTransaction,
+    InputType,
     OutputType,
     RenJSError,
     RenNetwork,
     RenNetworkString,
     utils,
 } from "@renproject/utils";
-import {
-    AccAddress,
-    Key,
-    RawKey,
-    SimplePublicKey,
-} from "@terra-money/terra.js";
+import { AccAddress, Key, SimplePublicKey } from "@terra-money/terra.js";
 
 import { TerraDev } from "./api/terraDev";
 import { isTerraNetworkConfig, TerraNetworkConfig } from "./api/types";
@@ -285,7 +281,8 @@ export class Terra
 
     public getOutputPayload(
         asset: string,
-        _type: OutputType.Release,
+        _inputType: InputType,
+        _outputType: OutputType,
         toPayload: TerraReleasePayload,
     ): {
         to: string;

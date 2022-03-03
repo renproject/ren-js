@@ -2,6 +2,7 @@ import BigNumber from "bignumber.js";
 import { blake2b } from "blakejs";
 import CID from "cids";
 import elliptic from "elliptic";
+import { InputType } from "zlib";
 
 import {
     Address,
@@ -445,7 +446,8 @@ export class Filecoin
 
     public getOutputPayload(
         asset: string,
-        _type: OutputType.Release,
+        _inputType: InputType,
+        _outputType: OutputType,
         toPayload: FilecoinReleasePayload,
     ): {
         to: string;

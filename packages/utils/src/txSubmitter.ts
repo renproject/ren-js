@@ -123,6 +123,28 @@ export class TxWaiterProxy {
         });
     }
 
+    public _wait(target?: number): PromiEvent<
+        ChainTransactionProgress,
+        {
+            progress: [ChainTransactionProgress];
+        }
+    > {
+        const promiEvent = newPromiEvent<
+            ChainTransactionProgress,
+            {
+                progress: [ChainTransactionProgress];
+            }
+        >(this._eventEmitter);
+
+        (async (): Promise<ChainTransactionProgress> => {
+            return await this._txWaiter.wait(target);
+        })()
+            .then(promiEvent.resolve)
+            .catch(promiEvent.reject);
+
+        return promiEvent;
+    }
+
     /**
      * Proxy handler to call the promise or eventEmitter methods
      */
@@ -140,6 +162,10 @@ export class TxWaiterProxy {
 
         if (name === "eventEmitter") {
             return target._eventEmitter;
+        }
+
+        if (name === "wait") {
+            return target._wait.bind(target);
         }
 
         return target._txWaiter[name];

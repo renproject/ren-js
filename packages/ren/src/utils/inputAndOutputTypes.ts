@@ -9,7 +9,7 @@ import {
 
 /**
  * Detect whether the transaction is a lock-and-mint, burn-and-release or
- * burn-and-mint.
+ * burn-and-mint, and return the selector.
  */
 export const getInputAndOutputTypes = async ({
     asset,
@@ -25,6 +25,8 @@ export const getInputAndOutputTypes = async ({
     selector: string;
 }> => {
     if (await toChain.isLockAsset(asset)) {
+        // Burn and release
+
         if (!isContractChain(fromChain)) {
             throw ErrorWithCode.from(
                 new Error(
@@ -47,6 +49,8 @@ export const getInputAndOutputTypes = async ({
             selector: `${asset}/from${fromChain.chain}`,
         };
     } else if (await fromChain.isLockAsset(asset)) {
+        // Lock and mint
+
         if (!isContractChain(toChain)) {
             throw ErrorWithCode.from(
                 new Error(
@@ -69,6 +73,8 @@ export const getInputAndOutputTypes = async ({
             selector: `${asset}/to${toChain.chain}`,
         };
     } else {
+        // Burn and mint
+
         if (!isContractChain(toChain)) {
             throw ErrorWithCode.from(
                 new Error(
@@ -106,7 +112,7 @@ export const getInputAndOutputTypes = async ({
         return {
             inputType: InputType.Burn,
             outputType: OutputType.Mint,
-            selector: `${asset}/from${fromChain.chain}To${toChain.chain}`,
+            selector: `${asset}/from${fromChain.chain}_to${toChain.chain}`,
         };
     }
 };

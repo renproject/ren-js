@@ -1,4 +1,4 @@
-import axios from "axios";
+import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 import {
@@ -32,22 +32,19 @@ export class SoChain implements BitcoinAPI {
 
     public async fetchHeight(): Promise<string> {
         return (
-            await axios.get<{ data: { blocks: number } }>(
+            await utils.POST<{ data: { blocks: number } }>(
                 `https://sochain.com/api/v2/get_info/${this.network}`,
-                {
-                    timeout: DEFAULT_TIMEOUT,
-                },
             )
-        ).data.data.blocks.toString();
+        ).data.blocks.toString();
     }
 
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `https://sochain.com/api/v2/get_tx/${this.network}/${txid}`;
-        const response = await axios.get<{
+        const response = await utils.POST<{
             readonly data: SoChainTX;
-        }>(url, { timeout: DEFAULT_TIMEOUT });
+        }>(url);
 
-        const tx = response.data.data;
+        const tx = response.data;
 
         const height = new BigNumber(await this.fetchHeight());
 
@@ -69,14 +66,14 @@ export class SoChain implements BitcoinAPI {
         const url = `https://sochain.com/api/v2/get_tx_unspent/${
             this.network
         }/${address}/${0}`;
-        const response = await axios.get<{
+        const response = await utils.POST<{
             data: { txs: SoChainUTXO[] };
-        }>(url, { timeout: DEFAULT_TIMEOUT });
+        }>(url);
 
         const height = new BigNumber(await this.fetchHeight());
 
         return fixUTXOs(
-            response.data.data.txs.map((utxo) => ({
+            response.data.txs.map((utxo) => ({
                 txid: utxo.txid,
                 txindex: utxo.output_no.toString(),
                 amount: utxo.value.toString(),
@@ -93,14 +90,14 @@ export class SoChain implements BitcoinAPI {
         const url = `https://sochain.com/api/v2/get_tx_received/${
             this.network
         }/${address}/${0}`;
-        const response = await axios.get<{
+        const response = await utils.POST<{
             readonly data: { readonly txs: readonly SoChainUTXO[] };
-        }>(url, { timeout: DEFAULT_TIMEOUT });
+        }>(url);
 
         const height = new BigNumber(await this.fetchHeight());
 
         return fixUTXOs(
-            response.data.data.txs.map((utxo) => ({
+            response.data.txs.map((utxo) => ({
                 txid: utxo.txid,
                 amount: utxo.value.toString(),
                 // scriptPubKey: utxo.script_hex,
@@ -115,18 +112,16 @@ export class SoChain implements BitcoinAPI {
     }
 
     public async broadcastTransaction(txHex: string): Promise<string> {
-        const response = await axios.post<{
+        const response = await utils.POST<{
             status: "success";
             data: {
                 network: string;
                 txid: string; // Hex without 0x
             };
-        }>(
-            `https://sochain.com/api/v2/send_tx/${this.network}`,
-            { tx_hex: txHex },
-            { timeout: DEFAULT_TIMEOUT },
-        );
-        return response.data.data.txid;
+        }>(`https://sochain.com/api/v2/send_tx/${this.network}`, {
+            tx_hex: txHex,
+        });
+        return response.data.txid;
     }
 }
 

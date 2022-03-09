@@ -1,4 +1,3 @@
-import Axios from "axios";
 import BigNumber from "bignumber.js";
 
 import { utils } from "@renproject/utils";
@@ -194,11 +193,9 @@ export class TerraDev implements TerraAPI {
 
     public async getHeight(): Promise<BigNumber> {
         const url = `${this.apiUrl}/blocks/latest`;
-        const response = (
-            await Axios.get<{ block: { header: { height: string } } }>(url, {
-                timeout: 60 * utils.sleep.SECONDS,
-            })
-        ).data;
+        const response = await utils.GET<{
+            block: { header: { height: string } };
+        }>(url);
         return new BigNumber(response.block.header.height);
     }
 
@@ -213,11 +210,7 @@ export class TerraDev implements TerraAPI {
         // }&chainId=${this.chainId}`
         const url = `${this.apiUrl}/v1/txs?account=${address}&chainId=${this.chainId}`;
 
-        const response = (
-            await Axios.get<MessagesResponse>(url, {
-                timeout: 60 * utils.sleep.SECONDS,
-            })
-        ).data;
+        const response = await utils.GET<MessagesResponse>(url);
 
         const { txs } = response;
 
@@ -244,11 +237,7 @@ export class TerraDev implements TerraAPI {
 
     public async fetchConfirmations(hash: string): Promise<BigNumber> {
         const url = `${this.apiUrl}/v1/tx/${hash}`;
-        const tx = (
-            await Axios.get<MessageResponse>(url, {
-                timeout: 60 * utils.sleep.SECONDS,
-            })
-        ).data;
+        const tx = await utils.GET<MessageResponse>(url);
 
         if (tx === null) {
             throw new Error(`Unable to find Terra transaction ${hash}.`);

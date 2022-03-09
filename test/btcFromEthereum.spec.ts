@@ -51,6 +51,7 @@ describe("BTC/fromEthereum", () => {
             );
             setup.eventEmitter.on("progress", console.log);
             await setup.submit();
+            await setup.wait();
         }
 
         console.log(
@@ -94,22 +95,20 @@ describe("BTC/fromEthereum", () => {
                         )}][${tx.hash.slice(0, 6)}]: Submitting to RenVM`,
                     );
 
+                    tx.renVM.eventEmitter.on("progress", (progress) =>
+                        console.log(
+                            `[${printChain(
+                                gateway.params.from.chain,
+                            )}⇢${printChain(
+                                gateway.params.to.chain,
+                            )}][${tx.hash.slice(0, 6)}]: RenVM status: ${
+                                progress.response?.txStatus
+                            }`,
+                        ),
+                    );
+
                     while (true) {
                         try {
-                            tx.renVM.eventEmitter.on("progress", (progress) =>
-                                console.log(
-                                    `[${printChain(
-                                        gateway.params.from.chain,
-                                    )}⇢${printChain(
-                                        gateway.params.to.chain,
-                                    )}][${tx.hash.slice(
-                                        0,
-                                        6,
-                                    )}]: RenVM status: ${
-                                        progress.response?.txStatus
-                                    }`,
-                                ),
-                            );
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;

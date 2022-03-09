@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import { utils } from "@renproject/utils";
 import { BitcoinAPI, DEFAULT_TIMEOUT, sortUTXOs, UTXO } from "./API";
 
 export class Blockstream implements BitcoinAPI {
@@ -19,18 +18,14 @@ export class Blockstream implements BitcoinAPI {
 
     public async fetchHeight(): Promise<string> {
         return (
-            await axios.get<string>(this.getAPIUrl(`/blocks/tip/height`), {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data.toString();
+            await utils.GET<string>(this.getAPIUrl(`/blocks/tip/height`))
+        ).toString();
     }
 
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
-        const utxo = (
-            await axios.get<BlockstreamTX>(this.getAPIUrl(`/tx/${txid}`), {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data;
+        const utxo = await utils.GET<BlockstreamTX>(
+            this.getAPIUrl(`/tx/${txid}`),
+        );
 
         return {
             txid,
@@ -43,12 +38,11 @@ export class Blockstream implements BitcoinAPI {
     }
 
     public async fetchUTXOs(address: string): Promise<UTXO[]> {
-        const response = await axios.get<BlockstreamUTXO[]>(
+        const response = await utils.GET<BlockstreamUTXO[]>(
             this.getAPIUrl(`/address/${address}/utxo`),
-            { timeout: DEFAULT_TIMEOUT },
         );
 
-        return response.data
+        return response
             .map((utxo) => ({
                 txid: utxo.txid,
                 amount: utxo.value.toString(),
@@ -61,14 +55,13 @@ export class Blockstream implements BitcoinAPI {
     }
 
     public async fetchTXs(address: string): Promise<UTXO[]> {
-        const response = await axios.get<BlockstreamTX[]>(
+        const response = await utils.GET<BlockstreamTX[]>(
             this.getAPIUrl(`/address/${address}/txs`),
-            { timeout: DEFAULT_TIMEOUT },
         );
 
         const received: UTXO[] = [];
 
-        for (const tx of response.data) {
+        for (const tx of response) {
             for (let i = 0; i < tx.vout.length; i++) {
                 const vout = tx.vout[i];
                 if (vout.scriptpubkey_address === address) {
@@ -88,14 +81,8 @@ export class Blockstream implements BitcoinAPI {
     }
 
     public async broadcastTransaction(txHex: string): Promise<string> {
-        const response = await axios.post<string>(
-            this.getAPIUrl(`/tx`),
-            txHex,
-            {
-                timeout: DEFAULT_TIMEOUT,
-            },
-        );
-        return response.data;
+        const response = await utils.POST<string>(this.getAPIUrl(`/tx`), txHex);
+        return response;
     }
 }
 

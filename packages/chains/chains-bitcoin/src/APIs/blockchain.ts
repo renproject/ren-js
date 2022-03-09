@@ -1,4 +1,4 @@
-import axios from "axios";
+import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { URLSearchParams } from "url";
 
@@ -68,19 +68,14 @@ export class Blockchain implements BitcoinAPI {
 
     public fetchHeight = async (): Promise<string> => {
         const statsUrl = `${this.url}/block/best?notx=true`;
-        const statsResponse = (await axios.get<{ height: number }>(statsUrl))
-            .data;
+        const statsResponse = await utils.GET<{ height: number }>(statsUrl);
         return statsResponse.height.toString();
     };
 
     public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.url}/transaction/${txid}`;
 
-        const response = (
-            await axios.get<BlockchainTransaction>(`${url}`, {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data;
+        const response = await utils.GET<BlockchainTransaction>(`${url}`);
 
         return {
             txid: txid,
@@ -108,11 +103,7 @@ export class Blockchain implements BitcoinAPI {
         onlyUnspent: boolean = false,
     ): Promise<UTXO[]> => {
         const url = `${this.url}/address/${address}/transactions/full?limit=${limit}&offset=${offset}`;
-        const response = (
-            await axios.get<BlockchainTransaction[]>(url, {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data;
+        const response = await utils.GET<BlockchainTransaction[]>(url);
 
         let latestBlock: BigNumber | undefined;
 
@@ -161,13 +152,15 @@ export class Blockchain implements BitcoinAPI {
         const params = new URLSearchParams();
         params.append("tx", txHex);
 
-        const response = await axios.post(url, params, {
-            timeout: DEFAULT_TIMEOUT,
-        });
-        if (response.data.error) {
-            throw new Error(response.data.error);
+        const response = await utils.POST<string | { error: string }>(
+            url,
+            params,
+        );
+        if (typeof response === "object" && response.error) {
+            throw new Error(response.error);
         }
-        // TODO
-        return response.data;
+
+        // Check response type.
+        return response as string;
     };
 }

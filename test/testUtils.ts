@@ -40,6 +40,7 @@ interface EVMConstructor<EVM> {
 export const getEVMProvider = <EVM>(
     ChainClass: EVMConstructor<EVM>,
     network: RenNetwork,
+    index: number = 0,
 ): {
     provider: EthProvider;
     signer: EthSigner;
@@ -60,7 +61,10 @@ export const getEVMProvider = <EVM>(
     }
 
     const provider = new providers.JsonRpcProvider(rpcUrl);
-    const signer = Wallet.fromMnemonic(MNEMONIC).connect(provider);
+    const signer = Wallet.fromMnemonic(
+        MNEMONIC,
+        `m/44'/60'/0'/0/${index}`,
+    ).connect(provider);
 
     return {
         provider,

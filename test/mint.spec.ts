@@ -113,7 +113,8 @@ describe("DAI/to*", () => {
                                     )}`,
                                 );
                                 setup.eventEmitter.on("progress", console.log);
-                                return await setup.submit();
+                                await setup.submit();
+                                return await setup.wait();
                             });
                         }
 

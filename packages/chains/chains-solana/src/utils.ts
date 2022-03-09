@@ -1,6 +1,6 @@
 import base58 from "bs58";
 import * as BufferLayout from "buffer-layout";
-import nacl from "tweetnacl";
+import tweetnacl from "tweetnacl";
 
 import Wallet from "@project-serum/sol-wallet-adapter";
 import {
@@ -173,13 +173,16 @@ export const constructRenVMMsg = (
 };
 
 export const makeTestSigner = (privatekey: Uint8Array): Wallet => {
-    const key = nacl.sign.keyPair.fromSecretKey(privatekey);
+    const key = tweetnacl.sign.keyPair.fromSecretKey(privatekey);
 
     const pubk = new PublicKey(key.publicKey);
     return {
         publicKey: pubk,
         signTransaction: async (x: Transaction) => {
-            const sig = nacl.sign.detached(x.serializeMessage(), key.secretKey);
+            const sig = tweetnacl.sign.detached(
+                x.serializeMessage(),
+                key.secretKey,
+            );
             x.addSignature(pubk, Buffer.from(sig));
             return x;
         },
@@ -228,7 +231,7 @@ export const txHashToChainTransaction = (
 ): ChainTransaction => ({
     chain: chain,
     txidFormatted: txHash,
-    txid: utils.toURLBase64(base58.decode(txHash)),
+    txid: utils.toURLBase64(Buffer.from(base58.decode(txHash))),
     txindex: "0",
 });
 
@@ -277,7 +280,7 @@ export const getBurnFromNonce = async (
     const recipientLength = parseInt(burnData.recipient_len.toString());
 
     const txidFormatted = transactions[0].signature;
-    const txid = utils.toURLBase64(base58.decode(txidFormatted));
+    const txid = utils.toURLBase64(Buffer.from(base58.decode(txidFormatted)));
     return {
         // Tx Details
         chain: chain,

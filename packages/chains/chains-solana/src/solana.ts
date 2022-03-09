@@ -21,22 +21,29 @@ import {
     TxWaiter,
     utils,
 } from "@renproject/utils";
-import { Token, TOKEN_PROGRAM_ID, u64 } from "@solana/spl-token";
+import {
+    TOKEN_PROGRAM_ID,
+    createBurnCheckedInstruction,
+} from "@solana/spl-token";
 import {
     Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
     PublicKey,
+    sendAndConfirmRawTransaction,
     Signer,
     SystemProgram,
     SYSVAR_INSTRUCTIONS_PUBKEY,
     SYSVAR_RENT_PUBKEY,
     Transaction,
     TransactionInstruction,
+    Commitment,
 } from "@solana/web3.js";
 
 import {
     GatewayLayout,
+    GatewayRegistryLayout,
     GatewayRegistryState,
+    GatewayRegistryStateKey,
     GatewayStateKey,
     MintLogLayout,
 } from "./layouts";
@@ -46,6 +53,7 @@ import { SolanaFromPayload, SolanaToPayload } from "./types/types";
 import {
     constructRenVMMsg,
     createInstructionWithEthAddress2,
+    finalizeTransaction,
     getBurnFromNonce,
     getGatewayRegistryState,
     resolveTokenGatewayContract,
@@ -112,7 +120,9 @@ export class Solana
      */
     public validateTransaction(transaction: ChainTransaction): boolean {
         try {
-            const decoded = base58.decode(transaction.txidFormatted);
+            const decoded = Buffer.from(
+                base58.decode(transaction.txidFormatted),
+            );
             return (
                 decoded.length === 64 &&
                 utils.toURLBase64(decoded) === transaction.txid
@@ -263,9 +273,6 @@ export class Solana
             asset,
             contractCall.params.to,
         );
-        if (!associatedTokenAccount) {
-            throw new Error(`Associated token account not created yet.`);
-        }
         return {
             to: associatedTokenAccount.toBase58(),
             toBytes: associatedTokenAccount.toBuffer(),
@@ -688,28 +695,15 @@ export class Solana
                 tokenMintId,
             );
 
-            const checkedBurnInst = (
-                Token as unknown as {
-                    createBurnCheckedInstruction(
-                        programId: PublicKey,
-                        mint: PublicKey,
-                        account: PublicKey,
-                        owner: PublicKey,
-                        multiSigners: Signer[],
-                        amount: number | u64,
-                        decimals: number,
-                    ): TransactionInstruction;
-                }
-            ).createBurnCheckedInstruction(
+            const checkedBurnInst = createBurnCheckedInstruction(
                 TOKEN_PROGRAM_ID,
                 tokenMintId,
-                source,
                 this.signer.publicKey,
-                [],
-                new u64(
-                    BigNumber.isBigNumber(amount)
+                BigInt(
+                    (BigNumber.isBigNumber(amount)
                         ? amount.toFixed()
-                        : amount.toString(),
+                        : amount.toString()
+                    ).toString(),
                 ),
                 await this.assetDecimals(asset),
             );
@@ -782,7 +776,9 @@ export class Solana
             tx.feePayer = this.signer.publicKey;
 
             onReceiptCallback = (signature: string) => {
-                const txid = utils.toURLBase64(base58.decode(signature));
+                const txid = utils.toURLBase64(
+                    Buffer.from(base58.decode(signature)),
+                );
                 onInput({
                     chain: this.chain,
                     txid: txid,
@@ -825,6 +821,27 @@ export class Solana
         });
     }
 
+    public async associatedTokenAccountExists(asset: string) {
+        const getAssociatedTokenAddress = await this.getAssociatedTokenAccount(
+            asset,
+        );
+        let setupRequired = false;
+        try {
+            const tokenAccount = await this.provider.getAccountInfo(
+                getAssociatedTokenAddress,
+                "processed",
+            );
+
+            if (!tokenAccount || !tokenAccount.data) {
+                setupRequired = true;
+            }
+        } catch (e) {
+            console.error(e);
+            setupRequired = true;
+        }
+        return !setupRequired;
+    }
+
     public async getOutSetup(
         asset: string,
         _inputType: InputType,
@@ -833,7 +850,7 @@ export class Solana
     ): Promise<{
         [key: string]: TxSubmitter | TxWaiter;
     }> {
-        if (!(await this.getAssociatedTokenAccount(asset))) {
+        if (!(await this.associatedTokenAccountExists(asset))) {
             return {
                 createTokenAccount: this.createAssociatedTokenAccount(asset),
             };
@@ -848,7 +865,7 @@ export class Solana
     public async getAssociatedTokenAccount(
         asset: string,
         address?: string,
-    ): Promise<PublicKey | undefined> {
+    ): Promise<PublicKey> {
         let targetAddress = address ? new PublicKey(address) : undefined;
         if (!targetAddress) {
             if (!this.signer) {
@@ -868,19 +885,19 @@ export class Solana
             tokenMintId,
         );
 
-        try {
-            const tokenAccount = await this.provider.getAccountInfo(
-                destination,
-                "processed",
-            );
+        // try {
+        //     const tokenAccount = await this.provider.getAccountInfo(
+        //         destination,
+        //         "processed",
+        //     );
 
-            if (!tokenAccount || !tokenAccount.data) {
-                return undefined;
-            }
-        } catch (e) {
-            console.error(e);
-            return undefined;
-        }
+        //     if (!tokenAccount || !tokenAccount.data) {
+        //         return undefined;
+        //     }
+        // } catch (e) {
+        //     console.error(e);
+        //     return undefined;
+        // }
         return destination;
     }
 
@@ -939,10 +956,7 @@ export class Solana
         const findExistingTransaction = async (): Promise<
             ChainTransaction | undefined
         > => {
-            const associatedTokenAccount = await this.getAssociatedTokenAccount(
-                asset,
-            );
-            if (associatedTokenAccount) {
+            if (await this.associatedTokenAccountExists(asset)) {
                 return {
                     chain: this.chain,
                     txid: "",

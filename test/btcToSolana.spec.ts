@@ -10,14 +10,14 @@ import { makeTestSigner } from "../packages/chains/chains-solana/build/main/util
 import { Solana } from "../packages/chains/chains-solana/src";
 import { renTestnet } from "../packages/chains/chains-solana/src/networks";
 import RenJS from "../packages/ren/src";
-import { RenNetwork } from "../packages/utils/src";
+import { RenNetwork, utils } from "../packages/utils/src";
 import { printChain, sendFunds } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-describe("BTC/toSolana", () => {
+describe.only("BTC/toSolana", () => {
     it("BTC/toSolana", async function () {
         this.timeout(100000000000);
 
@@ -38,7 +38,7 @@ describe("BTC/toSolana", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 4,
+            nonce: 5,
         });
 
         const decimals = from.assetDecimals(asset);
@@ -63,9 +63,19 @@ describe("BTC/toSolana", () => {
             );
             setup.eventEmitter.on("progress", console.log);
             await setup.submit();
+            await setup.wait();
         }
 
-        await sendFunds(asset, gateway.gatewayAddress, minimumAmount.times(5));
+        const SEND_FUNDS = true;
+        if (SEND_FUNDS) {
+            await sendFunds(
+                asset,
+                gateway.gatewayAddress,
+                minimumAmount.times(5),
+            );
+        } else {
+            console.log("Waiting for deposit...");
+        }
 
         let foundDeposits = 0;
 
@@ -74,35 +84,95 @@ describe("BTC/toSolana", () => {
                 (async () => {
                     foundDeposits += 1;
 
-                    const { amount, asset } = tx.in.progress
-                        .transaction as InputChainTransaction;
-
                     console.log(
-                        `[${printChain(gateway.fromChain.chain)}⇢${printChain(
-                            gateway.toChain.chain,
-                        )}][${tx.hash}]: Received ${new BigNumber(
-                            amount,
-                        ).shiftedBy(-decimals)} ${asset}`,
+                        `[${printChain(from.chain)}⇢${printChain(to.chain)}][${
+                            tx.hash
+                        }] Detected:`,
+                        tx.in.progress.transaction?.txidFormatted,
                     );
 
-                    await RenJS.defaultDepositHandler(tx);
+                    tx.in.eventEmitter.on("progress", (progress) =>
+                        console.log(
+                            `[${printChain(tx.in.chain)}⇢${printChain(
+                                tx.out.chain,
+                            )}][${tx.hash.slice(0, 6)}]: ${
+                                progress.confirmations || 0
+                            }/${progress.target} confirmations`,
+                        ),
+                    );
+
+                    await tx.in.wait();
+
+                    tx.renVM.eventEmitter.on("progress", (progress) =>
+                        console.log(
+                            `[${printChain(
+                                gateway.params.from.chain,
+                            )}⇢${printChain(
+                                gateway.params.to.chain,
+                            )}][${tx.hash.slice(0, 6)}]: RenVM status: ${
+                                progress.response?.txStatus
+                            }`,
+                        ),
+                    );
+
+                    while (true) {
+                        try {
+                            await tx.renVM.submit();
+                            await tx.renVM.wait();
+                            break;
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        } catch (error: any) {
+                            console.error(error);
+                            await utils.sleep(10 * utils.sleep.SECONDS);
+                        }
+                    }
+                    console.log(
+                        `[${printChain(tx.in.chain)}⇢${printChain(
+                            tx.out.chain,
+                        )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
+                            tx.out.chain,
+                            {
+                                pad: false,
+                            },
+                        )}`,
+                    );
+
+                    tx.out.eventEmitter.on("progress", console.log);
+
+                    console.log("outSetup", tx.outSetup);
+                    for (const setupKey of Object.keys(tx.outSetup)) {
+                        const setup = tx.outSetup[setupKey];
+                        console.log(
+                            `[${printChain(
+                                gateway.fromChain.chain,
+                            )}⇢${printChain(
+                                gateway.toChain.chain,
+                            )}]: Calling ${setupKey} setup for ${String(
+                                setup.chain,
+                            )}`,
+                        );
+                        setup.eventEmitter.on("progress", console.log);
+                        await setup.submit();
+                        await setup.wait();
+                    }
+
+                    if (tx.out.submit) {
+                        await tx.out.submit();
+                    }
+
+                    await tx.out.wait();
 
                     foundDeposits -= 1;
 
                     console.log(
                         `[${printChain(from.chain)}⇢${printChain(
                             to.chain,
-                        )}][${tx.hash.slice(0, 6)}] Done.${
-                            tx.renVM.progress.response &&
-                            tx.renVM.progress.response.tx.out
-                                ? ` Received ${tx.renVM.progress.response.tx.out.amount
-                                      .shiftedBy(-decimals)
-                                      .toFixed()}`
-                                : ""
-                        } (${foundDeposits} other deposits remaining)`,
+                        )}][${tx.hash.slice(
+                            0,
+                            6,
+                        )}] Done. (${foundDeposits} other deposits remaining)`,
                         tx.out.progress.transaction?.txidFormatted,
                     );
-
                     if (foundDeposits === 0) {
                         resolve();
                     }

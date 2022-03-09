@@ -63,6 +63,7 @@ describe("DAI/fromBSCtoFantom", () => {
             );
             setup.eventEmitter.on("progress", console.log);
             await setup.submit();
+            await setup.wait();
         }
 
         console.log(

@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import { utils } from "@renproject/utils";
 import { BitcoinAPI, DEFAULT_TIMEOUT, sortUTXOs, UTXO } from "./API";
 
 export enum BlockchairNetwork {
@@ -29,11 +28,9 @@ export class Blockchair implements BitcoinAPI {
     public async fetchHeight(): Promise<string> {
         const url = `${this.endpoint()}/stats`;
 
-        const response = (
-            await axios.get<{ data: { best_block_height: number } }>(`${url}`, {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data;
+        const response = await utils.GET<{
+            data: { best_block_height: number };
+        }>(`${url}`);
 
         return response.data.best_block_height.toString();
     }
@@ -41,11 +38,7 @@ export class Blockchair implements BitcoinAPI {
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.endpoint()}/dashboards/transaction/${txid}`;
 
-        const response = (
-            await axios.get<TransactionResponse>(`${url}`, {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data;
+        const response = await utils.GET<TransactionResponse>(`${url}`);
 
         if (!response.data[txid]) {
             throw new Error(`Transaction not found.`);
@@ -56,9 +49,9 @@ export class Blockchair implements BitcoinAPI {
         let latestBlock = response.context.state;
         if (latestBlock === 0) {
             const statsUrl = `${this.endpoint()}/stats`;
-            const statsResponse = (
-                await axios.get(statsUrl, { timeout: DEFAULT_TIMEOUT })
-            ).data;
+            const statsResponse = await utils.GET<{ data: { blocks: number } }>(
+                statsUrl,
+            );
             latestBlock = statsResponse.data.blocks - 1;
         }
 
@@ -75,16 +68,14 @@ export class Blockchair implements BitcoinAPI {
 
     public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=0,100`;
-        const response = (
-            await axios.get<AddressResponse>(url, { timeout: DEFAULT_TIMEOUT })
-        ).data;
+        const response = await utils.GET<AddressResponse>(url);
 
         let latestBlock = response.context.state;
         if (latestBlock === 0) {
             const statsUrl = `${this.endpoint()}/stats`;
-            const statsResponse = (
-                await axios.get(statsUrl, { timeout: DEFAULT_TIMEOUT })
-            ).data;
+            const statsResponse = await utils.GET<{ data: { blocks: number } }>(
+                statsUrl,
+            );
             latestBlock = statsResponse.data.blocks - 1;
         }
 
@@ -103,16 +94,14 @@ export class Blockchair implements BitcoinAPI {
 
     public async fetchTXs(address: string, limit = 25): Promise<UTXO[]> {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=${limit},0`;
-        const response = (
-            await axios.get<AddressResponse>(url, { timeout: DEFAULT_TIMEOUT })
-        ).data;
+        const response = await utils.GET<AddressResponse>(url);
 
         // let latestBlock = response.context.state;
         // if (latestBlock === 0) {
         //     const statsUrl = `${this.endpoint()}/stats`;
         //     const statsResponse = (
-        //         await axios.get(statsUrl, { timeout: DEFAULT_TIMEOUT })
-        //     ).data;
+        //         await utils.GET(statsUrl)
+        //     );
         //     latestBlock = statsResponse.data.blocks - 1;
         // }
 
@@ -127,11 +116,7 @@ export class Blockchair implements BitcoinAPI {
             const txUrl = `${this.endpoint()}/dashboards/transactions/${txHashes
                 .slice(i * 10, (i + 1) * 10)
                 .join(",")}`;
-            const txResponse = (
-                await axios.get<TransactionResponse>(txUrl, {
-                    timeout: DEFAULT_TIMEOUT,
-                })
-            ).data;
+            const txResponse = await utils.GET<TransactionResponse>(txUrl);
             txDetails = {
                 ...txDetails,
                 ...txResponse.data,
@@ -163,15 +148,15 @@ export class Blockchair implements BitcoinAPI {
 
     public async broadcastTransaction(txHex: string): Promise<string> {
         const url = `${this.endpoint()}/push/transaction`;
-        const response = await axios.post<{
+        const response = await utils.POST<{
             data: { transaction_hash: string };
-        }>(url, { data: txHex }, { timeout: DEFAULT_TIMEOUT });
+        }>(url, { data: txHex });
         if ((response.data as unknown as BlockchairError).error) {
             throw new Error(
                 (response.data as unknown as BlockchairError).error,
             );
         }
-        return response.data.data.transaction_hash;
+        return response.data.transaction_hash;
     }
 }
 

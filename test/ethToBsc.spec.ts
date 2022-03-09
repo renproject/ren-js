@@ -21,22 +21,25 @@ describe("ETH/toBinanceSmartChain", () => {
 
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.ETH;
+        const asset = Ethereum.assets.DAI;
         const ethereum = new Ethereum({
             network,
             ...getEVMProvider(Ethereum as any, network),
         });
-        const bsc = new BinanceSmartChain({
+        const bscAlt = new BinanceSmartChain({
             network,
-            ...getEVMProvider(BinanceSmartChain as any, network),
+            ...getEVMProvider(BinanceSmartChain as any, network, 1),
         });
 
-        const renJS = new RenJS(network).withChains(bsc, ethereum);
+        console.log("eth address:", await ethereum.signer.getAddress());
+        console.log("bsc address:", await bscAlt.signer.getAddress());
+
+        const renJS = new RenJS(network).withChains(bscAlt, ethereum);
 
         const gateway = await renJS.gateway({
             asset,
             from: ethereum.Account({ amount: 0.011, convertToWei: true }),
-            to: bsc.Account(),
+            to: bscAlt.Address("0x0000000000000000000000000000000000000000"),
         });
 
         const balance = await ethereum.getBalance(gateway.params.asset);
@@ -55,6 +58,7 @@ describe("ETH/toBinanceSmartChain", () => {
             );
             setup.eventEmitter.on("progress", console.log);
             await setup.submit();
+            await setup.wait();
         }
 
         const minimumAmount = gateway.fees.minimumAmount.shiftedBy(
@@ -92,8 +96,10 @@ describe("ETH/toBinanceSmartChain", () => {
 
                     tx.in.eventEmitter.on("progress", (progress) =>
                         console.log(
-                            `[${printChain(bsc.chain)}⇢${printChain(
-                                ethereum.chain,
+                            `[${printChain(
+                                gateway.params.from.chain,
+                            )}⇢${printChain(
+                                gateway.params.to.chain,
                             )}][${tx.hash.slice(0, 6)}]: ${
                                 progress.confirmations || 0
                             }/${progress.target} confirmations`,

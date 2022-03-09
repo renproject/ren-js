@@ -1,4 +1,3 @@
-import axios from "axios";
 import https from "https";
 
 import { utils } from "@renproject/utils";
@@ -21,26 +20,21 @@ export class Blockbook implements BitcoinAPI {
 
     public async fetchHeight(): Promise<string> {
         return (
-            await axios.get<{ bestHeight: number }>(`${this.url}`, {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data.bestHeight.toString();
+            await utils.GET<{ bestHeight: number }>(`${this.url}`)
+        ).bestHeight.toString();
     }
 
     public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `${this.url}/utxo/${address}`;
-        const response = await axios.get<FetchUTXOResult>(url, {
+        const response = await utils.GET<FetchUTXOResult>(url, {
             // TODO: Remove when certificate is fixed.
             httpsAgent: new https.Agent({
                 rejectUnauthorized: false,
             }),
-            timeout: DEFAULT_TIMEOUT,
         });
 
         const data: FetchUTXOResult =
-            typeof response.data === "string"
-                ? JSON.parse(response.data)
-                : response.data;
+            typeof response === "string" ? JSON.parse(response) : response;
 
         return (
             await Promise.all(
@@ -72,18 +66,17 @@ export class Blockbook implements BitcoinAPI {
 
     // fetchTXs = async (address: string): Promise<Array<{ tx: InputChainTransaction, height: string }>> => {
     //     const url = `${this.url}/txs/?address=${address}`;
-    //     const response = await axios.get<FetchTXsResult>(url, {
+    //     const response = await utils.GET<FetchTXsResult>(url, {
     //         // TODO: Remove when certificate is fixed.
     //         httpsAgent: new https.Agent({
     //             rejectUnauthorized: false,
     //         }),
-    //         timeout: DEFAULT_TIMEOUT,
     //     });
 
     //     const data: FetchTXsResult =
-    //         typeof response.data === "string"
-    //             ? JSON.parse(response.data)
-    //             : response.data;
+    //         typeof response === "string"
+    //             ? JSON.parse(response)
+    //             : response;
 
     //     const received: Array<{ tx: InputChainTransaction, height: number | null }> = [];
 
@@ -108,9 +101,7 @@ export class Blockbook implements BitcoinAPI {
 
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.url}/tx/${txid}`;
-        const tx = (
-            await axios.get<TxResponse>(url, { timeout: DEFAULT_TIMEOUT })
-        ).data;
+        const tx = await utils.GET<TxResponse>(url);
         return fixUTXO(
             {
                 txid,
@@ -127,15 +118,15 @@ export class Blockbook implements BitcoinAPI {
 
     public async broadcastTransaction(txHex: string): Promise<string> {
         const url = `${this.url}/tx/send`;
-        const response = await axios.post<{
+        const response = await utils.POST<{
             error: string | null;
             id: null;
             txid: string;
-        }>(url, { rawtx: txHex }, { timeout: DEFAULT_TIMEOUT });
-        if (response.data.error) {
-            throw new Error(response.data.error);
+        }>(url, { rawtx: txHex });
+        if (response.error) {
+            throw new Error(response.error);
         }
-        return response.data.txid;
+        return response.txid;
     }
 }
 

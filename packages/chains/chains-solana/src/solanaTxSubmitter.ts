@@ -146,7 +146,9 @@ export class SolanaTxWaiter implements TxSubmitter {
                 transaction: {
                     chain: this.progress.chain,
                     txidFormatted: confirmedSignature,
-                    txid: utils.toURLBase64(base58.decode(confirmedSignature)),
+                    txid: utils.toURLBase64(
+                        Buffer.from(base58.decode(confirmedSignature)),
+                    ),
                     txindex: "0",
                 },
             });

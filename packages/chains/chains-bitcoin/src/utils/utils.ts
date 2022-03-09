@@ -22,7 +22,7 @@ export const addressToBytes = (address: string): Buffer => {
         ]);
     } catch (error) {
         try {
-            return base58.decode(address);
+            return Buffer.from(base58.decode(address));
         } catch (internalError) {
             throw new Error(`Unrecognized address format "${address}".`);
         }

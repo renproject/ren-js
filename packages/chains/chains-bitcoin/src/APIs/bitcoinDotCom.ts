@@ -1,4 +1,4 @@
-import axios from "axios";
+import { utils } from "@renproject/utils";
 
 import {
     BitcoinAPI,
@@ -33,21 +33,15 @@ export class BitcoinDotCom implements BitcoinAPI {
     public async fetchHeight(): Promise<string> {
         const url = `${this.endpointV2()}/blockchain/getBlockCount`;
 
-        const response = await axios.get<number>(url, {
-            timeout: DEFAULT_TIMEOUT,
-        });
+        const height = await utils.GET<number>(url);
 
-        return response.data.toString();
+        return height.toString();
     }
 
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.endpointV2()}/tx/${txid}`;
 
-        const response = await axios.get<FetchTXResponse>(url, {
-            timeout: DEFAULT_TIMEOUT,
-        });
-
-        const utxo = response.data;
+        const utxo = await utils.GET<FetchTXResponse>(url);
 
         return fixUTXO(
             {
@@ -65,11 +59,9 @@ export class BitcoinDotCom implements BitcoinAPI {
 
     public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `${this.endpointV2()}/addr/${address}/utxo`;
-        const response = await axios.get<FetchUTXOSResponse>(url, {
-            timeout: DEFAULT_TIMEOUT,
-        });
+        const utxos = await utils.GET<FetchUTXOSResponse>(url);
         return fixUTXOs(
-            response.data.map((utxo) => ({
+            utxos.map((utxo) => ({
                 txid: utxo.txid,
                 amount: utxo.amount.toString(),
                 txindex: utxo.vout.toString(),
@@ -87,13 +79,11 @@ export class BitcoinDotCom implements BitcoinAPI {
             /\/$/,
             "",
         )}/address/transactions/${address}`;
-        const { data } = await axios.get<FetchTXsResult>(url, {
-            timeout: DEFAULT_TIMEOUT,
-        });
+        const { txs } = await utils.GET<FetchTXsResult>(url);
 
         const received: UTXO[] = [];
 
-        for (const tx of data.txs) {
+        for (const tx of txs) {
             for (let i = 0; i < tx.vout.length; i++) {
                 const vout = tx.vout[i];
                 if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
@@ -120,17 +110,13 @@ export class BitcoinDotCom implements BitcoinAPI {
             /\/$/,
             "",
         )}/rawtransactions/sendRawTransaction`;
-        const response = await axios.post<string[]>(
-            url,
-            { hexes: [hexEncodedTransaction] },
-            { timeout: DEFAULT_TIMEOUT },
-        );
-        if ((response.data as unknown as BlockchairError).error) {
-            throw new Error(
-                (response.data as unknown as BlockchairError).error,
-            );
+        const response = await utils.POST<string[]>(url, {
+            hexes: [hexEncodedTransaction],
+        });
+        if ((response as unknown as BlockchairError).error) {
+            throw new Error((response as unknown as BlockchairError).error);
         }
-        return response.data[0];
+        return response[0];
     }
 }
 

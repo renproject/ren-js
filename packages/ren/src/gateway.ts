@@ -1,4 +1,3 @@
-import axios from "axios";
 import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 
@@ -380,8 +379,8 @@ export class Gateway<
 
                 // Submit the gateway details to the back-up submitGateway
                 // endpoint.
-                void axios
-                    .post(
+                void utils
+                    .POST(
                         "https://validate-mint.herokuapp.com/",
                         JSON.stringify({
                             gateway: gatewayAddress,

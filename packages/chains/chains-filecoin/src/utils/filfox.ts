@@ -1,5 +1,3 @@
-import Axios from "axios";
-
 import { utils } from "@renproject/utils";
 
 import { FilTransaction } from "./deposit";
@@ -19,11 +17,12 @@ export class Filfox {
     ): Promise<{ deposits: FilTransaction[]; totalCount: number }> {
         const heightURL = `${this.filfoxApi}tipset/recent?count=1`;
 
-        const heightResponse = (
-            await Axios.get<FilscanHeight | FilscanError>(heightURL, {
-                timeout: 60 * utils.sleep.SECONDS,
-            })
-        ).data;
+        const heightResponse = await utils.GET<FilscanHeight | FilscanError>(
+            heightURL,
+            {
+                timeout: utils.DEFAULT_TIMEOUT * 2,
+            },
+        );
 
         if (!Array.isArray(heightResponse)) {
             throw new Error(
@@ -35,14 +34,11 @@ export class Filfox {
 
         const messagesURL = `${this.filfoxApi}address/${address}/messages?pageSize=${size}&page=${page}&detailed`;
 
-        const messagesResponse = (
-            await Axios.get<FilscanAddressMessages | FilscanError>(
-                messagesURL,
-                {
-                    timeout: 60 * utils.sleep.SECONDS,
-                },
-            )
-        ).data;
+        const messagesResponse = await utils.GET<
+            FilscanAddressMessages | FilscanError
+        >(messagesURL, {
+            timeout: utils.DEFAULT_TIMEOUT * 2,
+        });
 
         if (messagesResponse.error !== undefined) {
             throw new Error(
@@ -78,11 +74,9 @@ export class Filfox {
     public async fetchMessage(cid: string): Promise<FilTransaction> {
         const messagesURL = `${this.filfoxApi}message/${cid}`;
 
-        const message = (
-            await Axios.get<FilscanMessage>(messagesURL, {
-                timeout: 60 * utils.sleep.SECONDS,
-            })
-        ).data;
+        const message = await utils.GET<FilscanMessage>(messagesURL, {
+            timeout: utils.DEFAULT_TIMEOUT * 2,
+        });
 
         if (message.error !== undefined && message.error !== "") {
             throw new Error(

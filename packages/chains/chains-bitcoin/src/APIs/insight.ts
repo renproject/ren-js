@@ -1,4 +1,3 @@
-import axios from "axios";
 import BigNumber from "bignumber.js";
 import https from "https";
 
@@ -22,10 +21,8 @@ export class Insight implements BitcoinAPI {
 
     public async fetchHeight(): Promise<string> {
         return (
-            await axios.get<{ height: number }>(`${this.url}/sync`, {
-                timeout: DEFAULT_TIMEOUT,
-            })
-        ).data.height.toString();
+            await utils.GET<{ height: number }>(`${this.url}/sync`)
+        ).height.toString();
     }
 
     public async fetchUTXOs(
@@ -33,18 +30,15 @@ export class Insight implements BitcoinAPI {
         confirmations: number = 0,
     ): Promise<UTXO[]> {
         const url = `${this.url}/addr/${address}/utxo`;
-        const response = await axios.get<FetchUTXOResult>(url, {
+        const response = await utils.GET<FetchUTXOResult>(url, {
             // TODO: Remove when certificate is fixed.
             httpsAgent: new https.Agent({
                 rejectUnauthorized: false,
             }),
-            timeout: DEFAULT_TIMEOUT,
         });
 
         const data: FetchUTXOResult =
-            typeof response.data === "string"
-                ? JSON.parse(response.data)
-                : response.data;
+            typeof response === "string" ? JSON.parse(response) : response;
 
         const height = new BigNumber(await this.fetchHeight());
 
@@ -86,18 +80,15 @@ export class Insight implements BitcoinAPI {
 
     public async fetchTXs(address: string): Promise<UTXO[]> {
         const url = `${this.url}/txs/?address=${address}`;
-        const response = await axios.get<FetchTXsResult>(url, {
+        const response = await utils.GET<FetchTXsResult>(url, {
             // TODO: Remove when certificate is fixed.
             httpsAgent: new https.Agent({
                 rejectUnauthorized: false,
             }),
-            timeout: DEFAULT_TIMEOUT,
         });
 
         const data: FetchTXsResult =
-            typeof response.data === "string"
-                ? JSON.parse(response.data)
-                : response.data;
+            typeof response === "string" ? JSON.parse(response) : response;
 
         const received: UTXO[] = [];
 
@@ -123,9 +114,7 @@ export class Insight implements BitcoinAPI {
 
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `${this.url}/tx/${txid}`;
-        const tx = (
-            await axios.get<TxResponse>(url, { timeout: DEFAULT_TIMEOUT })
-        ).data;
+        const tx = await utils.GET<TxResponse>(url);
         return fixUTXO(
             {
                 txid,
@@ -142,15 +131,15 @@ export class Insight implements BitcoinAPI {
 
     public async broadcastTransaction(txHex: string): Promise<string> {
         const url = `${this.url}/tx/send`;
-        const response = await axios.post<{
+        const response = await utils.POST<{
             error: string | null;
             id: null;
             txid: string;
-        }>(url, { rawtx: txHex }, { timeout: DEFAULT_TIMEOUT });
-        if (response.data.error) {
-            throw new Error(response.data.error);
+        }>(url, { rawtx: txHex });
+        if (response.error) {
+            throw new Error(response.error);
         }
-        return response.data.txid;
+        return response.txid;
     }
 }
 

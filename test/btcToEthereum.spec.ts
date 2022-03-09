@@ -45,6 +45,18 @@ describe("BTC/toEthereum", () => {
             } (to receive at least ${receivedAmount.toFixed()})`,
         );
 
+        for (const setupKey of Object.keys(gateway.inSetup)) {
+            const setup = gateway.inSetup[setupKey];
+            console.log(
+                `[${printChain(gateway.fromChain.chain)}⇢${printChain(
+                    gateway.toChain.chain,
+                )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
+            );
+            setup.eventEmitter.on("progress", console.log);
+            await setup.submit();
+            await setup.wait();
+        }
+
         try {
             await sendFunds(
                 asset,
@@ -83,22 +95,20 @@ describe("BTC/toEthereum", () => {
 
                     await tx.in.wait();
 
+                    tx.renVM.eventEmitter.on("progress", (progress) =>
+                        console.log(
+                            `[${printChain(
+                                gateway.params.from.chain,
+                            )}⇢${printChain(
+                                gateway.params.to.chain,
+                            )}][${tx.hash.slice(0, 6)}]: RenVM status: ${
+                                progress.response?.txStatus
+                            }`,
+                        ),
+                    );
+
                     while (true) {
                         try {
-                            tx.renVM.eventEmitter.on("progress", (progress) =>
-                                console.log(
-                                    `[${printChain(
-                                        gateway.params.from.chain,
-                                    )}⇢${printChain(
-                                        gateway.params.to.chain,
-                                    )}][${tx.hash.slice(
-                                        0,
-                                        6,
-                                    )}]: RenVM status: ${
-                                        progress.response?.txStatus
-                                    }`,
-                                ),
-                            );
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;
@@ -120,6 +130,22 @@ describe("BTC/toEthereum", () => {
                     );
 
                     tx.out.eventEmitter.on("progress", console.log);
+
+                    for (const setupKey of Object.keys(tx.outSetup)) {
+                        const setup = tx.outSetup[setupKey];
+                        console.log(
+                            `[${printChain(
+                                gateway.fromChain.chain,
+                            )}⇢${printChain(
+                                gateway.toChain.chain,
+                            )}]: Calling ${setupKey} setup for ${String(
+                                setup.chain,
+                            )}`,
+                        );
+                        setup.eventEmitter.on("progress", console.log);
+                        await setup.submit();
+                        await setup.wait();
+                    }
 
                     if (tx.out.submit) {
                         await tx.out.submit();

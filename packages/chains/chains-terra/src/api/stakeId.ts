@@ -1,5 +1,3 @@
-// import Axios from "axios";
-
 // import { SECONDS } from "@renproject/utils";
 
 // import { TerraAPI, TerraNetwork, TerraTransaction } from "./deposit";
@@ -137,10 +135,8 @@
 
 //     const url = `${STAKE_ID_URL(network)}/addr/${address}?page=${page + 1}`;
 //     const response = (
-//         await Axios.get<MessagesResponse>(url, {
-//             timeout: 60 * SECONDS,
-//         })
-//     ).data;
+//         await utils.GET<MessagesResponse>(url)
+//     );
 
 //     const { status, errors, txs } = response;
 
@@ -176,10 +172,8 @@
 
 //     const url = `${STAKE_ID_URL(network)}/tx/${hash}`;
 //     const response = (
-//         await Axios.get<MessageResponse>(url, {
-//             timeout: 60 * SECONDS,
-//         })
-//     ).data;
+//         await utils.GET<MessageResponse>(url)
+//     );
 
 //     const { status, errors, tx } = response;
 

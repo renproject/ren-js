@@ -47,7 +47,7 @@
         "@renproject/utils": "^3.0.0-alpha.11",
         "@types/create-hash": "1.2.2",
         "@types/node": ">=10",
-        "axios": "^0.24.0",
+        "axios": "^0.26.0",
         "bignumber.js": "^9.0.2"
     },
     "resolutions": {

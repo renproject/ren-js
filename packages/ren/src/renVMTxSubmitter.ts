@@ -21,7 +21,7 @@ import {
 
 export const RENVM_CHAIN = "RenVM";
 
-class RenVMTxSubmitter<Transaction extends RenVMTransaction>
+export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
     implements
         TxSubmitter<
             ChainTransactionProgress & {
@@ -30,21 +30,8 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         >
 {
     public chain = "RenVM";
-    public _hash: string;
-
-    private version = "1";
     private provider: RenVMProvider;
-    private selector: string;
-    private params: TypedPackValue;
-
-    public get tx(): TransactionInput<TypedPackValue> {
-        return {
-            hash: this._hash,
-            selector: this.selector,
-            version: this.version,
-            in: this.params,
-        };
-    }
+    public tx: TransactionInput<TypedPackValue>;
 
     private signatureCallback?: (
         response: RenVMTransactionWithStatus<Transaction>,
@@ -78,21 +65,35 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
 
     public constructor(
         provider: RenVMProvider,
-        selector: string,
-        params: TypedPackValue,
+        tx: {
+            hash?: string;
+            version?: string;
+            selector: string;
+            in: TypedPackValue;
+        },
         signatureCallback?: (
             response: RenVMTransactionWithStatus<Transaction>,
         ) => Promise<void>,
     ) {
         this.provider = provider;
-        this.selector = selector;
-        this.params = params;
         this.eventEmitter = eventEmitter();
         this.signatureCallback = signatureCallback;
 
-        this._hash = utils.toURLBase64(
-            generateTransactionHash(this.version, this.selector, this.params),
+        const version = tx.version || "1";
+        const expectedHash = utils.toURLBase64(
+            generateTransactionHash(version, tx.selector, tx.in),
         );
+        if (tx.hash && tx.hash !== expectedHash) {
+            throw new Error(
+                `Invalid hash (expected ${expectedHash}, got ${tx.hash}.)`,
+            );
+        }
+        const hash = tx.hash || expectedHash;
+        this.tx = {
+            ...tx,
+            version,
+            hash,
+        };
 
         this.progress = {
             chain: RENVM_CHAIN,
@@ -100,11 +101,15 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             target: 1,
             transaction: {
                 chain: RENVM_CHAIN,
-                txid: this._hash,
-                txidFormatted: this._hash,
+                txid: this.tx.hash,
+                txidFormatted: this.tx.hash,
                 txindex: "0",
             },
         };
+    }
+
+    public export() {
+        return this.tx;
     }
 
     public submit(): PromiEvent<
@@ -148,7 +153,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                     errorInner = error;
                 }
                 try {
-                    await this.provider.queryTx(this._hash, 1);
+                    await this.provider.queryTx(this.tx.hash, 1);
                     break;
                 } catch (error) {
                     // Ignore error.
@@ -209,7 +214,7 @@ class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             let existingStatus: TxStatus | undefined = undefined;
             while (true) {
                 try {
-                    tx = await this.provider.queryTx(this._hash, 1);
+                    tx = await this.provider.queryTx(this.tx.hash, 1);
                     if (tx && tx.txStatus === TxStatus.TxStatusDone) {
                         break;
                     }
@@ -284,20 +289,22 @@ export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<RenVMCrossChain
     ) {
         super(
             provider,
-            selector,
             {
-                t: crossChainParamsType,
-                v: {
-                    txid: utils.toURLBase64(params.txid),
-                    txindex: params.txindex.toFixed(),
-                    amount: params.amount.toFixed(),
-                    payload: utils.toURLBase64(params.payload),
-                    phash: utils.toURLBase64(params.phash),
-                    to: params.to,
-                    nonce: utils.toURLBase64(params.nonce),
-                    nhash: utils.toURLBase64(params.nhash),
-                    gpubkey: utils.toURLBase64(params.gpubkey),
-                    ghash: utils.toURLBase64(params.ghash),
+                selector,
+                in: {
+                    t: crossChainParamsType,
+                    v: {
+                        txid: utils.toURLBase64(params.txid),
+                        txindex: params.txindex.toFixed(),
+                        amount: params.amount.toFixed(),
+                        payload: utils.toURLBase64(params.payload),
+                        phash: utils.toURLBase64(params.phash),
+                        to: params.to,
+                        nonce: utils.toURLBase64(params.nonce),
+                        nhash: utils.toURLBase64(params.nhash),
+                        gpubkey: utils.toURLBase64(params.gpubkey),
+                        ghash: utils.toURLBase64(params.ghash),
+                    },
                 },
             },
             signatureCallback,

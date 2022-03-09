@@ -55,6 +55,7 @@ import {
     mapBurnToChainLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
+    txHashToChainTransaction,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
@@ -65,7 +66,9 @@ import {
     EVMParam,
     EVMParamValues,
     EVMPayload,
+    EVMTxPayload,
     PayloadHandler,
+    txPayloadHandler,
 } from "./utils/payloads/evmPayloadHandlers";
 import {
     EthereumClassConfig,
@@ -555,6 +558,14 @@ export class EthereumBaseChain
             );
         }
 
+        if (contractCall.type === "transaction") {
+            return new DefaultTxWaiter({
+                chain: this,
+                target: confirmationTarget,
+                chainTransaction: contractCall.params.tx,
+            });
+        }
+
         return new EVMTxSubmitter({
             signer: this.signer,
             network: this.network,
@@ -697,6 +708,21 @@ export class EthereumBaseChain
             }
         };
 
+        if (contractCall.type === "transaction") {
+            return new DefaultTxWaiter({
+                chain: this,
+                target: confirmationTarget,
+                chainTransaction: contractCall.params.tx,
+                onFirstProgress: async (tx: ChainTransaction) => {
+                    onReceipt(
+                        await this.provider.getTransactionReceipt(
+                            tx.txidFormatted,
+                        ),
+                    );
+                },
+            });
+        }
+
         return new EVMTxSubmitter({
             signer: this.signer,
             network: this.network,
@@ -730,7 +756,7 @@ export class EthereumBaseChain
             };
             gatewayAddress?: string;
         },
-    ): Promise<{ [key: string]: EVMTxSubmitter }> {
+    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
@@ -755,24 +781,33 @@ export class EthereumBaseChain
             this.getPayloadHandler,
         );
 
-        const txSubmitted: { [key: string]: EVMTxSubmitter } = {};
+        const txSubmitted: { [key: string]: EVMTxSubmitter | TxWaiter } = {};
         for (const callKey of Object.keys(calls)) {
-            txSubmitted[callKey] = new EVMTxSubmitter({
-                signer: this.signer,
-                network: this.network,
-                chain: this.chain,
-                payload: calls[callKey],
-                target: 1,
-                getPayloadHandler: this.getPayloadHandler,
-                getParams: () =>
-                    this.getEVMParams(
-                        asset,
-                        inputType,
-                        outputType,
-                        inputType,
-                        getParams(),
-                    ),
-            });
+            if (calls[callKey].type === "transaction") {
+                txSubmitted[callKey] = new DefaultTxWaiter({
+                    chain: this,
+                    target: 1,
+                    chainTransaction: (calls[callKey] as EVMTxPayload).params
+                        .tx,
+                });
+            } else {
+                txSubmitted[callKey] = new EVMTxSubmitter({
+                    signer: this.signer,
+                    network: this.network,
+                    chain: this.chain,
+                    payload: calls[callKey],
+                    target: 1,
+                    getPayloadHandler: this.getPayloadHandler,
+                    getParams: () =>
+                        this.getEVMParams(
+                            asset,
+                            inputType,
+                            outputType,
+                            inputType,
+                            getParams(),
+                        ),
+                });
+            }
         }
         return txSubmitted;
     }
@@ -789,7 +824,7 @@ export class EthereumBaseChain
             sigHash?: Buffer;
             signature?: Buffer;
         },
-    ): Promise<{ [key: string]: EVMTxSubmitter }> {
+    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
@@ -814,24 +849,33 @@ export class EthereumBaseChain
             this.getPayloadHandler,
         );
 
-        const txSubmitted: { [key: string]: EVMTxSubmitter } = {};
+        const txSubmitted: { [key: string]: EVMTxSubmitter | TxWaiter } = {};
         for (const callKey of Object.keys(calls)) {
-            txSubmitted[callKey] = new EVMTxSubmitter({
-                signer: this.signer,
-                network: this.network,
-                chain: this.chain,
-                payload: calls[callKey],
-                target: 1,
-                getPayloadHandler: this.getPayloadHandler,
-                getParams: () =>
-                    this.getEVMParams(
-                        asset,
-                        inputType,
-                        outputType,
-                        outputType,
-                        getParams(),
-                    ),
-            });
+            if (calls[callKey].type === "transaction") {
+                txSubmitted[callKey] = new DefaultTxWaiter({
+                    chain: this,
+                    target: 1,
+                    chainTransaction: (calls[callKey] as EVMTxPayload).params
+                        .tx,
+                });
+            } else {
+                txSubmitted[callKey] = new EVMTxSubmitter({
+                    signer: this.signer,
+                    network: this.network,
+                    chain: this.chain,
+                    payload: calls[callKey],
+                    target: 1,
+                    getPayloadHandler: this.getPayloadHandler,
+                    getParams: () =>
+                        this.getEVMParams(
+                            asset,
+                            inputType,
+                            outputType,
+                            outputType,
+                            getParams(),
+                        ),
+                });
+            }
         }
         return txSubmitted;
     }
@@ -839,14 +883,13 @@ export class EthereumBaseChain
     private getPayloadHandler = (payloadType: string): PayloadHandler => {
         switch (payloadType) {
             case "approval":
-                return approvalPayloadHandler as PayloadHandler<// eslint-disable-next-line @typescript-eslint/no-explicit-any
-                EVMPayload>;
+                return approvalPayloadHandler as PayloadHandler<EVMPayload>;
             case "contract":
-                return contractPayloadHandler as PayloadHandler<// eslint-disable-next-line @typescript-eslint/no-explicit-any
-                EVMPayload>;
+                return contractPayloadHandler as PayloadHandler<EVMPayload>;
             case "address":
-                return accountPayloadHandler as PayloadHandler<// eslint-disable-next-line @typescript-eslint/no-explicit-any
-                EVMPayload>;
+                return accountPayloadHandler as PayloadHandler<EVMPayload>;
+            case "transaction":
+                return txPayloadHandler as PayloadHandler<EVMPayload>;
         }
 
         // TODO: Allow adding custom payload handlers.
@@ -1005,6 +1048,26 @@ export class EthereumBaseChain
         amount?: BigNumber | string | number;
         convertToWei?: boolean;
     } = {}): EVMPayload {
+        return this.Address({
+            address: EVMParam.EVM_ACCOUNT,
+            amount,
+            convertToWei,
+        });
+    }
+
+    public Address({
+        address,
+        amount,
+        convertToWei,
+    }: {
+        address: string;
+        amount?: BigNumber | string | number;
+        convertToWei?: boolean;
+    }): EVMPayload {
+        assertType<string>("string", {
+            address,
+        });
+
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
             { amount },
@@ -1038,23 +1101,19 @@ export class EthereumBaseChain
             chain: this.chain,
             type: "address",
             params: {
-                address: EVMParam.EVM_ACCOUNT,
+                address,
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
                 convertToWei,
             },
         };
     }
 
-    public Address(address: string): EVMPayload {
-        assertType<string>("string", {
-            address,
-        });
-
+    public Transaction(chainTransaction: ChainTransaction): EVMPayload {
         return {
             chain: this.chain,
-            type: "address",
+            type: "transaction",
             params: {
-                address,
+                tx: chainTransaction,
             },
         };
     }

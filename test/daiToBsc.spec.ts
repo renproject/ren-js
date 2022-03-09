@@ -16,7 +16,7 @@ chai.should();
 
 loadDotEnv();
 
-describe("DAI/toBinanceSmartChain", () => {
+describe.only("DAI/toBinanceSmartChain", () => {
     it("DAI/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
@@ -73,9 +73,12 @@ describe("DAI/toBinanceSmartChain", () => {
         );
 
         gateway.in.eventEmitter.on("progress", console.log);
-        await gateway.in.submit();
+        if (gateway.in.submit) {
+            await gateway.in.submit();
+        }
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
+        console.log("transaction", gateway.in.progress.transaction);
 
         await new Promise<void>((resolve, reject) => {
             gateway.on("transaction", (tx) => {

@@ -31,12 +31,16 @@ import { EvmNetworkConfig } from "./types";
 export const txHashToChainTransaction = (
     chain: string,
     txHash: string,
-): ChainTransaction => ({
-    chain,
-    txidFormatted: txHash,
-    txid: utils.toURLBase64(utils.fromHex(txHash)),
-    txindex: "0",
-});
+): ChainTransaction => {
+    const txHashBuffer = utils.fromHex(txHash);
+    return {
+        chain,
+        // Standardize.
+        txidFormatted: utils.Ox(txHashBuffer),
+        txid: utils.toURLBase64(txHashBuffer),
+        txindex: "0",
+    };
+};
 
 export const mapBurnLogToInputChainTransaction = (
     chain: string,

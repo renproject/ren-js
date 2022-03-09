@@ -29,21 +29,16 @@ import {
     Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
     PublicKey,
-    sendAndConfirmRawTransaction,
-    Signer,
     SystemProgram,
     SYSVAR_INSTRUCTIONS_PUBKEY,
     SYSVAR_RENT_PUBKEY,
     Transaction,
     TransactionInstruction,
-    Commitment,
 } from "@solana/web3.js";
 
 import {
     GatewayLayout,
-    GatewayRegistryLayout,
     GatewayRegistryState,
-    GatewayRegistryStateKey,
     GatewayStateKey,
     MintLogLayout,
 } from "./layouts";
@@ -53,7 +48,6 @@ import { SolanaFromPayload, SolanaToPayload } from "./types/types";
 import {
     constructRenVMMsg,
     createInstructionWithEthAddress2,
-    finalizeTransaction,
     getBurnFromNonce,
     getGatewayRegistryState,
     resolveTokenGatewayContract,
@@ -667,6 +661,18 @@ export class Solana
                 chainTransaction,
                 chain: this,
                 target: confirmationTarget,
+                onFirstProgress: (tx: ChainTransaction) =>
+                    onReceipt(tx.txidFormatted),
+            });
+        }
+
+        if (contractCall.type === "transaction") {
+            return new DefaultTxWaiter({
+                chainTransaction: contractCall.params.tx,
+                chain: this,
+                target: confirmationTarget,
+                onFirstProgress: (tx: ChainTransaction) =>
+                    onReceipt(tx.txidFormatted),
             });
         }
 

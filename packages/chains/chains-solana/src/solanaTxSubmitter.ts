@@ -12,13 +12,16 @@ import {
 } from "@renproject/utils";
 import {
     Connection,
+    Message,
     sendAndConfirmRawTransaction,
     Transaction,
 } from "@solana/web3.js";
 
 import { SolanaSigner } from "./types/types";
 
-export class SolanaTxWaiter implements TxSubmitter {
+export class SolanaTxWaiter
+    implements TxSubmitter<ChainTransactionProgress, {}, string>
+{
     private _getTransaction: () => Promise<Transaction>;
     private _provider: Connection;
     private _getSigner: () => SolanaSigner | undefined;
@@ -78,6 +81,10 @@ export class SolanaTxWaiter implements TxSubmitter {
         };
     }
 
+    public async export(): Promise<string> {
+        return base58.encode((await this._getTransaction()).serializeMessage());
+    }
+
     public submit(): PromiEvent<
         ChainTransactionProgress,
         {
@@ -125,6 +132,7 @@ export class SolanaTxWaiter implements TxSubmitter {
             if (!signer) {
                 throw new Error(`Must connect ${this.chain} signer.`);
             }
+
             const signed = await signer.signTransaction(tx);
             if (!signed.signature) {
                 throw new Error("failed to sign");

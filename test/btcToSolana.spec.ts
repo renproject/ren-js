@@ -9,15 +9,16 @@ import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import { makeTestSigner } from "../packages/chains/chains-solana/build/main/utils";
 import { Solana } from "../packages/chains/chains-solana/src";
 import { renTestnet } from "../packages/chains/chains-solana/src/networks";
-import RenJS from "../packages/ren/src";
+import RenJS, { RenVMTxSubmitter } from "../packages/ren/src";
 import { RenNetwork, utils } from "../packages/utils/src";
 import { printChain, sendFunds } from "./testUtils";
+import { RenVMProvider } from "@renproject/provider";
 
 chai.should();
 
 loadDotEnv();
 
-describe.only("BTC/toSolana", () => {
+describe("BTC/toSolana", () => {
     it("BTC/toSolana", async function () {
         this.timeout(100000000000);
 
@@ -38,7 +39,7 @@ describe.only("BTC/toSolana", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 5,
+            nonce: 6,
         });
 
         const decimals = from.assetDecimals(asset);
@@ -66,7 +67,7 @@ describe.only("BTC/toSolana", () => {
             await setup.wait();
         }
 
-        const SEND_FUNDS = true;
+        const SEND_FUNDS = false;
         if (SEND_FUNDS) {
             await sendFunds(
                 asset,
@@ -115,6 +116,10 @@ describe.only("BTC/toSolana", () => {
                         ),
                     );
 
+                    console.log(
+                        JSON.stringify(await tx.renVM.export(), null, "    "),
+                    );
+
                     while (true) {
                         try {
                             await tx.renVM.submit();
@@ -139,7 +144,18 @@ describe.only("BTC/toSolana", () => {
 
                     tx.out.eventEmitter.on("progress", console.log);
 
-                    console.log("outSetup", tx.outSetup);
+                    // const renVMExport = tx.renVM.export();
+                    // const provider = new RenVMProvider("testnet");
+                    // const renVM = new RenVMTxSubmitter(provider, renVMExport);
+                    // console.log("Submitting!");
+                    // await renVM.submit();
+                    // await renVM.wait();
+
+                    console.log(
+                        await tx.out.export(),
+                        JSON.stringify(await tx.out.export(), null, "    "),
+                    );
+
                     for (const setupKey of Object.keys(tx.outSetup)) {
                         const setup = tx.outSetup[setupKey];
                         console.log(

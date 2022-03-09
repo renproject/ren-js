@@ -1,4 +1,9 @@
-import { Contract, PayableOverrides, Signer } from "ethers";
+import {
+    Contract,
+    PayableOverrides,
+    PopulatedTransaction,
+    Signer,
+} from "ethers";
 import { Logger } from "ethers/lib/utils";
 
 import {
@@ -6,9 +11,11 @@ import {
     TransactionResponse,
 } from "@ethersproject/providers";
 import {
+    Chain,
     ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
+    DefaultTxWaiter,
     ErrorWithCode,
     eventEmitter,
     EventEmitterTyped,
@@ -78,7 +85,14 @@ export const callContract = async (
 /**
  * EVMTxSubmitter handles submitting and waiting for EVM transactions.
  */
-export class EVMTxSubmitter implements TxSubmitter {
+export class EVMTxSubmitter
+    implements
+        TxSubmitter<
+            ChainTransactionProgress,
+            PayableOverrides,
+            PopulatedTransaction
+        >
+{
     public chain: string;
     public progress: ChainTransactionProgress;
     public eventEmitter: EventEmitterTyped<{
@@ -145,6 +159,23 @@ export class EVMTxSubmitter implements TxSubmitter {
         };
     }
 
+    public async export(
+        options: {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            overrides?: any[];
+            txConfig?: PayableOverrides;
+        } = {},
+    ): Promise<PopulatedTransaction> {
+        return await this.getPayloadHandler(this.payload.type).export(
+            this.network,
+            this.signer,
+            this.payload,
+            this.getParams(),
+            options,
+            this.getPayloadHandler,
+        );
+    }
+
     public submit(
         options: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,16 +214,24 @@ export class EVMTxSubmitter implements TxSubmitter {
                 }
             }
 
-            this.tx =
-                this.tx ||
-                (await this.getPayloadHandler(this.payload.type).submit(
+            if (!this.tx) {
+                if (!this.signer.provider) {
+                    throw new Error("EVM signer has no connected provider.");
+                }
+                const tx = await this.getPayloadHandler(
+                    this.payload.type,
+                ).export(
                     this.network,
                     this.signer,
                     this.payload,
                     this.getParams(),
                     options,
                     this.getPayloadHandler,
-                ));
+                );
+                const populatedTx = await this.signer.populateTransaction(tx);
+                const signedTx = await this.signer.signTransaction(populatedTx);
+                this.tx = await this.signer.provider.sendTransaction(signedTx);
+            }
 
             this.updateProgress({
                 status: ChainTransactionStatus.Confirming,

@@ -29,7 +29,7 @@ describe("BTC/toEthereum", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 2,
+            nonce: 4,
         });
 
         const minimumAmount = gateway.fees.minimumAmount.shiftedBy(
@@ -57,16 +57,21 @@ describe("BTC/toEthereum", () => {
             await setup.wait();
         }
 
-        try {
-            await sendFunds(
-                asset,
-                gateway.gatewayAddress,
-                minimumAmount.times(5),
-            );
-        } catch (error) {
-            // console.log(error.request);
-            // console.log(error.response);
-            throw error;
+        const SEND_FUNDS = false;
+        if (SEND_FUNDS) {
+            try {
+                await sendFunds(
+                    asset,
+                    gateway.gatewayAddress,
+                    minimumAmount.times(5),
+                );
+            } catch (error) {
+                // console.log(error.request);
+                // console.log(error.response);
+                throw error;
+            }
+        } else {
+            console.log("Waiting for deposit...");
         }
 
         let foundDeposits = 0;
@@ -130,6 +135,7 @@ describe("BTC/toEthereum", () => {
                     );
 
                     tx.out.eventEmitter.on("progress", console.log);
+                    console.log(await tx.out.export());
 
                     for (const setupKey of Object.keys(tx.outSetup)) {
                         const setup = tx.outSetup[setupKey];

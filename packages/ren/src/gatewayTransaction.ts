@@ -259,7 +259,7 @@ export class GatewayTransaction<
             },
             onSignatureReady,
         );
-        this._hash = this.renVM._hash;
+        this._hash = this.renVM.tx.hash;
 
         this.renVM.eventEmitter.on("progress", (status) => {
             // Check if status.response's txStatus is outdated.

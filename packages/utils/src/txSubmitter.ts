@@ -1,5 +1,5 @@
 import { isDefined, newPromiEvent, sleep } from "./internal/common";
-import { Chain, ChainTransaction } from "./types/chain";
+import { Chain, ChainTransaction, SyncOrPromise } from "./types/chain";
 import {
     eventEmitter,
     EventEmitterTyped,
@@ -52,12 +52,18 @@ export interface TxWaiter<
      * Submit the transaction to the chain.
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    submit?(params?: { overrides?: any[] }): PromiEvent<
+    submit?(
+        params?: { overrides?: any[] },
+        txConfig?: any,
+    ): PromiEvent<
         Progress,
         {
             progress: [Progress];
         }
     >;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    export?(params?: { overrides?: any[]; txConfig?: any }): SyncOrPromise<any>;
 
     /**
      * Wait for the required finality / number of confirmations.
@@ -79,6 +85,7 @@ export interface TxWaiter<
 export interface TxSubmitter<
     Progress extends ChainTransactionProgress = ChainTransactionProgress,
     TxConfig = {},
+    TxExport = {},
 > extends TxWaiter<Progress> {
     /**
      * Submit the transaction to the chain.
@@ -90,6 +97,16 @@ export interface TxSubmitter<
             progress: [Progress];
         }
     >;
+
+    /**
+     * Export the raw unsigned transaction that would be signed/submitted by
+     * `submit`.
+     */
+    export(params?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        overrides?: any[];
+        txConfig?: TxConfig;
+    }): SyncOrPromise<TxExport>;
 }
 
 /**
@@ -185,6 +202,7 @@ export class DefaultTxWaiter implements TxWaiter {
     public eventEmitter: EventEmitterTyped<{
         progress: [ChainTransactionProgress];
     }>;
+    private _onFirstProgress?: (tx: ChainTransaction) => SyncOrPromise<void>;
 
     private updateProgress(progress: Partial<ChainTransactionProgress>) {
         this.progress = {
@@ -202,13 +220,16 @@ export class DefaultTxWaiter implements TxWaiter {
         chainTransaction,
         chain,
         target,
+        onFirstProgress,
     }: {
         chainTransaction?: ChainTransaction;
         chain: Chain;
         target: number;
+        onFirstProgress?: (tx: ChainTransaction) => SyncOrPromise<void>;
     }) {
         this._chainTransaction = chainTransaction;
         this._chain = chain;
+        this._onFirstProgress = onFirstProgress;
 
         this.chain = chain.chain;
         this.eventEmitter = eventEmitter();
@@ -251,30 +272,39 @@ export class DefaultTxWaiter implements TxWaiter {
 
             let currentConfidenceRatio = -1;
             while (true) {
-                const confidence = (
-                    await this._chain.transactionConfidence(tx)
-                ).toNumber();
+                try {
+                    const confidence = (
+                        await this._chain.transactionConfidence(tx)
+                    ).toNumber();
 
-                const confidenceRatio = target === 0 ? 1 : confidence / target;
+                    const confidenceRatio =
+                        target === 0 ? 1 : confidence / target;
 
-                // The confidence has increased.
-                if (confidenceRatio > currentConfidenceRatio) {
-                    if (confidenceRatio >= 1) {
-                        // Done.
-                        this.updateProgress({
-                            ...this.progress,
-                            confirmations: confidence,
-                            status: ChainTransactionStatus.Done,
-                        });
-                        break;
-                    } else {
-                        // Update progress.
-                        currentConfidenceRatio = confidenceRatio;
-                        this.updateProgress({
-                            ...this.progress,
-                            confirmations: confidence,
-                        });
+                    // The confidence has increased.
+                    if (confidenceRatio > currentConfidenceRatio) {
+                        if (this._onFirstProgress) {
+                            await this._onFirstProgress(tx);
+                            this._onFirstProgress = undefined;
+                        }
+                        if (confidenceRatio >= 1) {
+                            // Done.
+                            this.updateProgress({
+                                ...this.progress,
+                                confirmations: confidence,
+                                status: ChainTransactionStatus.Done,
+                            });
+                            break;
+                        } else {
+                            // Update progress.
+                            currentConfidenceRatio = confidenceRatio;
+                            this.updateProgress({
+                                ...this.progress,
+                                confirmations: confidence,
+                            });
+                        }
                     }
+                } catch (error) {
+                    console.error(error);
                 }
                 await sleep(15 * sleep.SECONDS);
             }

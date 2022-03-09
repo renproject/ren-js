@@ -19,6 +19,7 @@ import { GatewayParams } from "./params";
 export { Gateway } from "./gateway";
 export { GatewayTransaction } from "./gatewayTransaction";
 export { GatewayFees } from "./fees";
+export { RenVMTxSubmitter } from "./renVMTxSubmitter";
 
 /**
  * This is the main exported class from `@renproject/ren`.

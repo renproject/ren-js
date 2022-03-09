@@ -622,6 +622,11 @@ export class Gateway<
                     await promise,
                 );
             } catch (error) {
+                console.error(
+                    `Error processing deposit ${
+                        deposit.txidFormatted
+                    }: ${utils.extractError(error)}`,
+                );
                 this.transactions = this.transactions.remove(depositIdentifier);
             }
         }

@@ -16,10 +16,11 @@ import {
 import { APIWithPriority, BitcoinAPI, CombinedAPI } from "./APIs/API";
 import { createAddressBuffer } from "./script/index";
 import {
+    BitcoinInputPayload,
     BitcoinNetworkConfig,
     BitcoinNetworkConfigMap,
     BitcoinNetworkInput,
-    BitcoinReleasePayload,
+    BitcoinOutputPayload,
     isBitcoinNetworkConfig,
 } from "./utils/types";
 import { addressToBytes, hash160, validateAddress } from "./utils/utils";
@@ -28,13 +29,7 @@ import { addressToBytes, hash160, validateAddress } from "./utils/utils";
  * A base Bitcoin chain class that is extended by each Bitcoin chain/fork.
  */
 export abstract class BitcoinBaseChain
-    implements
-        DepositChain<
-            {
-                chain: string;
-            },
-            BitcoinReleasePayload
-        >
+    implements DepositChain<BitcoinInputPayload, BitcoinOutputPayload>
 {
     public static chain: string;
     public chain: string;
@@ -77,16 +72,22 @@ export abstract class BitcoinBaseChain
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
-        toPayload: BitcoinReleasePayload,
+        toPayload: BitcoinOutputPayload,
     ): {
         to: string;
         toBytes: Buffer;
         payload: Buffer;
     } {
         this._assertAssetIsSupported(asset);
+        const address = toPayload.params
+            ? toPayload.params.address
+            : toPayload.address;
+        if (!address) {
+            throw new Error(`No ${this.chain} address specified.`);
+        }
         return {
-            to: toPayload.address,
-            toBytes: this.decodeAddress(toPayload.address),
+            to: address,
+            toBytes: this.decodeAddress(address),
             payload: Buffer.from([]),
         };
     }
@@ -172,7 +173,7 @@ export abstract class BitcoinBaseChain
 
     public async watchForDeposits(
         asset: string,
-        fromPayload: { chain: string },
+        fromPayload: BitcoinInputPayload,
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
@@ -183,6 +184,40 @@ export abstract class BitcoinBaseChain
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
             );
+        }
+
+        // If the payload is a transaction, submit it to onInput and then loop
+        // indefintely.
+        if (fromPayload.type === "transaction") {
+            const inputTx = fromPayload.params.tx;
+            if ((inputTx as InputChainTransaction).amount === undefined) {
+                while (true) {
+                    try {
+                        const tx = await this.api.fetchUTXO(
+                            inputTx.txidFormatted,
+                            inputTx.txindex,
+                        );
+                        onInput({
+                            chain: this.chain,
+                            txid: utils.toURLBase64(
+                                utils.fromHex(tx.txid).reverse(),
+                            ),
+                            txidFormatted: tx.txid,
+                            txindex: tx.txindex,
+
+                            asset,
+                            amount: tx.amount,
+                        });
+                        break;
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+
+                while (true) {
+                    await utils.sleep(15 * utils.sleep.SECONDS);
+                }
+            }
         }
 
         try {
@@ -255,7 +290,7 @@ export abstract class BitcoinBaseChain
      */
     public createGatewayAddress(
         asset: string,
-        fromPayload: { chain: string },
+        fromPayload: BitcoinInputPayload,
         shardPublicKey: Buffer,
         gHash: Buffer,
     ): Promise<string> | string {
@@ -282,7 +317,7 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    public Address(address: string): { chain: string; address: string } {
+    public Address(address: string): BitcoinOutputPayload {
         // Type validation
         assertType<string>("string", { address });
 
@@ -295,7 +330,10 @@ export abstract class BitcoinBaseChain
 
         return {
             chain: this.chain,
-            address,
+            type: "address",
+            params: {
+                address,
+            },
         };
     }
 
@@ -305,9 +343,20 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    public GatewayAddress(): { chain: string } {
+    public GatewayAddress(): BitcoinInputPayload {
         return {
             chain: this.chain,
+            type: "gatewayAddress",
+        };
+    }
+
+    public Transaction(tx: ChainTransaction): BitcoinInputPayload {
+        return {
+            chain: this.chain,
+            type: "transaction",
+            params: {
+                tx,
+            },
         };
     }
 

@@ -1,7 +1,5 @@
-import BigNumber from "bignumber.js";
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
-import { InputChainTransaction } from "packages/utils/build/main";
 
 import { Connection } from "@solana/web3.js";
 
@@ -9,14 +7,15 @@ import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import { makeTestSigner } from "../packages/chains/chains-solana/build/main/utils";
 import { Solana } from "../packages/chains/chains-solana/src";
 import { renTestnet } from "../packages/chains/chains-solana/src/networks";
-import RenJS, { RenVMTxSubmitter } from "../packages/ren/src";
+import RenJS from "../packages/ren/src";
 import { RenNetwork, utils } from "../packages/utils/src";
 import { printChain, sendFunds } from "./testUtils";
-import { RenVMProvider } from "@renproject/provider";
+import { txHashToChainTransaction } from "@renproject/chains-ethereum/src/utils/generic";
 
 chai.should();
 
 loadDotEnv();
+txHashToChainTransaction;
 
 describe("BTC/toSolana", () => {
     it("BTC/toSolana", async function () {
@@ -39,7 +38,7 @@ describe("BTC/toSolana", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 6,
+            nonce: 7,
         });
 
         const decimals = from.assetDecimals(asset);
@@ -67,7 +66,7 @@ describe("BTC/toSolana", () => {
             await setup.wait();
         }
 
-        const SEND_FUNDS = false;
+        const SEND_FUNDS = true;
         if (SEND_FUNDS) {
             await sendFunds(
                 asset,
@@ -102,7 +101,16 @@ describe("BTC/toSolana", () => {
                         ),
                     );
 
-                    await tx.in.wait();
+                    while (true) {
+                        try {
+                            await tx.in.wait();
+                            break;
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        } catch (error: any) {
+                            console.error(error);
+                            await utils.sleep(10 * utils.sleep.SECONDS);
+                        }
+                    }
 
                     tx.renVM.eventEmitter.on("progress", (progress) =>
                         console.log(
@@ -114,10 +122,6 @@ describe("BTC/toSolana", () => {
                                 progress.response?.txStatus
                             }`,
                         ),
-                    );
-
-                    console.log(
-                        JSON.stringify(await tx.renVM.export(), null, "    "),
                     );
 
                     while (true) {
@@ -143,18 +147,6 @@ describe("BTC/toSolana", () => {
                     );
 
                     tx.out.eventEmitter.on("progress", console.log);
-
-                    // const renVMExport = tx.renVM.export();
-                    // const provider = new RenVMProvider("testnet");
-                    // const renVM = new RenVMTxSubmitter(provider, renVMExport);
-                    // console.log("Submitting!");
-                    // await renVM.submit();
-                    // await renVM.wait();
-
-                    console.log(
-                        await tx.out.export(),
-                        JSON.stringify(await tx.out.export(), null, "    "),
-                    );
 
                     for (const setupKey of Object.keys(tx.outSetup)) {
                         const setup = tx.outSetup[setupKey];

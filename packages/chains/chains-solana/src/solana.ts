@@ -567,49 +567,6 @@ export class Solana
         );
     }
 
-    public Account({
-        amount,
-        address,
-    }: {
-        amount?: string | BigNumber;
-        address?: string;
-    } = {}): SolanaToPayload | SolanaFromPayload {
-        if (amount) {
-            const payload: SolanaFromPayload = {
-                chain: this.chain,
-                type: "burnToAddress",
-                params: {
-                    amount,
-                },
-            };
-            return payload;
-        }
-
-        if (address) {
-            const payload: SolanaToPayload = {
-                chain: this.chain,
-                type: "mintToAddress",
-                params: {
-                    to: address,
-                },
-            };
-            return payload;
-        }
-
-        if (this.signer && this.signer.publicKey) {
-            const payload: SolanaToPayload = {
-                chain: this.chain,
-                type: "mintToAddress",
-                params: {
-                    to: this.signer.publicKey.toString(),
-                },
-            };
-            return payload;
-        }
-
-        throw new Error(`Must provide amount or address.`);
-    }
-
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
@@ -981,5 +938,58 @@ export class Solana
             getTransaction,
             findExistingTransaction,
         });
+    }
+
+    public Account({
+        amount,
+        address,
+    }: {
+        amount?: string | BigNumber;
+        address?: string;
+    } = {}): SolanaToPayload | SolanaFromPayload {
+        if (amount) {
+            const payload: SolanaFromPayload = {
+                chain: this.chain,
+                type: "burnToAddress",
+                params: {
+                    amount,
+                },
+            };
+            return payload;
+        }
+
+        if (address) {
+            const payload: SolanaToPayload = {
+                chain: this.chain,
+                type: "mintToAddress",
+                params: {
+                    to: address,
+                },
+            };
+            return payload;
+        }
+
+        if (this.signer && this.signer.publicKey) {
+            const payload: SolanaToPayload = {
+                chain: this.chain,
+                type: "mintToAddress",
+                params: {
+                    to: this.signer.publicKey.toString(),
+                },
+            };
+            return payload;
+        }
+
+        throw new Error(`Must provide amount or address.`);
+    }
+
+    public Transaction(tx: ChainTransaction): SolanaFromPayload {
+        return {
+            chain: this.chain,
+            type: "transaction",
+            params: {
+                tx,
+            },
+        };
     }
 }

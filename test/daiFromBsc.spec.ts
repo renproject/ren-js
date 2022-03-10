@@ -72,11 +72,7 @@ describe("DAI/fromBinanceSmartChain", () => {
         );
 
         gateway.in.eventEmitter.on("progress", console.log);
-        await gateway.in.submit({
-            txConfig: {
-                gasLimit: 1000000,
-            },
-        });
+        await gateway.in.submit();
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
 

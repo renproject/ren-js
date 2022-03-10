@@ -68,6 +68,10 @@ export const tryNTimes = async <T>(
     throw returnError;
 };
 
+export const tryIndefinitely = async <T>(
+    fnCall: (attempt: number, retries: number) => Promise<T>,
+) => tryNTimes(fnCall, -1, 15 * sleep.SECONDS, console);
+
 /**
  * isDefined returns true if the parameter is defined and not null.
  */

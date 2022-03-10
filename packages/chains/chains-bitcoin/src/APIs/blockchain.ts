@@ -1,8 +1,8 @@
 import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { URLSearchParams } from "url";
+import qs from "qs";
 
-import { BitcoinAPI, DEFAULT_TIMEOUT, sortUTXOs, UTXO } from "./API";
+import { BitcoinAPI, sortUTXOs, UTXO } from "./API";
 
 export enum BlockchainNetwork {
     Bitcoin = "btc",
@@ -149,12 +149,15 @@ export class Blockchain implements BitcoinAPI {
         }
         const url = `https://blockchain.info/pushtx`;
 
-        const params = new URLSearchParams();
-        params.append("tx", txHex);
-
         const response = await utils.POST<string | { error: string }>(
             url,
-            params,
+            qs.stringify({ tx: txHex }),
+            // URL-encoded params
+            {
+                headers: {
+                    "content-type": "application/x-www-form-urlencoded",
+                },
+            },
         );
         if (typeof response === "object" && response.error) {
             throw new Error(response.error);

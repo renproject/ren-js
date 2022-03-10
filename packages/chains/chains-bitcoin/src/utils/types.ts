@@ -1,10 +1,34 @@
-import { RenNetwork, RenNetworkString } from "@renproject/utils";
+import {
+    ChainTransaction,
+    RenNetwork,
+    RenNetworkString,
+} from "@renproject/utils";
 
 import { APIWithPriority, BitcoinAPI } from "../APIs/API";
 
-export interface BitcoinReleasePayload {
+export type BitcoinInputPayload =
+    | {
+          chain: string;
+          type?: "gatewayAddress";
+      }
+    | {
+          chain: string;
+          type: "transaction";
+          params: {
+              tx: ChainTransaction;
+          };
+      };
+
+export interface BitcoinOutputPayload {
     chain: string;
-    address: string;
+    type?: "address";
+    /**
+     * @deprecated Use params.address instead.
+     */
+    address?: string;
+    params?: {
+        address: string;
+    };
 }
 
 export interface BitcoinNetworkConfig {

@@ -29,21 +29,15 @@ describe("BTC/toEthereum", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 4,
+            nonce: 5,
         });
 
         const minimumAmount = gateway.fees.minimumAmount.shiftedBy(
-            -from.assetDecimals(asset),
+            -(await from.assetDecimals(asset)),
         );
         const receivedAmount = gateway.fees
             .estimateOutput(gateway.fees.minimumAmount)
-            .shiftedBy(-from.assetDecimals(asset));
-
-        console.log(
-            `Deposit at least ${minimumAmount.toFixed()} ${asset} to ${
-                gateway.gatewayAddress
-            } (to receive at least ${receivedAmount.toFixed()})`,
-        );
+            .shiftedBy(-(await from.assetDecimals(asset)));
 
         for (const setupKey of Object.keys(gateway.inSetup)) {
             const setup = gateway.inSetup[setupKey];
@@ -53,25 +47,45 @@ describe("BTC/toEthereum", () => {
                 )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
             );
             setup.eventEmitter.on("progress", console.log);
-            await setup.submit();
-            await setup.wait();
+            await utils.tryNTimes(async () => await setup.submit(), 2);
+            await utils.tryNTimes(async () => await setup.wait(), 2);
         }
 
-        const SEND_FUNDS = false;
-        if (SEND_FUNDS) {
-            try {
-                await sendFunds(
-                    asset,
-                    gateway.gatewayAddress,
-                    minimumAmount.times(5),
-                );
-            } catch (error) {
-                // console.log(error.request);
-                // console.log(error.response);
-                throw error;
-            }
+        if (gateway.in) {
+            console.log(
+                `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                    gateway.params.to.chain,
+                )}]: Submitting to ${printChain(gateway.params.from.chain, {
+                    pad: false,
+                })}`,
+            );
+
+            gateway.in.eventEmitter.on("progress", console.log);
+            await utils.tryIndefinitely(async () => await gateway.in.submit());
+            // Wait for just 1 transaction for now - tx.in.wait() is called below.
+            await utils.tryIndefinitely(async () => await gateway.in.wait(1));
         } else {
-            console.log("Waiting for deposit...");
+            console.log(
+                `Deposit at least ${minimumAmount.toFixed()} ${asset} to ${
+                    gateway.gatewayAddress
+                } (to receive at least ${receivedAmount.toFixed()})`,
+            );
+            const SEND_FUNDS = true;
+            if (SEND_FUNDS) {
+                try {
+                    await sendFunds(
+                        asset,
+                        gateway.gatewayAddress,
+                        minimumAmount.times(5),
+                    );
+                } catch (error) {
+                    // console.log(error.request);
+                    // console.log(error.response);
+                    throw error;
+                }
+            } else {
+                console.log("Waiting for deposit...");
+            }
         }
 
         let foundDeposits = 0;
@@ -135,7 +149,6 @@ describe("BTC/toEthereum", () => {
                     );
 
                     tx.out.eventEmitter.on("progress", console.log);
-                    console.log(await tx.out.export());
 
                     for (const setupKey of Object.keys(tx.outSetup)) {
                         const setup = tx.outSetup[setupKey];

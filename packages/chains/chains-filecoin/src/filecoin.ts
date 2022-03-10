@@ -98,13 +98,34 @@ const FilecoinTestnet: FilecoinNetworkConfig = {
         apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
     },
 };
-export interface FilecoinReleasePayload {
+
+export type FilecoinInputPayload =
+    | {
+          chain: string;
+          type?: "gatewayAddress";
+      }
+    | {
+          chain: string;
+          type: "transaction";
+          params: {
+              tx: ChainTransaction;
+          };
+      };
+
+export interface FilecoinOutputPayload {
     chain: string;
-    address: string;
+    type?: "address";
+    /**
+     * @deprecated Use params.address instead.
+     */
+    address?: string;
+    params?: {
+        address: string;
+    };
 }
 
 export class Filecoin
-    implements DepositChain<{ chain: string }, FilecoinReleasePayload>
+    implements DepositChain<FilecoinInputPayload, FilecoinOutputPayload>
 {
     public static chain = "Filecoin";
     public chain: string;
@@ -201,7 +222,7 @@ export class Filecoin
 
     public async watchForDeposits(
         asset: string,
-        fromPayload: { chain: string },
+        fromPayload: FilecoinInputPayload,
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
@@ -212,6 +233,49 @@ export class Filecoin
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
             );
+        }
+
+        // If the payload is a transaction, submit it to onInput and then loop
+        // indefintely.
+        if (fromPayload.type === "transaction") {
+            const inputTx = fromPayload.params.tx;
+            if ((inputTx as InputChainTransaction).amount === undefined) {
+                while (true) {
+                    let tx: FilTransaction;
+
+                    try {
+                        if (this.filfox) {
+                            tx = await this.filfox.fetchMessage(
+                                inputTx.txidFormatted,
+                            );
+                        } else {
+                            tx = await await fetchMessage(
+                                this.client,
+                                inputTx.txidFormatted,
+                                this.network.addressPrefix,
+                            );
+                        }
+                        onInput({
+                            chain: this.chain,
+                            txid: utils.toURLBase64(
+                                Buffer.from(new CID(tx.cid).bytes),
+                            ),
+                            txidFormatted: tx.cid,
+                            txindex: "0",
+
+                            asset,
+                            amount: tx.amount,
+                        });
+                        break;
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+
+                while (true) {
+                    await utils.sleep(15 * utils.sleep.SECONDS);
+                }
+            }
         }
 
         // If there's too many logs to catch-up on, fetch the transactions from
@@ -370,7 +434,7 @@ export class Filecoin
      */
     public createGatewayAddress(
         asset: string,
-        fromPayload: { chain: string },
+        fromPayload: FilecoinInputPayload,
         shardPublicKey: Buffer,
         gHash: Buffer,
     ): string {
@@ -448,16 +512,22 @@ export class Filecoin
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
-        toPayload: FilecoinReleasePayload,
+        toPayload: FilecoinOutputPayload,
     ): {
         to: string;
         toBytes: Buffer;
         payload: Buffer;
     } {
         this._assertAssetIsSupported(asset);
+        const address = toPayload.params
+            ? toPayload.params.address
+            : toPayload.address;
+        if (!address) {
+            throw new Error(`No ${this.chain} address specified.`);
+        }
         return {
-            to: toPayload.address,
-            toBytes: Buffer.from(new CID(toPayload.address).bytes),
+            to: address,
+            toBytes: Buffer.from(new CID(address).bytes),
             payload: Buffer.from([]),
         };
     }
@@ -493,9 +563,19 @@ export class Filecoin
      *
      * @category Main
      */
-    public GatewayAddress(): { chain: string } {
+    public GatewayAddress(): FilecoinInputPayload {
         return {
             chain: this.chain,
+        };
+    }
+
+    public Transaction(tx: ChainTransaction): FilecoinInputPayload {
+        return {
+            chain: this.chain,
+            type: "transaction",
+            params: {
+                tx,
+            },
         };
     }
 }

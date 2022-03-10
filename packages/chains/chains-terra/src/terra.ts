@@ -56,9 +56,29 @@ export const TerraConfigMap = {
     [RenNetwork.Devnet]: TerraTestnet,
 };
 
-export interface TerraReleasePayload {
+export type TerraInputPayload =
+    | {
+          chain: string;
+          type?: "gatewayAddress";
+      }
+    | {
+          chain: string;
+          type: "transaction";
+          params: {
+              tx: ChainTransaction;
+          };
+      };
+
+export interface TerraOutputPayload {
     chain: string;
-    address: string;
+    type?: "address";
+    /**
+     * @deprecated Use params.address instead.
+     */
+    address?: string;
+    params?: {
+        address: string;
+    };
 }
 
 /**
@@ -66,7 +86,7 @@ export interface TerraReleasePayload {
  * and it's asset LUNA.
  */
 export class Terra
-    implements DepositChain<{ chain: string }, TerraReleasePayload>
+    implements DepositChain<TerraInputPayload, TerraOutputPayload>
 {
     public static chain = "Terra";
     public chain = Terra.chain;
@@ -187,7 +207,7 @@ export class Terra
      */
     public async watchForDeposits(
         asset: string,
-        fromPayload: { chain: string },
+        fromPayload: TerraInputPayload,
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
@@ -239,7 +259,7 @@ export class Terra
      */
     public createGatewayAddress(
         asset: string,
-        fromPayload: { chain: string },
+        fromPayload: TerraInputPayload,
         shardPublicKey: Buffer,
         gHash: Buffer,
     ): string {
@@ -283,17 +303,23 @@ export class Terra
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
-        toPayload: TerraReleasePayload,
+        toPayload: TerraOutputPayload,
     ): {
         to: string;
         toBytes: Buffer;
         payload: Buffer;
     } {
         this._assertAssetIsSupported(asset);
+        const address = toPayload.params
+            ? toPayload.params.address
+            : toPayload.address;
+        if (!address) {
+            throw new Error(`No ${this.chain} address specified.`);
+        }
         return {
-            to: toPayload.address,
+            to: address,
             toBytes: Buffer.from(
-                bech32.fromWords(bech32.decode(toPayload.address).words),
+                bech32.fromWords(bech32.decode(address).words),
             ),
             payload: Buffer.from([]),
         };
@@ -330,7 +356,7 @@ export class Terra
      *
      * @category Main
      */
-    public GatewayAddress(): { chain: string } {
+    public GatewayAddress(): TerraInputPayload {
         return {
             chain: this.chain,
         };

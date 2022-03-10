@@ -166,14 +166,14 @@ export class EVMTxSubmitter
             txConfig?: PayableOverrides;
         } = {},
     ): Promise<PopulatedTransaction> {
-        return await this.getPayloadHandler(this.payload.type).export(
-            this.network,
-            this.signer,
-            this.payload,
-            this.getParams(),
-            options,
-            this.getPayloadHandler,
-        );
+        return await this.getPayloadHandler(this.payload.type).export({
+            network: this.network,
+            signer: this.signer,
+            payload: this.payload,
+            evmParams: this.getParams(),
+            overrides: options,
+            getPayloadHandler: this.getPayloadHandler,
+        });
     }
 
     public submit(
@@ -220,14 +220,14 @@ export class EVMTxSubmitter
                 }
                 const tx = await this.getPayloadHandler(
                     this.payload.type,
-                ).export(
-                    this.network,
-                    this.signer,
-                    this.payload,
-                    this.getParams(),
-                    options,
-                    this.getPayloadHandler,
-                );
+                ).export({
+                    network: this.network,
+                    signer: this.signer,
+                    payload: this.payload,
+                    evmParams: this.getParams(),
+                    overrides: options,
+                    getPayloadHandler: this.getPayloadHandler,
+                });
                 const populatedTx = await this.signer.populateTransaction(tx);
                 const signedTx = await this.signer.signTransaction(populatedTx);
                 this.tx = await this.signer.provider.sendTransaction(signedTx);

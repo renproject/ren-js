@@ -6,7 +6,6 @@ import {
     Signer,
 } from "ethers";
 
-import { TransactionResponse } from "@ethersproject/providers";
 import {
     ChainTransaction,
     ErrorWithCode,
@@ -111,45 +110,45 @@ interface EVMPayloadInterface<Name extends string = string, T = any> {
 }
 
 export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
-    required?: (
-        network: EvmNetworkConfig,
-        signer: Signer,
-        payload: P,
-        evmParams: EVMParamValues,
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ) => SyncOrPromise<boolean>;
-    getSetup?: (
-        network: EvmNetworkConfig,
-        signer: Signer,
-        payload: P,
-        evmParams: EVMParamValues,
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ) => SyncOrPromise<{
+    required?: (params: {
+        network: EvmNetworkConfig;
+        signer?: Signer;
+        payload: P;
+        evmParams: EVMParamValues;
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }) => SyncOrPromise<boolean>;
+    getSetup?: (params: {
+        network: EvmNetworkConfig;
+        signer?: Signer;
+        payload: P;
+        evmParams: EVMParamValues;
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }) => SyncOrPromise<{
         [name: string]: EVMPayload;
     }>;
-    getPayload?: (
-        network: EvmNetworkConfig,
-        signer: Signer | undefined,
-        payload: P,
-        evmParams: EVMParamValues,
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ) => SyncOrPromise<{
+    getPayload?: (params: {
+        network: EvmNetworkConfig;
+        signer: Signer | undefined;
+        payload: P;
+        evmParams: EVMParamValues;
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }) => SyncOrPromise<{
         to: string;
         toBytes: Buffer;
         payload: Buffer;
     }>;
-    export: (
-        network: EvmNetworkConfig,
-        signer: Signer,
-        payload: P,
-        evmParams: EVMParamValues,
+    export: (params: {
+        network: EvmNetworkConfig;
+        signer?: Signer;
+        payload: P;
+        evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
-        },
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ) => SyncOrPromise<PopulatedTransaction>;
+        };
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }) => SyncOrPromise<PopulatedTransaction>;
 }
 
 const replaceRenParam = async (
@@ -195,20 +194,18 @@ export type EVMContractPayload = EVMPayloadInterface<
 >;
 
 export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
-    getSetup: (
-        _network: EvmNetworkConfig,
-        _signer: Signer,
-        payload: EVMContractPayload,
-        _evmParams: EVMParamValues,
-        _getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ) => payload.setup || {},
+    getSetup: ({ payload }: { payload: EVMContractPayload }) =>
+        payload.setup || {},
 
-    getPayload: async (
-        network: EvmNetworkConfig,
-        _signer: Signer | undefined,
-        payload: EVMContractPayload,
-        evmParams: EVMParamValues,
-    ): Promise<{
+    getPayload: async ({
+        network,
+        payload,
+        evmParams,
+    }: {
+        network: EvmNetworkConfig;
+        payload: EVMContractPayload;
+        evmParams: EVMParamValues;
+    }): Promise<{
         to: string;
         toBytes: Buffer;
         payload: Buffer;
@@ -263,17 +260,23 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         };
     },
 
-    export: async (
-        network: EvmNetworkConfig,
-        signer: Signer,
-        payload: EVMContractPayload,
-        evmParams: EVMParamValues,
+    export: async ({
+        network,
+        signer,
+        payload,
+        evmParams,
+        overrides,
+    }: {
+        network: EvmNetworkConfig;
+        signer?: Signer;
+        payload: EVMContractPayload;
+        evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
-        },
-    ): Promise<PopulatedTransaction> => {
+        };
+    }): Promise<PopulatedTransaction> => {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -661,13 +664,19 @@ export type EVMAddressPayload = EVMPayloadInterface<
 >;
 
 export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
-    getSetup: async (
-        network: EvmNetworkConfig,
-        signer: Signer,
-        payload: EVMAddressPayload,
-        evmParams: EVMParamValues,
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ) => {
+    getSetup: async ({
+        network,
+        signer,
+        payload,
+        evmParams,
+        getPayloadHandler,
+    }: {
+        network: EvmNetworkConfig;
+        signer?: Signer;
+        payload: EVMAddressPayload;
+        evmParams: EVMParamValues;
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }) => {
         if (!contractPayloadHandler.getSetup) {
             throw new Error(`Missing contract payload handler.`);
         }
@@ -679,22 +688,28 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         if (!contractPayload) {
             return {};
         }
-        return await contractPayloadHandler.getSetup(
+        return await contractPayloadHandler.getSetup({
             network,
             signer,
-            contractPayload,
+            payload: contractPayload,
             evmParams,
             getPayloadHandler,
-        );
+        });
     },
 
-    getPayload: async (
-        network: EvmNetworkConfig,
-        signer: Signer | undefined,
-        payload: EVMAddressPayload,
-        evmParams: EVMParamValues,
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ): Promise<{
+    getPayload: async ({
+        network,
+        signer,
+        payload,
+        evmParams,
+        getPayloadHandler,
+    }: {
+        network: EvmNetworkConfig;
+        signer: Signer | undefined;
+        payload: EVMAddressPayload;
+        evmParams: EVMParamValues;
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }): Promise<{
         to: string;
         toBytes: Buffer;
         payload: Buffer;
@@ -715,13 +730,13 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
                 payload: Buffer.from([]),
             };
         }
-        let p = await contractPayloadHandler.getPayload(
+        let p = await contractPayloadHandler.getPayload({
             network,
             signer,
-            contractPayload,
+            payload: contractPayload,
             evmParams,
             getPayloadHandler,
-        );
+        });
         if (
             p.to.toLowerCase() ===
             (await evmParams[EVMParam.EVM_GATEWAY]()).toLowerCase()
@@ -736,18 +751,25 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         return p;
     },
 
-    export: async (
-        network: EvmNetworkConfig,
-        signer: Signer,
-        payload: EVMAddressPayload,
-        evmParams: EVMParamValues,
+    export: async ({
+        network,
+        signer,
+        payload,
+        evmParams,
+        overrides,
+        getPayloadHandler,
+    }: {
+        network: EvmNetworkConfig;
+        signer?: Signer;
+        payload: EVMAddressPayload;
+        evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
-        },
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ): Promise<PopulatedTransaction> => {
+        };
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }): Promise<PopulatedTransaction> => {
         const contractPayload = await getContractFromAccount(
             network,
             payload,
@@ -758,14 +780,14 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
                 `Unable to submit empty payload for release to ${payload.params.address}.`,
             );
         }
-        return contractPayloadHandler.export(
+        return contractPayloadHandler.export({
             network,
             signer,
-            contractPayload,
+            payload: contractPayload,
             evmParams,
             overrides,
             getPayloadHandler,
-        );
+        });
     },
 };
 
@@ -833,22 +855,23 @@ const getContractFromApproval = async (
 };
 
 export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
-    getSetup: (
-        _network: EvmNetworkConfig,
-        _signer: Signer,
-        payload: EVMApprovalPayload,
-        _evmParams: EVMParamValues,
-        _getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ) => payload.setup || {},
+    getSetup: ({ payload }: { payload: EVMApprovalPayload }) =>
+        payload.setup || {},
 
-    required: async (
-        _network: EvmNetworkConfig,
-        signer: Signer,
-        payload: EVMApprovalPayload,
-        evmParams: EVMParamValues,
-    ): Promise<boolean> => {
+    required: async ({
+        signer,
+        payload,
+        evmParams,
+    }: {
+        signer?: Signer;
+        payload: EVMApprovalPayload;
+        evmParams: EVMParamValues;
+    }): Promise<boolean> => {
         payload = await resolveEvmApprovalParams(payload, evmParams);
         const token = payload.params.token;
+        if (!signer) {
+            return true;
+        }
         const erc20Instance = getERC20Instance(signer, token);
         const account = await signer.getAddress();
         const allowance = new BigNumber(
@@ -859,28 +882,35 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         return allowance.lt(new BigNumber(payload.params.amount));
     },
 
-    export: async (
-        network: EvmNetworkConfig,
-        signer: Signer,
-        payload: EVMApprovalPayload,
-        evmParams: EVMParamValues,
+    export: async ({
+        network,
+        signer,
+        payload,
+        evmParams,
+        overrides,
+        getPayloadHandler,
+    }: {
+        network: EvmNetworkConfig;
+        signer?: Signer;
+        payload: EVMApprovalPayload;
+        evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             params?: { [key: string]: any };
             txConfig?: PayableOverrides;
-        },
-        getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ): Promise<PopulatedTransaction> => {
+        };
+        getPayloadHandler: (payloadType: string) => PayloadHandler;
+    }): Promise<PopulatedTransaction> => {
         payload = await resolveEvmApprovalParams(payload, evmParams);
 
-        return contractPayloadHandler.export(
+        return contractPayloadHandler.export({
             network,
             signer,
-            await getContractFromApproval(network, payload, evmParams),
+            payload: await getContractFromApproval(network, payload, evmParams),
             evmParams,
             overrides,
             getPayloadHandler,
-        );
+        });
     },
 };
 
@@ -892,18 +922,7 @@ export type EVMTxPayload = EVMPayloadInterface<
 >;
 
 export const txPayloadHandler: PayloadHandler<EVMTxPayload> = {
-    export: async (
-        _network: EvmNetworkConfig,
-        _signer: Signer,
-        _payload: EVMTxPayload,
-        _evmParams: EVMParamValues,
-        _overrides: {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            params?: { [key: string]: any };
-            txConfig?: PayableOverrides;
-        },
-        _getPayloadHandler: (payloadType: string) => PayloadHandler,
-    ): Promise<PopulatedTransaction> => {
+    export: async (): Promise<PopulatedTransaction> => {
         throw new Error(`Unable to export transaction payload.`);
     },
 };

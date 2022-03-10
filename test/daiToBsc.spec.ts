@@ -16,7 +16,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.only("DAI/toBinanceSmartChain", () => {
+describe("DAI/toBinanceSmartChain", () => {
     it("DAI/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
@@ -40,7 +40,14 @@ describe.only("DAI/toBinanceSmartChain", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 1, convertToWei: true }),
+            // from: ethereum.Account({ amount: 1, convertToWei: true }),
+            from: ethereum.Transaction({
+                chain: "Ethereum",
+                txidFormatted:
+                    "0x27a7df5508abf38946ee418c120c7ad9ae1c682ea5b7d9c6a5fa92b730cf3946",
+                txid: "J6ffVQir84lG7kGMEgx62a4caC6lt9nGpfqStzDPOUY",
+                txindex: "0",
+            }),
             to: bsc.Account(),
         });
 

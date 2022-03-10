@@ -246,13 +246,20 @@ export class EthereumBaseChain
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        return await handler.getPayload(
-            this.network,
-            this.signer,
-            contractCall,
-            this.getEVMParams(asset, inputType, outputType, outputType, {}),
-            this.getPayloadHandler,
-        );
+
+        return await handler.getPayload({
+            network: this.network,
+            signer: this.signer,
+            payload: contractCall,
+            evmParams: this.getEVMParams(
+                asset,
+                inputType,
+                outputType,
+                outputType,
+                {},
+            ),
+            getPayloadHandler: this.getPayloadHandler,
+        });
     }
 
     // Supported assets
@@ -551,19 +558,19 @@ export class EthereumBaseChain
         //         : call.contractParams,
         // }));
 
-        if (!this.signer) {
-            throw ErrorWithCode.from(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-
         if (contractCall.type === "transaction") {
             return new DefaultTxWaiter({
                 chain: this,
                 target: confirmationTarget,
                 chainTransaction: contractCall.params.tx,
             });
+        }
+
+        if (!this.signer) {
+            throw ErrorWithCode.from(
+                new Error(`Must connect signer.`),
+                RenJSError.PARAMETER_ERROR,
+            );
         }
 
         return new EVMTxSubmitter({
@@ -637,13 +644,6 @@ export class EthereumBaseChain
         // );
 
         // return extractBurnDetails(receipt);
-
-        if (!this.signer) {
-            throw ErrorWithCode.from(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
 
         const onReceipt = (receipt: ethers.providers.TransactionReceipt) => {
             if (inputType === InputType.Burn) {
@@ -723,6 +723,13 @@ export class EthereumBaseChain
             });
         }
 
+        if (!this.signer) {
+            throw ErrorWithCode.from(
+                new Error(`Must connect signer.`),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
+
         return new EVMTxSubmitter({
             signer: this.signer,
             network: this.network,
@@ -767,19 +774,19 @@ export class EthereumBaseChain
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        const calls = await handler.getSetup(
-            this.network,
-            this.signer,
-            contractCall,
-            this.getEVMParams(
+        const calls = await handler.getSetup({
+            network: this.network,
+            signer: this.signer,
+            payload: contractCall,
+            evmParams: this.getEVMParams(
                 asset,
                 inputType,
                 outputType,
                 inputType,
                 getParams(),
             ),
-            this.getPayloadHandler,
-        );
+            getPayloadHandler: this.getPayloadHandler,
+        });
 
         const txSubmitted: { [key: string]: EVMTxSubmitter | TxWaiter } = {};
         for (const callKey of Object.keys(calls)) {
@@ -835,19 +842,19 @@ export class EthereumBaseChain
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        const calls = await handler.getSetup(
-            this.network,
-            this.signer,
-            contractCall,
-            this.getEVMParams(
+        const calls = await handler.getSetup({
+            network: this.network,
+            signer: this.signer,
+            payload: contractCall,
+            evmParams: this.getEVMParams(
                 asset,
                 inputType,
                 outputType,
                 outputType,
                 getParams(),
             ),
-            this.getPayloadHandler,
-        );
+            getPayloadHandler: this.getPayloadHandler,
+        });
 
         const txSubmitted: { [key: string]: EVMTxSubmitter | TxWaiter } = {};
         for (const callKey of Object.keys(calls)) {

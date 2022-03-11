@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { blake2b } from "blakejs";
-import CID from "cids";
+import { CID } from "multiformats";
 import elliptic from "elliptic";
 import { InputType } from "zlib";
 
@@ -185,7 +185,7 @@ export class Filecoin
 
     public validateTransaction = utils.doesntError(
         (tx: ChainTransaction) =>
-            new CID(utils.fromBase64(tx.txid)).bytes.length === 38 &&
+            CID.decode(utils.fromBase64(tx.txid)).bytes.length === 38 &&
             tx.txindex === "0",
     );
 
@@ -523,7 +523,7 @@ export class Filecoin
         }
         return {
             to: address,
-            toBytes: Buffer.from(new CID(address).bytes),
+            toBytes: Buffer.from(CID.parse(address).bytes),
             payload: Buffer.from([]),
         };
     }

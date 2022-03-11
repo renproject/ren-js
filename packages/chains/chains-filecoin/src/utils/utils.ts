@@ -1,5 +1,5 @@
 import { utils } from "@renproject/utils";
-import CID from "cids";
+import { CID } from "multiformats";
 
 /**
  * Convert a Filecoin transaction hash from its standard format to the format
@@ -8,7 +8,7 @@ import CID from "cids";
  * @returns The same Filecoin transaction hash formatted as a base64 string.
  */
 export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(Buffer.from(new CID(txidFormatted).bytes));
+    return utils.toURLBase64(Buffer.from(CID.parse(txidFormatted).bytes));
 }
 
 /**
@@ -18,5 +18,5 @@ export function txidFormattedToTxid(txidFormatted: string): string {
  * @returns The same Filecoin transaction hash formatted as a CID string.
  */
 export function txidToTxidFormatted(txid: string): string {
-    return new CID(utils.fromBase64(txid)).toString();
+    return CID.decode(utils.fromBase64(txid)).toString();
 }

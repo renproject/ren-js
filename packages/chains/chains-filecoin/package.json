@@ -50,7 +50,7 @@
         "@types/node": ">=10",
         "bignumber.js": "^9.0.2",
         "blakejs": "^1.1.1",
-        "cids": "^1.1.9",
+        "multiformats": "^9.6.4",
         "elliptic": "^6.5.4"
     },
     "resolutions": {

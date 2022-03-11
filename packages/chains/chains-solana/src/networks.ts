@@ -4,7 +4,6 @@ export interface SolNetworkConfig {
     name: RenNetwork;
     symbol: string;
     chain: string;
-    lightnode: string;
     isTestnet?: boolean;
     chainLabel: string;
 
@@ -65,7 +64,6 @@ export const renMainnet: SolNetworkConfig = {
 
     endpoint: "https://ren.rpcpool.com/",
     chainExplorer: "https://explorer.solana.com",
-    lightnode: "https://lightnode-mainnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
@@ -88,7 +86,6 @@ export const renTestnet: SolNetworkConfig = {
 
     endpoint: "https://api.devnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
-    lightnode: "https://lightnode-testnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
@@ -111,7 +108,6 @@ export const renDevnet: SolNetworkConfig = {
 
     endpoint: "https://api.testnet.solana.com",
     chainExplorer: "https://explorer.solana.com",
-    lightnode: "https://lightnode-devnet.herokuapp.com",
     addresses: {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },

@@ -279,6 +279,13 @@ export class GatewayTransaction<
             this.queryTxResult = status.response;
         });
 
+        try {
+            await this.renVM.query();
+        } catch (error) {
+            // Ignore error, possible submitted too soon before RenVM's nodes
+            // have seen the transaction.
+        }
+
         const getOutputParams = () => ({
             amount:
                 this.queryTxResult && this.queryTxResult.tx.out

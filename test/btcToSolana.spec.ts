@@ -66,7 +66,7 @@ describe("BTC/toSolana", () => {
             await setup.wait();
         }
 
-        const SEND_FUNDS = true;
+        const SEND_FUNDS = false;
         if (SEND_FUNDS) {
             await sendFunds(
                 asset,
@@ -165,6 +165,7 @@ describe("BTC/toSolana", () => {
                     }
 
                     if (tx.out.submit) {
+                        console.log(`Calling submit.`);
                         await tx.out.submit();
                     }
 

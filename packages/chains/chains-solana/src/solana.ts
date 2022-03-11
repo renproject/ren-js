@@ -293,7 +293,7 @@ export class Solana
             signature?: Buffer;
         },
         confirmationTarget: number,
-    ): Promise<TxSubmitter> {
+    ): Promise<TxSubmitter | TxWaiter> {
         const program = await this.getMintGateway(asset, { publicKey: true });
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
@@ -325,12 +325,8 @@ export class Solana
             ChainTransaction | undefined
         > => {
             const { nHash, pHash, amount, signature } = params();
-            if (!amount) {
-                throw new Error(`Unable to fetch RenVM transaction amount.`);
-            }
-
-            if (!signature) {
-                throw new Error(`Unable to fetch RenVM signature.`);
+            if (!amount || !signature) {
+                return undefined;
             }
 
             const to = associatedTokenAccount.toBase58();
@@ -393,6 +389,16 @@ export class Solana
                 }
             }
         };
+
+        const existingTransaction = await findExistingTransaction();
+
+        if (existingTransaction) {
+            return new DefaultTxWaiter({
+                chainTransaction: existingTransaction,
+                chain: this,
+                target: confirmationTarget,
+            });
+        }
 
         // To get to this point, the token account should already exist.
         // const recipientWalletAddress =

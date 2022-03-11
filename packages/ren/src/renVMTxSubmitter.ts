@@ -112,6 +112,20 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         return this.tx;
     }
 
+    public async query(): Promise<
+        ChainTransactionProgress & {
+            response?: RenVMTransactionWithStatus<Transaction>;
+        }
+    > {
+        const tx: RenVMTransactionWithStatus<Transaction> =
+            await this.provider.queryTx(this.tx.hash, 1);
+
+        return this.updateProgress({
+            response: tx,
+            status: ChainTransactionStatus.Confirming,
+        });
+    }
+
     public submit(): PromiEvent<
         ChainTransactionProgress & {
             response?: RenVMTransactionWithStatus<Transaction>;

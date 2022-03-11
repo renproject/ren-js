@@ -16,7 +16,7 @@ const network = RenNetwork.Testnet;
  * - less logs
  */
 
-describe.only("DAI/toBinanceSmartChain - simpler", () => {
+describe("DAI/toBinanceSmartChain - simpler", () => {
     it("DAI/toBinanceSmartChain - simpler", async function () {
         this.timeout(100000000000);
 

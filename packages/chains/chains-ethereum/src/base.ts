@@ -24,6 +24,7 @@ import {
     TxSubmitter,
     TxWaiter,
     utils,
+    populateChainTransaction,
 } from "@renproject/utils";
 
 import {
@@ -55,7 +56,8 @@ import {
     mapBurnToChainLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
-    txHashToChainTransaction,
+    txidFormattedToTxid,
+    txidToTxidFormatted,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
@@ -176,11 +178,8 @@ export class EthereumBaseChain
         return this.explorer.address(address);
     }
 
-    public formattedTransactionHash(transaction: {
-        txid: string;
-        txindex: string;
-    }): string {
-        return utils.Ox(utils.fromBase64(transaction.txid));
+    public formattedTransactionHash({ txid }: { txid: string }): string {
+        return txidToTxidFormatted(txid);
     }
 
     public transactionExplorerLink(transaction: ChainTransaction): string {
@@ -1115,16 +1114,6 @@ export class EthereumBaseChain
         };
     }
 
-    public Transaction(chainTransaction: ChainTransaction): EVMPayload {
-        return {
-            chain: this.chain,
-            type: "transaction",
-            params: {
-                tx: chainTransaction,
-            },
-        };
-    }
-
     public Contract(params: {
         to: string;
         method: string;
@@ -1168,108 +1157,27 @@ export class EthereumBaseChain
         };
     }
 
-    // /** @category Main */
-    // public Address = (address: string): OutputContractCall => ({
-    //     chain: this.chain,
-    //     getPayload: async (asset: string, type: OutputType) => {
-    //         switch (type) {
-    //             case OutputType.Mint:
-    //                 return {
-    //                     to: this.network.addresses.BasicBridge,
-    //                     method: "mint",
-    //                     values: [
-    //                         {
-    //                             type: "string",
-    //                             name: "_symbol",
-    //                             value: asset,
-    //                         },
-    //                         {
-    //                             type: "address",
-    //                             name: "recipient_",
-    //                             value: address,
-    //                         },
-    //                     ],
-    //                 };
-    //             case OutputType.Release:
-    //                 if (!this.signer) {
-    //                     throw new Error(`Must connect signer.`);
-    //                 }
-    //                 return {
-    //                     to: await this.signer.getAddress(),
-    //                     method: "release",
-    //                     values: [],
-    //                 };
-    //         }
-    //     },
-    //     getContractCall: async (
-    //         asset: string,
-    //         type: OutputType,
-    //         pHash: Buffer,
-    //         amount: string,
-    //         nHash: Buffer,
-    //         signature: Buffer,
-    //     ) => {
-    //         switch (type) {
-    //             case OutputType.Mint:
-    //                 return {
-    //                     to: this.network.addresses.BasicBridge,
-    //                     method: "mint",
-    //                     values: [
-    //                         {
-    //                             type: "string",
-    //                             name: "_symbol",
-    //                             value: asset,
-    //                         },
-    //                         {
-    //                             type: "address",
-    //                             name: "recipient_",
-    //                             value: address,
-    //                         },
-    //                         {
-    //                             name: "amount",
-    //                             type: "uint256",
-    //                             value: amount,
-    //                         },
-    //                         {
-    //                             name: "nHash",
-    //                             type: "bytes32",
-    //                             value: nHash,
-    //                         },
-    //                         {
-    //                             name: "signature",
-    //                             type: "bytes",
-    //                             value: signature,
-    //                         },
-    //                     ],
-    //                 };
-    //             case OutputType.Release:
-    //                 return {
-    //                     to: await this.getLockGateway(asset),
-    //                     method: "release",
-    //                     values: [
-    //                         {
-    //                             name: "pHash",
-    //                             type: "bytes32",
-    //                             value: pHash,
-    //                         },
-    //                         {
-    //                             name: "amount",
-    //                             type: "uint256",
-    //                             value: amount,
-    //                         },
-    //                         {
-    //                             name: "nHash",
-    //                             type: "bytes32",
-    //                             value: nHash,
-    //                         },
-    //                         {
-    //                             name: "signature",
-    //                             type: "bytes",
-    //                             value: signature,
-    //                         },
-    //                     ],
-    //                 };
-    //         }
-    //     },
-    // });
+    /**
+     * Import an existing Ethereum transaction.
+     *
+     * @example
+     * ethereum.Transaction({
+     *   txidFormatted: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
+     * })
+     */
+    public Transaction(partialTx: Partial<ChainTransaction>): EVMPayload {
+        return {
+            chain: this.chain,
+            type: "transaction",
+            params: {
+                tx: populateChainTransaction({
+                    partialTx,
+                    chain: this.chain,
+                    txidToTxidFormatted,
+                    txidFormattedToTxid,
+                    defaultTxindex: "0",
+                }),
+            },
+        };
+    }
 }

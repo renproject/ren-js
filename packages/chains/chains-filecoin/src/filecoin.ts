@@ -18,6 +18,7 @@ import {
     ErrorWithCode,
     InputChainTransaction,
     OutputType,
+    populateChainTransaction,
     RenJSError,
     RenNetwork,
     RenNetworkString,
@@ -27,6 +28,7 @@ import {
 import { FilTransaction } from "./utils/deposit";
 import { Filfox } from "./utils/filfox";
 import { fetchDeposits, fetchMessage, getHeight } from "./utils/lotus";
+import { txidFormattedToTxid, txidToTxidFormatted } from "./utils/utils";
 
 interface FilecoinConfig {}
 
@@ -257,9 +259,7 @@ export class Filecoin
                         }
                         onInput({
                             chain: this.chain,
-                            txid: utils.toURLBase64(
-                                Buffer.from(new CID(tx.cid).bytes),
-                            ),
+                            txid: txidFormattedToTxid(tx.cid),
                             txidFormatted: tx.cid,
                             txindex: "0",
 
@@ -326,9 +326,7 @@ export class Filecoin
                             (deposits || []).map((tx) =>
                                 onInput({
                                     chain: this.chain,
-                                    txid: utils.toURLBase64(
-                                        Buffer.from(new CID(tx.cid).bytes),
-                                    ),
+                                    txid: txidFormattedToTxid(tx.cid),
                                     txidFormatted: tx.cid,
                                     txindex: "0",
 
@@ -365,9 +363,7 @@ export class Filecoin
                     (txs || []).map((tx) =>
                         onInput({
                             chain: this.chain,
-                            txid: utils.toURLBase64(
-                                Buffer.from(new CID(tx.cid).bytes),
-                            ),
+                            txid: txidFormattedToTxid(tx.cid),
                             txidFormatted: tx.cid,
                             txindex: "0",
 
@@ -505,7 +501,7 @@ export class Filecoin
         txid: string;
         txindex: string;
     }): string {
-        return new CID(utils.fromBase64(tx.txid)).toString();
+        return txidToTxidFormatted(tx.txid);
     }
 
     public getOutputPayload(
@@ -569,12 +565,29 @@ export class Filecoin
         };
     }
 
-    public Transaction(tx: ChainTransaction): FilecoinInputPayload {
+    /**
+     * Import an existing Filecoin transaction instead of watching for deposits
+     * to a gateway address.
+     *
+     * @example
+     * filecoin.Transaction({
+     *   txidFormatted: "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
+     * })
+     */
+    public Transaction(
+        partialTx: Partial<ChainTransaction>,
+    ): FilecoinInputPayload {
         return {
             chain: this.chain,
             type: "transaction",
             params: {
-                tx,
+                tx: populateChainTransaction({
+                    partialTx,
+                    chain: this.chain,
+                    txidToTxidFormatted,
+                    txidFormattedToTxid,
+                    defaultTxindex: "0",
+                }),
             },
         };
     }

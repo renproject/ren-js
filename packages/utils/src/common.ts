@@ -2,6 +2,7 @@ import BigNumber from "bignumber.js";
 
 import { assertType } from "./internal/assert";
 import { Ox, toNBytes } from "./internal/common";
+import { ChainTransaction } from "./types/chain";
 
 /**
  * Decode a RenVM selector into the asset, the from-chain and the to-chain.
@@ -86,3 +87,40 @@ export const normalizeSignature = (signature: Buffer): Buffer => {
 
     return Buffer.concat([r, toNBytes(sBN, 32), Buffer.from([v])]);
 };
+
+export function populateChainTransaction({
+    partialTx,
+    chain,
+    txidToTxidFormatted,
+    txidFormattedToTxid,
+    defaultTxindex,
+}: {
+    partialTx: Partial<ChainTransaction>;
+    chain: string;
+    txidToTxidFormatted: (txid: string) => string;
+    txidFormattedToTxid: (txidFormatted: string) => string;
+    defaultTxindex?: string;
+}): ChainTransaction {
+    if (!partialTx.txid || !partialTx.txidFormatted) {
+        throw new Error(
+            `Must provide either 'txid' or 'txidFormatted' for ${chain} transaction.`,
+        );
+    }
+    if (partialTx.chain && partialTx.chain !== chain) {
+        throw new Error(
+            `Unexpected chain (expected '${chain}', got '$partialTx.chain}').`,
+        );
+    }
+    if (!partialTx.txindex && !defaultTxindex) {
+        throw new Error(`Must provide txindex for ${chain} transaction.`);
+    }
+
+    return {
+        ...partialTx,
+        chain: chain,
+        txid: partialTx.txid || txidToTxidFormatted(partialTx.txidFormatted!),
+        txidFormatted:
+            partialTx.txidFormatted || txidFormattedToTxid(partialTx.txid!),
+        txindex: partialTx.txindex || defaultTxindex!,
+    };
+}

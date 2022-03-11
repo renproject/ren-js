@@ -44,5 +44,5 @@ export type Transaction = SolanaPayloadInterface<
     }
 >;
 
-export type SolanaToPayload = MintToAddress;
-export type SolanaFromPayload = BurnFromAddress | BurnNonce | Transaction;
+export type SolanaOutputPayload = MintToAddress;
+export type SolanaInputPayload = BurnFromAddress | BurnNonce | Transaction;

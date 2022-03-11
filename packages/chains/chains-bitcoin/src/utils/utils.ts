@@ -1,3 +1,4 @@
+import { utils } from "@renproject/utils";
 import { bech32 } from "bech32";
 import base58 from "bs58";
 import createHash from "create-hash";
@@ -110,3 +111,25 @@ export const ripemd160 = (input: Buffer): Buffer =>
  */
 export const hash160 = (publicKey: Buffer): Buffer =>
     ripemd160(sha256(publicKey));
+
+/**
+ * Convert a Bitcoin transaction hash from its standard format to the format
+ * required by RenVM.
+ * @param txidFormatted A Bitcoin transaction hash formatted as an unprefixed
+ * hex string.
+ * @returns The same Bitcoin transaction hash formatted as a base64 string.
+ */
+export function txidFormattedToTxid(txidFormatted: string) {
+    return utils.toURLBase64(utils.fromHex(txidFormatted).reverse());
+}
+
+/**
+ * Convert a Bitcoin transaction hash from the format required by RenVM to its
+ * standard format.
+ * @param txid A Bitcoin transaction hash formatted as a base64 string.
+ * @returns The same Bitcoin transaction hash formatted as an unprefixed hex
+ * string.
+ */
+export function txidToTxidFormatted(txid: string) {
+    return utils.fromBase64(txid).reverse().toString("hex");
+}

@@ -18,6 +18,7 @@ import {
 } from "@solana/web3.js";
 
 import { SolanaSigner } from "./types/types";
+import { txidFormattedToTxid } from "./utils";
 
 export class SolanaTxWaiter
     implements TxSubmitter<ChainTransactionProgress, {}, string>
@@ -154,9 +155,7 @@ export class SolanaTxWaiter
                 transaction: {
                     chain: this.progress.chain,
                     txidFormatted: confirmedSignature,
-                    txid: utils.toURLBase64(
-                        Buffer.from(base58.decode(confirmedSignature)),
-                    ),
+                    txid: txidFormattedToTxid(confirmedSignature),
                     txindex: "0",
                 },
             });

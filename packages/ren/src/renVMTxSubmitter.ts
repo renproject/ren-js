@@ -85,7 +85,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         );
         if (tx.hash && tx.hash !== expectedHash) {
             throw new Error(
-                `Invalid hash (expected ${expectedHash}, got ${tx.hash}.)`,
+                `Invalid hash (expected '${expectedHash}', got '${tx.hash}').`,
             );
         }
         const hash = tx.hash || expectedHash;

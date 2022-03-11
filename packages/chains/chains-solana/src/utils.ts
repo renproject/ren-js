@@ -231,7 +231,7 @@ export const txHashToChainTransaction = (
 ): ChainTransaction => ({
     chain: chain,
     txidFormatted: txHash,
-    txid: utils.toURLBase64(Buffer.from(base58.decode(txHash))),
+    txid: txidFormattedToTxid(txHash),
     txindex: "0",
 });
 
@@ -296,3 +296,23 @@ export const getBurnFromNonce = async (
         ),
     };
 };
+
+/**
+ * Convert a Solana transaction hash from its standard format to the format
+ * required by RenVM.
+ * @param txidFormatted A Solana transaction hash formatted as a base58 string.
+ * @returns The same Solana transaction hash formatted as a base64 string.
+ */
+export function txidFormattedToTxid(txidFormatted: string) {
+    return utils.toURLBase64(Buffer.from(base58.decode(txidFormatted)));
+}
+
+/**
+ * Convert a Solana transaction hash from the format required by RenVM to its
+ * standard format.
+ * @param txid A Solana transaction hash formatted as a base64 string.
+ * @returns The same Solana transaction hash formatted as a base58 string.
+ */
+export function txidToTxidFormatted(txid: string) {
+    return base58.encode(utils.fromBase64(txid));
+}

@@ -9,6 +9,7 @@ import {
     InputChainTransaction,
     InputType,
     OutputType,
+    populateChainTransaction,
     RenJSError,
     utils,
 } from "@renproject/utils";
@@ -23,7 +24,13 @@ import {
     BitcoinOutputPayload,
     isBitcoinNetworkConfig,
 } from "./utils/types";
-import { addressToBytes, hash160, validateAddress } from "./utils/utils";
+import {
+    addressToBytes,
+    hash160,
+    txidFormattedToTxid,
+    txidToTxidFormatted,
+    validateAddress,
+} from "./utils/utils";
 
 /**
  * A base Bitcoin chain class that is extended by each Bitcoin chain/fork.
@@ -131,10 +138,7 @@ export abstract class BitcoinBaseChain
         );
     }
 
-    public formattedTransactionHash(transaction: {
-        txid: string;
-        txindex: string;
-    }): string {
+    public formattedTransactionHash(transaction: { txid: string }): string {
         return utils.fromBase64(transaction.txid).reverse().toString("hex");
     }
 
@@ -350,12 +354,29 @@ export abstract class BitcoinBaseChain
         };
     }
 
-    public Transaction(tx: ChainTransaction): BitcoinInputPayload {
+    /**
+     * Import an existing Bitcoin transaction instead of watching for deposits
+     * to a gateway address.
+     *
+     * @example
+     * bitcoin.Transaction({
+     *   txidFormatted: "a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d",
+     *   txindex: "0"
+     * })
+     */
+    public Transaction(
+        partialTx: Partial<ChainTransaction> & { txindex: string },
+    ): BitcoinInputPayload {
         return {
             chain: this.chain,
             type: "transaction",
             params: {
-                tx,
+                tx: populateChainTransaction({
+                    partialTx,
+                    chain: this.chain,
+                    txidToTxidFormatted,
+                    txidFormattedToTxid,
+                }),
             },
         };
     }

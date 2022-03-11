@@ -15,6 +15,7 @@ import {
     Logger,
     nullLogger,
     OutputType,
+    populateChainTransaction,
     RenNetwork,
     RenNetworkString,
     TxSubmitter,
@@ -44,7 +45,7 @@ import {
 } from "./layouts";
 import { resolveNetwork, SolNetworkConfig } from "./networks";
 import { SolanaTxWaiter } from "./solanaTxSubmitter";
-import { SolanaFromPayload, SolanaToPayload } from "./types/types";
+import { SolanaInputPayload, SolanaOutputPayload } from "./types/types";
 import {
     constructRenVMMsg,
     createInstructionWithEthAddress2,
@@ -52,6 +53,8 @@ import {
     getGatewayRegistryState,
     resolveTokenGatewayContract,
     txHashToChainTransaction,
+    txidFormattedToTxid,
+    txidToTxidFormatted,
 } from "./utils";
 
 interface SolOptions {
@@ -59,7 +62,7 @@ interface SolOptions {
 }
 
 export class Solana
-    implements ContractChain<SolanaFromPayload, SolanaToPayload>
+    implements ContractChain<SolanaInputPayload, SolanaOutputPayload>
 {
     public static chain = "Solana" as const;
     public chain = Solana.chain;
@@ -200,11 +203,8 @@ export class Solana
         return new BigNumber(currentSlot - (tx && tx.slot ? tx.slot : 0));
     }
 
-    public formattedTransactionHash(transaction: {
-        txid: string;
-        txindex: string;
-    }): string {
-        return base58.encode(utils.fromBase64(transaction.txid));
+    public formattedTransactionHash({ txid }: { txid: string }): string {
+        return txidToTxidFormatted(txid);
     }
 
     public async getMintGateway<ReturnPublicKey extends true | false = false>(
@@ -257,7 +257,7 @@ export class Solana
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
-        contractCall: SolanaToPayload,
+        contractCall: SolanaOutputPayload,
     ): Promise<{
         to: string;
         toBytes: Buffer;
@@ -282,7 +282,7 @@ export class Solana
         _inputType: InputType,
         _outputType: OutputType,
         asset: string,
-        contractCall: SolanaToPayload,
+        contractCall: SolanaOutputPayload,
         params: () => {
             sHash: Buffer;
             pHash: Buffer;
@@ -575,7 +575,7 @@ export class Solana
         _inputType: InputType,
         _outputType: OutputType,
         asset: string,
-        contractCall: SolanaFromPayload,
+        contractCall: SolanaInputPayload,
         getParams: () => {
             toChain: string;
             toPayload: {
@@ -809,7 +809,7 @@ export class Solana
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
-        _contractCall: SolanaToPayload,
+        _contractCall: SolanaOutputPayload,
     ): Promise<{
         [key: string]: TxSubmitter | TxWaiter;
     }> {
@@ -946,9 +946,9 @@ export class Solana
     }: {
         amount?: string | BigNumber;
         address?: string;
-    } = {}): SolanaToPayload | SolanaFromPayload {
+    } = {}): SolanaOutputPayload | SolanaInputPayload {
         if (amount) {
-            const payload: SolanaFromPayload = {
+            const payload: SolanaInputPayload = {
                 chain: this.chain,
                 type: "burnToAddress",
                 params: {
@@ -959,7 +959,7 @@ export class Solana
         }
 
         if (address) {
-            const payload: SolanaToPayload = {
+            const payload: SolanaOutputPayload = {
                 chain: this.chain,
                 type: "mintToAddress",
                 params: {
@@ -970,7 +970,7 @@ export class Solana
         }
 
         if (this.signer && this.signer.publicKey) {
-            const payload: SolanaToPayload = {
+            const payload: SolanaOutputPayload = {
                 chain: this.chain,
                 type: "mintToAddress",
                 params: {
@@ -983,12 +983,29 @@ export class Solana
         throw new Error(`Must provide amount or address.`);
     }
 
-    public Transaction(tx: ChainTransaction): SolanaFromPayload {
+    /**
+     * Import an existing Solana transaction instead of watching for deposits
+     * to a gateway address.
+     *
+     * @example
+     * solana.Transaction({
+     *   txidFormatted: "3mabcf8...",
+     * })
+     */
+    public Transaction(
+        partialTx: Partial<ChainTransaction>,
+    ): SolanaInputPayload {
         return {
             chain: this.chain,
             type: "transaction",
             params: {
-                tx,
+                tx: populateChainTransaction({
+                    partialTx,
+                    chain: this.chain,
+                    txidToTxidFormatted,
+                    txidFormattedToTxid,
+                    defaultTxindex: "0",
+                }),
             },
         };
     }

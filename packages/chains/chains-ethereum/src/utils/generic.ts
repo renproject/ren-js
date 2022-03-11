@@ -28,6 +28,28 @@ import { AbiItem } from "./abi";
 import { getLockGateway, getMintGateway } from "./gatewayRegistry";
 import { EvmNetworkConfig } from "./types";
 
+/**
+ * Convert an Ethereum transaction hash from its standard format to the format
+ * required by RenVM.
+ * @param txidFormatted An Ethereum transaction hash formatted as a 0x-prefixed
+ * hex string.
+ * @returns The same Ethereum transaction hash formatted as a base64 string.
+ */
+export function txidFormattedToTxid(txidFormatted: string): string {
+    return utils.toURLBase64(utils.fromHex(txidFormatted));
+}
+
+/**
+ * Convert an Ethereum transaction hash from the format required by RenVM to its
+ * standard format.
+ * @param txid An Ethereum transaction hash formatted as a base64 string.
+ * @returns The same Ethereum transaction hash formatted as a 0x-prefixed hex
+ * string.
+ */
+export function txidToTxidFormatted(txid: string): string {
+    return utils.Ox(utils.fromBase64(txid));
+}
+
 export const txHashToChainTransaction = (
     chain: string,
     txHash: string,

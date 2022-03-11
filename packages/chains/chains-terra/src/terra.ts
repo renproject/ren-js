@@ -10,6 +10,7 @@ import {
     InputChainTransaction,
     InputType,
     OutputType,
+    populateChainTransaction,
     RenJSError,
     RenNetwork,
     RenNetworkString,
@@ -19,6 +20,7 @@ import { AccAddress, Key, SimplePublicKey } from "@terra-money/terra.js";
 
 import { TerraDev } from "./api/terraDev";
 import { isTerraNetworkConfig, TerraNetworkConfig } from "./api/types";
+import { txidFormattedToTxid, txidToTxidFormatted } from "./utils";
 
 export const TerraMainnet: TerraNetworkConfig = {
     selector: "Terra",
@@ -133,11 +135,8 @@ export class Terra
         ).href;
     }
 
-    public formattedTransactionHash(tx: {
-        txid: string;
-        txindex: string;
-    }): string {
-        return utils.fromBase64(tx.txid).toString("hex").toUpperCase();
+    public formattedTransactionHash({ txid }: { txid: string }): string {
+        return txidToTxidFormatted(txid);
     }
 
     public constructor({
@@ -230,7 +229,7 @@ export class Terra
                 txs.map(async (tx) =>
                     onInput({
                         chain: this.chain,
-                        txid: utils.toURLBase64(Buffer.from(tx.hash, "hex")),
+                        txid: txidFormattedToTxid(tx.hash),
                         txidFormatted: tx.hash.toUpperCase(),
                         txindex: "0",
 
@@ -359,6 +358,33 @@ export class Terra
     public GatewayAddress(): TerraInputPayload {
         return {
             chain: this.chain,
+        };
+    }
+
+    /**
+     * Import an existing Terra transaction instead of watching for deposits
+     * to a gateway address.
+     *
+     * @example
+     * terra.Transaction({
+     *   txidFormatted: "A16B0B3E...",
+     *   txindex: "0",
+     * })
+     */
+    public Transaction(
+        partialTx: Partial<ChainTransaction>,
+    ): TerraInputPayload {
+        return {
+            chain: this.chain,
+            type: "transaction",
+            params: {
+                tx: populateChainTransaction({
+                    partialTx,
+                    chain: this.chain,
+                    txidToTxidFormatted,
+                    txidFormattedToTxid,
+                }),
+            },
         };
     }
 }

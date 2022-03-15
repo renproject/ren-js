@@ -52,7 +52,8 @@
         "create-hash": "1.2.0",
         "events": "^3.3.0",
         "immutable": "^4.0.0",
-        "js-sha3": "^0.8.0"
+        "js-sha3": "^0.8.0",
+        "stream": "^0.0.2"
     },
     "resolutions": {
         "sha3": "^2.1.2"

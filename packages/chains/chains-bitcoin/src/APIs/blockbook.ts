@@ -1,15 +1,8 @@
-import https from "https";
+// import https from "https";
 
 import { utils } from "@renproject/utils";
 
-import {
-    BitcoinAPI,
-    DEFAULT_TIMEOUT,
-    fixUTXO,
-    fixValue,
-    sortUTXOs,
-    UTXO,
-} from "./API";
+import { BitcoinAPI, fixUTXO, fixValue, sortUTXOs, UTXO } from "./API";
 
 export class Blockbook implements BitcoinAPI {
     public url: string;
@@ -26,12 +19,15 @@ export class Blockbook implements BitcoinAPI {
 
     public async fetchUTXOs(address: string): Promise<UTXO[]> {
         const url = `${this.url}/utxo/${address}`;
-        const response = await utils.GET<FetchUTXOResult>(url, {
-            // TODO: Remove when certificate is fixed.
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
-            }),
-        });
+        const response = await utils.GET<FetchUTXOResult>(
+            url,
+            // {
+            //     // TODO: Remove when certificate is fixed.
+            //     httpsAgent: new https.Agent({
+            //         rejectUnauthorized: false,
+            //     }),
+            // }
+        );
 
         const data: FetchUTXOResult =
             typeof response === "string" ? JSON.parse(response) : response;

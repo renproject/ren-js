@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import https from "https";
+// import https from "https";
 
 import { utils } from "@renproject/utils";
 
@@ -30,12 +30,15 @@ export class Insight implements BitcoinAPI {
         confirmations: number = 0,
     ): Promise<UTXO[]> {
         const url = `${this.url}/addr/${address}/utxo`;
-        const response = await utils.GET<FetchUTXOResult>(url, {
-            // TODO: Remove when certificate is fixed.
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
-            }),
-        });
+        const response = await utils.GET<FetchUTXOResult>(
+            url,
+            // {
+            //     // TODO: Remove when certificate is fixed.
+            //     httpsAgent: new https.Agent({
+            //         rejectUnauthorized: false,
+            //     }),
+            // }
+        );
 
         const data: FetchUTXOResult =
             typeof response === "string" ? JSON.parse(response) : response;
@@ -80,12 +83,15 @@ export class Insight implements BitcoinAPI {
 
     public async fetchTXs(address: string): Promise<UTXO[]> {
         const url = `${this.url}/txs/?address=${address}`;
-        const response = await utils.GET<FetchTXsResult>(url, {
-            // TODO: Remove when certificate is fixed.
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
-            }),
-        });
+        const response = await utils.GET<FetchTXsResult>(
+            url,
+            // {
+            //     // TODO: Remove when certificate is fixed.
+            //     httpsAgent: new https.Agent({
+            //         rejectUnauthorized: false,
+            //     }),
+            // }
+        );
 
         const data: FetchTXsResult =
             typeof response === "string" ? JSON.parse(response) : response;

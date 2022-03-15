@@ -229,8 +229,7 @@ export class EVMTxSubmitter
                     getPayloadHandler: this.getPayloadHandler,
                 });
                 const populatedTx = await this.signer.populateTransaction(tx);
-                const signedTx = await this.signer.signTransaction(populatedTx);
-                this.tx = await this.signer.provider.sendTransaction(signedTx);
+                this.tx = await this.signer.sendTransaction(populatedTx);
             }
 
             this.updateProgress({

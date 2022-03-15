@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "3.0.0-alpha.14",
+    "version": "3.0.0-alpha.15",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -44,7 +44,7 @@
     },
     "dependencies": {
         "@renproject/chains-bitcoin": "^3.0.0-alpha.14",
-        "@renproject/chains-ethereum": "^3.0.0-alpha.14",
+        "@renproject/chains-ethereum": "^3.0.0-alpha.15",
         "@renproject/chains-filecoin": "^3.0.0-alpha.14",
         "@renproject/chains-terra": "^3.0.0-alpha.14",
         "@renproject/utils": "^3.0.0-alpha.14",

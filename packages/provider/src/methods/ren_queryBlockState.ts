@@ -84,24 +84,24 @@ export interface BlockState {
                 numNodes: BigNumber;
             }>;
             nodes: Array<{
-                node: Buffer;
+                node: Uint8Array;
                 lastEpochClaimed: BigNumber;
             }>;
             unassigned: BigNumber;
         };
         shards: Array<{
-            shard: Buffer;
-            pubKey: Buffer;
+            shard: Uint8Array;
+            pubKey: Uint8Array;
             queue: Array<{
-                hash: Buffer;
+                hash: Uint8Array;
             }>;
             state: {
                 outpoint: {
-                    hash: Buffer;
+                    hash: Uint8Array;
                     index: BigNumber;
                 };
                 value: BigNumber;
-                pubKeyScript: Buffer;
+                pubKeyScript: Uint8Array;
             };
         }>;
         minted: Array<{

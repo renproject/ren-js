@@ -42,12 +42,10 @@ export interface TransactionParams<
     /**
      * The public key of the RenVM shard selected when `fromTx` was submitted.
      * If the input is contract/event-based then it should be left empty.
-     *
-     * @default Buffer.from([])
      */
     shard?: RenVMShard;
     /**
-     * @default toBytes(0,32)
+     * The nonce is a free variable for generating unique gateway addresses.
      */
     nonce?: string;
 
@@ -88,9 +86,9 @@ export class GatewayTransaction<
     public fromChain: Chain;
     public toChain: Chain;
 
-    public nHash: Buffer;
-    public pHash: Buffer;
-    public gHash: Buffer;
+    public nHash: Uint8Array;
+    public pHash: Uint8Array;
+    public gHash: Uint8Array;
 
     public _config: typeof defaultRenJSConfig & RenJSConfig;
 
@@ -177,9 +175,9 @@ export class GatewayTransaction<
 
         this.pHash = generatePHash(payload.payload);
 
-        const nonceBuffer = nonce
-            ? Buffer.isBuffer(nonce)
-                ? nonce
+        const nonceBytes: Uint8Array = nonce
+            ? (nonce as any) instanceof Uint8Array
+                ? (nonce as unknown as Uint8Array)
                 : utils.fromBase64(nonce)
             : utils.toNBytes(0, 32);
 
@@ -187,12 +185,12 @@ export class GatewayTransaction<
             this.pHash,
             sHash,
             payload.toBytes,
-            nonceBuffer,
+            nonceBytes,
         );
 
         const gPubKey = this.params.shard
             ? utils.fromBase64(this.params.shard.gPubKey)
-            : Buffer.from([]);
+            : new Uint8Array();
 
         if (!this.in) {
             this.in = new DefaultTxWaiter({
@@ -252,7 +250,7 @@ export class GatewayTransaction<
                 payload: payload.payload,
                 phash: this.pHash,
                 to: payload.to,
-                nonce: nonceBuffer,
+                nonce: nonceBytes,
                 nhash: this.nHash,
                 gpubkey: gPubKey,
                 ghash: this.gHash,
@@ -292,7 +290,7 @@ export class GatewayTransaction<
                     ? this.queryTxResult.tx.out.amount
                     : undefined,
             nHash: this.nHash,
-            sHash: utils.keccak256(Buffer.from(this.selector)),
+            sHash: utils.keccak256(utils.fromUTF8String(this.selector)),
             pHash: this.pHash,
             sigHash:
                 this.queryTxResult && this.queryTxResult.tx.out

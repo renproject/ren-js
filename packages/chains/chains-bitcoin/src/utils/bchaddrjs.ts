@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { utils } from "@renproject/utils";
 import { InvalidAddressError } from "bchaddrjs";
 import bs58check from "bs58check";
 import cashaddr, { ValidationError } from "cashaddrjs";
@@ -183,17 +184,17 @@ const getTypeBits = (type: string) => {
     }
 };
 
-export const decodeBitcoinCashAddress = (address: string): Buffer => {
+export const decodeBitcoinCashAddress = (address: string): Uint8Array => {
     try {
-        return Buffer.from(decodeBase58Address(address).hash);
+        return new Uint8Array(decodeBase58Address(address).hash);
     } catch (error) {
         // Ignore error.
     }
     try {
         const { hash, type } = decodeCashAddress(address);
-        return Buffer.concat([
-            Buffer.from([getTypeBits(type)]),
-            Buffer.from(hash),
+        return utils.concat([
+            new Uint8Array([getTypeBits(type)]),
+            new Uint8Array(hash),
         ]);
     } catch (error) {
         // Ignore error.

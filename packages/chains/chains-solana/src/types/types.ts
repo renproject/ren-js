@@ -33,7 +33,7 @@ export type BurnFromAddress = SolanaPayloadInterface<
 export type BurnNonce = SolanaPayloadInterface<
     "burnNonce",
     {
-        burnNonce: Buffer | string | number;
+        burnNonce: Uint8Array | string | number;
     }
 >;
 

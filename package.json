@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "clean": "lerna run clean --scope @renproject/* && yarn rimraf ./node_modules",
-        "build": "lerna run build --scope @renproject/*",
+        "build": "build() { lerna run build --scope \"@renproject/${@:-\"*\"}\"; }; build",
         "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
         "lint": "lerna run lint --scope @renproject/*",
         "fix": "lerna run fix --scope @renproject/*",
@@ -22,7 +22,6 @@
         "@types/chai": "^4.3.0",
         "@types/chai-as-promised": "^7.1.5",
         "@types/mocha": "^9.1.0",
-        "@types/node": "^17",
         "@typescript-eslint/eslint-plugin": "^5.14.0",
         "@typescript-eslint/parser": "^5.14.0",
         "babel-core": "^6.26.3",

@@ -54,12 +54,12 @@ export const txHashToChainTransaction = (
     chain: string,
     txHash: string,
 ): ChainTransaction => {
-    const txHashBuffer = utils.fromHex(txHash);
+    const txHashBytes = utils.fromHex(txHash);
     return {
         chain,
         // Standardize.
-        txidFormatted: utils.Ox(txHashBuffer),
-        txid: utils.toURLBase64(txHashBuffer),
+        txidFormatted: utils.Ox(txHashBytes),
+        txid: utils.toURLBase64(txHashBytes),
         txindex: "0",
     };
 };
@@ -112,15 +112,15 @@ export const mapLockLogToInputChainTransaction = (
         amount,
         lockNonce,
     ] = event.args;
-    const nonceBuffer = utils.toNBytes(new BigNumber(lockNonce.toString()), 32);
-    if (nonceBuffer.length !== 32) {
+    const nonceBytes = utils.toNBytes(new BigNumber(lockNonce.toString()), 32);
+    if (nonceBytes.length !== 32) {
         throw new Error("Invalid nonce length");
     }
     return {
         ...txHashToChainTransaction(chain, event.transactionHash),
         asset,
         amount: amount.toString(),
-        nonce: utils.toURLBase64(nonceBuffer),
+        nonce: utils.toURLBase64(nonceBytes),
         toRecipient: recipientAddress,
         toChain: recipientChain,
         toPayload: utils.toURLBase64(utils.fromHex(recipientPayload)),
@@ -165,7 +165,7 @@ export const mapTransferLogToInputChainTransaction = (
 //     network: EvmNetworkConfig,
 //     provider: Provider,
 //     asset: string,
-//     nonce: Buffer,
+//     nonce: Uint8Array,
 //     blockLimit?: number,
 // ): Promise<InputChainTransaction | undefined> => {
 //     const gatewayAddress = await getMintGateway(network, provider, asset);
@@ -195,8 +195,8 @@ export const findMintBySigHash = async (
     network: EvmNetworkConfig,
     provider: Provider,
     asset: string,
-    nHash: Buffer,
-    sigHash?: Buffer,
+    nHash: Uint8Array,
+    sigHash?: Uint8Array,
     blockLimit?: number,
 ): Promise<ChainTransaction | undefined> => {
     const gatewayAddress = await getMintGateway(network, provider, asset);
@@ -237,7 +237,7 @@ export const findReleaseBySigHash = async (
     network: EvmNetworkConfig,
     provider: Provider,
     asset: string,
-    nHash: Buffer,
+    nHash: Uint8Array,
     blockLimit?: number,
 ): Promise<ChainTransaction | undefined> => {
     const gatewayAddress = await getLockGateway(network, provider, asset);
@@ -415,5 +415,5 @@ export const validateTransaction = (transaction: ChainTransaction): boolean =>
     transaction !== null &&
     utils.isHex(transaction.txid, { length: 32, prefix: true });
 
-export const rawEncode = (types: string[], parameters: unknown[]): Buffer =>
+export const rawEncode = (types: string[], parameters: unknown[]): Uint8Array =>
     utils.fromHex(defaultAbiCoder.encode(types, parameters));

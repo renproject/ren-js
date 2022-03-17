@@ -226,6 +226,19 @@ export class EthereumBaseChain
         return this;
     }
 
+    public async checkProviderNetwork(): Promise<void> {
+        const actualChainID = await (await this.provider.getNetwork()).chainId;
+        const expectedChainID = new BigNumber(
+            this.network.network.chainId,
+        ).toNumber();
+        const wrongNetwork = actualChainID !== expectedChainID;
+        if (wrongNetwork) {
+            throw new Error(
+                `${this.chain} provider connected to wrong network: expected ${expectedChainID}, got ${actualChainID}.`,
+            );
+        }
+    }
+
     public async getOutputPayload(
         asset: string,
         inputType: InputType,
@@ -233,9 +246,10 @@ export class EthereumBaseChain
         contractCall: EVMPayload,
     ): Promise<{
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     }> {
+        await this.checkProviderNetwork();
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler.getPayload) {
             throw ErrorWithCode.from(
@@ -315,9 +329,11 @@ export class EthereumBaseChain
                 try {
                     return (await this.getMintAsset(asset)) !== undefined;
                 } catch (error: unknown) {
+                    // Check that the error isn't caused by being on the wrong network.
+                    await this.checkProviderNetwork();
                     if (
                         error instanceof Error &&
-                        /(Empty address returned)|(Asset not supported on mint-chain)/.exec(
+                        /(Empty address returned)|(not supported)/.exec(
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                             String((error || {}).message),
                         )
@@ -494,14 +510,16 @@ export class EthereumBaseChain
         asset: string,
         contractCall: EVMPayload,
         getParams: () => {
-            pHash: Buffer;
-            nHash: Buffer;
+            pHash: Uint8Array;
+            nHash: Uint8Array;
             amount?: BigNumber;
-            sigHash?: Buffer;
-            signature?: Buffer;
+            sigHash?: Uint8Array;
+            signature?: Uint8Array;
         },
         confirmationTarget: number,
     ): Promise<TxSubmitter | TxWaiter> {
+        await this.checkProviderNetwork();
+
         const findExistingTransaction = async (): Promise<
             ChainTransaction | undefined
         > => {
@@ -595,7 +613,7 @@ export class EthereumBaseChain
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    public getInputTx(
+    public async getInputTx(
         inputType: InputType,
         outputType: OutputType,
         asset: string,
@@ -604,24 +622,26 @@ export class EthereumBaseChain
             toChain: string;
             toPayload: {
                 to: string;
-                payload: Buffer;
+                payload: Uint8Array;
             };
             gatewayAddress?: string;
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
-    ): TxSubmitter | TxWaiter {
+    ): Promise<TxSubmitter | TxWaiter> {
+        await this.checkProviderNetwork();
+
         // if (!transaction && burnNonce) {
-        //     const nonceBuffer = Buffer.isBuffer(burnNonce)
-        //         ? Buffer.from(burnNonce)
-        //         : new BN(burnNonce).toArrayLike(Buffer, "be", 32);
+        //     const nonceBytes = burnNonce instanceof Uint8Array
+        //         ? burnNonce
+        //         : toNBytes(burnNonce, 32);
 
         //     return [
         //         await findBurnByNonce(
         //             this.renNetworkDetails,
         //             this.provider,
         //             asset,
-        //             nonceBuffer,
+        //             nonceBytes,
         //         ),
         //     ];
         // }
@@ -757,8 +777,8 @@ export class EthereumBaseChain
             toChain: string;
             toPayload: {
                 to: string;
-                toBytes: Buffer;
-                payload: Buffer;
+                toBytes: Uint8Array;
+                payload: Uint8Array;
             };
             gatewayAddress?: string;
         },
@@ -824,11 +844,11 @@ export class EthereumBaseChain
         outputType: OutputType,
         contractCall: EVMPayload,
         getParams: () => {
-            pHash: Buffer;
-            nHash: Buffer;
+            pHash: Uint8Array;
+            nHash: Uint8Array;
             amount?: BigNumber;
-            sigHash?: Buffer;
-            signature?: Buffer;
+            sigHash?: Uint8Array;
+            signature?: Uint8Array;
         },
     ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> {
         const handler = this.getPayloadHandler(contractCall.type);
@@ -906,8 +926,8 @@ export class EthereumBaseChain
     public createGatewayAddress(
         _asset: string,
         fromPayload: EVMPayload,
-        shardPublicKey: Buffer,
-        gHash: Buffer,
+        shardPublicKey: Uint8Array,
+        gHash: Uint8Array,
     ): Promise<string> | string {
         if (fromPayload.chain !== this.chain) {
             throw new Error(
@@ -932,7 +952,7 @@ export class EthereumBaseChain
         );
 
         return computeAddress(
-            Buffer.from(derivedPublicKey.getPublic(false, "hex"), "hex"),
+            utils.fromHex(derivedPublicKey.getPublic(false, "hex")),
         );
     }
 
@@ -946,16 +966,16 @@ export class EthereumBaseChain
             toChain?: string;
             toPayload?: {
                 to: string;
-                payload: Buffer;
+                payload: Uint8Array;
             };
             gatewayAddress?: string;
 
             // Output
-            pHash?: Buffer;
+            pHash?: Uint8Array;
             amount?: BigNumber;
-            nHash?: Buffer;
-            sigHash?: Buffer;
-            signature?: Buffer;
+            nHash?: Uint8Array;
+            sigHash?: Uint8Array;
+            signature?: Uint8Array;
         },
     ): EVMParamValues {
         return {
@@ -1032,7 +1052,7 @@ export class EthereumBaseChain
             // Available when locking or burning
             [EVMParam.EVM_TO_CHAIN]: params.toChain,
             [EVMParam.EVM_TO_ADDRESS_BYTES]: utils.isDefined(params.toPayload)
-                ? Buffer.from(params.toPayload.to)
+                ? utils.fromUTF8String(params.toPayload.to)
                 : undefined,
             [EVMParam.EVM_TO_ADDRESS]: utils.isDefined(params.toPayload)
                 ? params.toPayload.to

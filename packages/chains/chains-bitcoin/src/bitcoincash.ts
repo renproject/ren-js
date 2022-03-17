@@ -36,7 +36,7 @@ const BitcoinCashMainnet: BitcoinNetworkConfig = {
     averageConfirmationTime: 60 * 10,
 
     explorer: StandardBitcoinExplorer("https://explorer.bitcoin.com/bch/"),
-    p2shPrefix: Buffer.from([0x05]),
+    p2shPrefix: new Uint8Array([0x05]),
     providers: [
         new Blockchair(BlockchairNetwork.BITCOIN_CASH),
         { api: new BitcoinDotCom(), priority: 15 },
@@ -58,7 +58,7 @@ const BitcoinCashTestnet: BitcoinNetworkConfig = {
 
     isTestnet: true,
     explorer: StandardBitcoinExplorer("https://explorer.bitcoin.com/tbch/"),
-    p2shPrefix: Buffer.from([0xc4]),
+    p2shPrefix: new Uint8Array([0xc4]),
     providers: [
         new Blockchain(BlockchainNetwork.BitcoinCashTestnet),
         { api: new BitcoinDotCom({ testnet: true }), priority: 15 },
@@ -85,11 +85,11 @@ export class BitcoinCash extends BitcoinBaseChain {
             : isMainnetAddress(address);
     }
 
-    public encodeAddress(bytes: Buffer): string {
+    public encodeAddress(bytes: Uint8Array): string {
         return toCashAddress(bs58.encode(bytes));
     }
 
-    public decodeAddress(address: string): Buffer {
+    public decodeAddress(address: string): Uint8Array {
         return decodeBitcoinCashAddress(address);
     }
 

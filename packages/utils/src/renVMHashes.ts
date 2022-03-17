@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { assertType } from "./internal/assert";
-import { padBuffer, toNBytes } from "./internal/common";
+import { concat, padUint8Array, toNBytes } from "./internal/common";
 import { keccak256, sha256 } from "./internal/hashes";
 import { pack, TypedPackValue } from "./libraries/pack";
 
@@ -47,10 +47,13 @@ export const generatePHash = keccak256;
  * generateSHash("BTC/fromFantomToEthereum") === keccak256("BTC/toEthereum")
  * ```
  */
-export const generateSHash = (selector: string): Buffer => {
+export const generateSHash = (selector: string): Uint8Array => {
     assertType<string>("string", { selector });
 
-    const toSelector = Buffer.from(selector.replace(/\/.*To/, "/to"));
+    const encoder = new TextEncoder();
+    const toSelector: Uint8Array = encoder.encode(
+        selector.replace(/\/.*To/, "/to"),
+    );
     return keccak256(toSelector);
 };
 
@@ -62,12 +65,12 @@ export const generateSHash = (selector: string): Buffer => {
  * 2. the second and third parameters (sHash and to) have been swapped.
  */
 export const generateGHash = (
-    pHash: Buffer,
-    sHash: Buffer,
-    to: Buffer,
-    nonce: Buffer,
-): Buffer => {
-    assertType<Buffer>("Buffer", { pHash, nonce, sHash, to });
+    pHash: Uint8Array,
+    sHash: Uint8Array,
+    to: Uint8Array,
+    nonce: Uint8Array,
+): Uint8Array => {
+    assertType<Uint8Array>("Uint8Array", { pHash, nonce, sHash, to });
 
     return keccak256(pHash, sHash, to, nonce);
 };
@@ -77,11 +80,11 @@ export const generateGHash = (
  * `keccak256(nonce, txid, toNBytes(txindex, 4))`
  */
 export const generateNHash = (
-    nonce: Buffer,
-    txid: Buffer,
+    nonce: Uint8Array,
+    txid: Uint8Array,
     txindex: string,
-): Buffer => {
-    assertType<Buffer>("Buffer", { nonce, txid });
+): Uint8Array => {
+    assertType<Uint8Array>("Uint8Array", { nonce, txid });
     assertType<string>("string", { txindex });
 
     return keccak256(nonce, txid, toNBytes(txindex, 4));
@@ -92,13 +95,13 @@ export const generateNHash = (
  * RenVM for mints and releases.
  */
 export const generateSighash = (
-    pHash: Buffer,
+    pHash: Uint8Array,
     amount: BigNumber,
-    to: Buffer,
-    sHash: Buffer,
-    nHash: Buffer,
-): Buffer => {
-    assertType<Buffer>("Buffer", { pHash, nHash, sHash, to });
+    to: Uint8Array,
+    sHash: Uint8Array,
+    nHash: Uint8Array,
+): Uint8Array => {
+    assertType<Uint8Array>("Uint8Array", { pHash, nHash, sHash, to });
     assertType<BigNumber>("BigNumber", { amount });
 
     if (pHash.length !== 32) {
@@ -119,11 +122,11 @@ export const generateSighash = (
         );
     }
 
-    const encoded = Buffer.concat([
+    const encoded = concat([
         pHash,
         toNBytes(amount, 32),
         sHash,
-        padBuffer(to, 32),
+        padUint8Array(to, 32),
         nHash,
     ]);
 
@@ -140,7 +143,7 @@ export const generateTransactionHash = (
     version: string,
     selector: string,
     packValue: TypedPackValue,
-): Buffer => {
+): Uint8Array => {
     assertType<string>("string", { version, selector });
     return sha256(
         pack.binaryMarshal.encodeString(version),

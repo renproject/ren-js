@@ -21,7 +21,7 @@ const DogecoinMainnet: BitcoinNetworkConfig = {
     },
     averageConfirmationTime: 60,
     explorer: SoChainExplorer("doge", "DOGE"),
-    p2shPrefix: Buffer.from([0x16]),
+    p2shPrefix: new Uint8Array([0x16]),
     providers: [
         new Blockchair(BlockchairNetwork.DOGECOIN),
         { api: new SoChain(SoChainNetwork.DOGE), priority: 15 },
@@ -42,7 +42,7 @@ const DogecoinTestnet: BitcoinNetworkConfig = {
     averageConfirmationTime: 60,
     isTestnet: true,
     explorer: SoChainExplorer("testnet/doge", "DOGETEST"),
-    p2shPrefix: Buffer.from([0xc4]),
+    p2shPrefix: new Uint8Array([0xc4]),
     providers: [{ api: new SoChain(SoChainNetwork.DOGETEST), priority: 15 }],
     // validateAddress: (address: string) =>
     //     validateAddress(address, "DOGE", "testnet"),

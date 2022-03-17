@@ -96,11 +96,11 @@ export type Unmarshalled<
     : Type extends PackPrimitive.Str
     ? string
     : Type extends PackPrimitive.Bytes
-    ? Buffer
+    ? Uint8Array
     : Type extends PackPrimitive.Bytes32
-    ? Buffer
+    ? Uint8Array
     : Type extends PackPrimitive.Bytes65
-    ? Buffer
+    ? Uint8Array
     : Type extends PackNilType
     ? null
     : Type extends { list: InnerType }

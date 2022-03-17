@@ -27,7 +27,7 @@ export interface GatewayParams<
      * A LockAndMint's gateway address can be forced to be unique by providing a
      * 32-byte nonce.
      *
-     * The nonce should be passed is as a 32-byte Buffer or a 32-byte hex
+     * The nonce should be passed is as a 32-byte Uint8Array or a 32-byte hex
      * string, with or without a "0x" prefix.
      *
      * It defaults to 0 (32 empty bytes).
@@ -46,7 +46,7 @@ export interface GatewayParams<
      * nonce: "ZA", // In URL-base64 or standard base64 format.
      *
      * // String
-     * nonce: toURLBase64(Buffer.from([100])) // from @renproject/utils
+     * nonce: toURLBase64(new Uint8Array([100])) // from @renproject/utils
      * ```
      *
      *
@@ -54,8 +54,7 @@ export interface GatewayParams<
      * ```
      * // Use a nonce based on the number of days since epoch, in order to
      * // generate a new deposit address each day.
-     * nonce: new BN(Math.floor(Date.now() / 8.64e7))
-     *          .toArrayLike(Buffer, "be", 32),
+     * nonce: utils.toNBytes(new BigNumber(Math.floor(Date.now() / 8.64e7)), 32)
      * ```
      */
     nonce?: UrlBase64String | number;

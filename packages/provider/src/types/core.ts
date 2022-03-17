@@ -4,14 +4,14 @@ import { TxStatus, UrlBase64String } from "@renproject/utils";
 
 export interface RenVMBlock {
     height: BigNumber;
-    hash: Buffer;
-    parentHash: Buffer;
-    commitment: Buffer;
+    hash: Uint8Array;
+    parentHash: Uint8Array;
+    commitment: Uint8Array;
     timestamp: BigNumber;
     round: BigNumber;
-    stateRoot: Buffer;
-    intrinsicTxs: Buffer[];
-    extrinsicTxs: Buffer[];
+    stateRoot: Uint8Array;
+    intrinsicTxs: Uint8Array[];
+    extrinsicTxs: Uint8Array[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,26 +33,26 @@ export interface RenVMTransactionWithStatus<
 export type RenVMCrossChainTransaction = RenVMTransaction<
     // Input
     {
-        txid: Buffer;
+        txid: Uint8Array;
         txindex: BigNumber;
         amount: BigNumber;
-        payload: Buffer;
-        phash: Buffer;
+        payload: Uint8Array;
+        phash: Uint8Array;
         to: string;
-        nonce: Buffer;
-        nhash: Buffer;
-        gpubkey: Buffer;
-        ghash: Buffer;
+        nonce: Uint8Array;
+        nhash: Uint8Array;
+        gpubkey: Uint8Array;
+        ghash: Uint8Array;
     },
     // Output
     {
         amount: BigNumber;
         fees: BigNumber;
-        hash: Buffer;
+        hash: Uint8Array;
         revert: string;
-        sig: Buffer;
-        sighash: Buffer;
-        txid: Buffer;
+        sig: Uint8Array;
+        sighash: Uint8Array;
+        txid: Uint8Array;
         txindex: BigNumber;
     }
 >;

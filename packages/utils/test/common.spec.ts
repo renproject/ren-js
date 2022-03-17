@@ -7,22 +7,25 @@ import {
     fromHex,
     isDefined,
     Ox,
-    SECONDS,
     sleep,
     strip0x,
     toBase64,
     toURLBase64,
     tryNTimes,
-} from "../src/common";
-import { extractError } from "../src/errors";
+    extractError,
+    toHex,
+    toNBytes,
+    toUTF8String,
+    fromUTF8String,
+} from "../src/internal/common";
 
 chai.use(chaiAsPromised);
 
-describe("common utils", () => {
+describe.only("common utils", () => {
     context("sleep", () => {
         it("correct amount of time passes", async () => {
             const timeBefore = Date.now();
-            await sleep(0.1 * SECONDS);
+            await sleep(0.1 * sleep.SECONDS);
             const timeAfter = Date.now();
 
             const difference = (timeAfter - timeBefore) / 1000;
@@ -47,45 +50,57 @@ describe("common utils", () => {
             expect(Ox("1234")).to.equal("0x1234");
             expect(Ox("")).to.equal("0x");
             expect(Ox("0x1234")).to.equal("0x1234");
-            expect(Ox(Buffer.from("1234", "hex"))).to.equal("0x1234");
+            expect(Ox(fromHex("1234"))).to.equal("0x1234");
         });
     });
 
     context("fromHex", () => {
         it("converts hex string to Buffer", () => {
-            expect(fromHex("1234")).to.deep.equal(Buffer.from([0x12, 0x34]));
-            expect(fromHex("0x1234")).to.deep.equal(Buffer.from([0x12, 0x34]));
-            expect(fromHex(Buffer.from([0x12, 0x34]))).to.deep.equal(
-                Buffer.from([0x12, 0x34]),
+            expect(fromHex("1234")).to.deep.equal(new Uint8Array([0x12, 0x34]));
+            expect(fromHex("0x1234")).to.deep.equal(
+                new Uint8Array([0x12, 0x34]),
+            );
+            expect(fromHex(toHex(new Uint8Array([0x12, 0x34])))).to.deep.equal(
+                new Uint8Array([0x12, 0x34]),
             );
         });
     });
 
     context("fromBase64", () => {
         it("converts base64 string to Buffer", () => {
-            expect(fromBase64("EjQ=")).to.deep.equal(Buffer.from([0x12, 0x34]));
-            expect(fromBase64(Buffer.from([0x12, 0x34]))).to.deep.equal(
-                Buffer.from([0x12, 0x34]),
+            expect(fromBase64("EjQ=")).to.deep.equal(
+                new Uint8Array([0x12, 0x34]),
             );
+            expect(
+                fromBase64(toBase64(new Uint8Array([0x12, 0x34]))),
+            ).to.deep.equal(new Uint8Array([0x12, 0x34]));
         });
 
         it("converts url-base64 string to Buffer", () => {
-            expect(fromBase64("+/8=")).to.deep.equal(Buffer.from([0xfb, 0xff]));
-            expect(fromBase64("+/8")).to.deep.equal(Buffer.from([0xfb, 0xff]));
-            expect(fromBase64("-_8")).to.deep.equal(Buffer.from([0xfb, 0xff]));
-            expect(fromBase64("-_8=")).to.deep.equal(Buffer.from([0xfb, 0xff]));
+            expect(fromBase64("+/8=")).to.deep.equal(
+                new Uint8Array([0xfb, 0xff]),
+            );
+            expect(fromBase64("+/8")).to.deep.equal(
+                new Uint8Array([0xfb, 0xff]),
+            );
+            expect(fromBase64("-_8")).to.deep.equal(
+                new Uint8Array([0xfb, 0xff]),
+            );
+            expect(fromBase64("-_8=")).to.deep.equal(
+                new Uint8Array([0xfb, 0xff]),
+            );
         });
     });
 
     context("toBase64", () => {
         it("converts buffers to base64 strings", () => {
-            expect(toBase64(Buffer.from([0xfb, 0xff]))).to.equal("+/8=");
+            expect(toBase64(new Uint8Array([0xfb, 0xff]))).to.equal("+/8=");
         });
     });
 
     context("toURLBase64", () => {
         it("converts buffers to url-base64 strings", () => {
-            expect(toURLBase64(Buffer.from([0xfb, 0xff]))).to.equal("-_8");
+            expect(toURLBase64(new Uint8Array([0xfb, 0xff]))).to.equal("-_8");
             // expect(toURLBase64("0xfbff")).to.equal("-_8");
         });
     });
@@ -210,5 +225,33 @@ describe("common utils", () => {
         });
     });
 
-    context("toHex", () => {});
+    context("toNBytes", () => {
+        it("should correctly convert to bytes", () => {
+            expect(toHex(toNBytes(new BigNumber(1000), 2, "be"))).to.equal(
+                "03e8",
+            );
+            expect(toHex(toNBytes(new BigNumber(1000), 2, "le"))).to.equal(
+                "e803",
+            );
+            expect(toHex(toNBytes(new BigNumber(1), 2, "be"))).to.equal("0001");
+            expect(toHex(toNBytes(new BigNumber(1), 2, "le"))).to.equal("0100");
+        });
+    });
+
+    context.only("toUTF8String", () => {
+        it("should correctly convert to utf8-string", () => {
+            expect(toUTF8String(new Uint8Array([97, 98]))).to.equal("ab");
+        });
+    });
+
+    context.only("fromUTF8String", () => {
+        it("should correctly convert from utf8-string", () => {
+            expect(toHex(fromUTF8String("BTC/toEthereum"))).to.equal(
+                "4254432f746f457468657265756d",
+            );
+            expect(fromUTF8String("!").join(",")).to.equal(
+                new Uint8Array([33]).join(","),
+            );
+        });
+    });
 });

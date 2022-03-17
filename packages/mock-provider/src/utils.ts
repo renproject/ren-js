@@ -5,7 +5,7 @@ import { utils } from "@renproject/utils";
  *
  * @param bytes The number of bytes to generate.
  */
-export const randomBytes = (bytes: number): Buffer => {
+export const randomBytes = (bytes: number): Uint8Array => {
     try {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -28,7 +28,7 @@ export const randomBytes = (bytes: number): Buffer => {
     }
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const crypto = require("crypto") as {
-        randomBytes: (length: number) => Buffer;
+        randomBytes: (length: number) => Uint8Array;
     };
     return crypto.randomBytes(bytes);
 };

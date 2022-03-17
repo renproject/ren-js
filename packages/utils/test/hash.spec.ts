@@ -1,6 +1,6 @@
 import chai, { expect } from "chai";
 
-import { keccak256 } from "../src/hash";
+import { keccak256 } from "../src/internal/hashes";
 
 chai.should();
 

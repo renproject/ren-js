@@ -1,7 +1,7 @@
-import { utils } from "@renproject/utils";
+import { assertType, utils } from "@renproject/utils";
 import { bech32 } from "bech32";
 import base58 from "bs58";
-import createHash from "create-hash";
+import { ripemd160 as createRipemd160 } from "@noble/hashes/ripemd160";
 import { validate } from "wallet-address-validator";
 import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
 
@@ -12,18 +12,18 @@ import {
     isBitcoinNetworkConfig,
 } from "./types";
 
-export const addressToBytes = (address: string): Buffer => {
+export const addressToBytes = (address: string): Uint8Array => {
     // Attempt to decode address as a bech32 address, and if that fails
     // fall back to base58.
     try {
         const [type, ...words] = bech32.decode(address).words;
-        return Buffer.concat([
-            Buffer.from([type]),
-            Buffer.from(bech32.fromWords(words)),
+        return utils.concat([
+            new Uint8Array([type]),
+            new Uint8Array(bech32.fromWords(words)),
         ]);
     } catch (error) {
         try {
-            return Buffer.from(base58.decode(address));
+            return new Uint8Array(base58.decode(address));
         } catch (internalError) {
             throw new Error(`Unrecognized address format "${address}".`);
         }
@@ -97,20 +97,20 @@ export const resolveBitcoinNetworkConfig = (
     return networkConfig;
 };
 
-/** Calculate the sha256 hash of the input. */
-export const sha256 = (input: Buffer): Buffer =>
-    createHash("sha256").update(input).digest();
-
 /** Calculate the ripemd160 hash of the input. */
-export const ripemd160 = (input: Buffer): Buffer =>
-    createHash("rmd160").update(input).digest();
+export const ripemd160 = (...msg: Uint8Array[]): Uint8Array => {
+    assertType<Uint8Array[]>("Uint8Array[]", { msg });
+    return new Uint8Array(createRipemd160(utils.concat(msg)));
+};
 
 /**
  * hash160 is used to calculate the Bitcoin address from a private key, and is
  * equivalent to `ripemd160(sha256(publicKey))`
  */
-export const hash160 = (publicKey: Buffer): Buffer =>
-    ripemd160(sha256(publicKey));
+export const hash160 = (...msg: Uint8Array[]): Uint8Array => {
+    assertType<Uint8Array[]>("Uint8Array[]", { msg });
+    return ripemd160(utils.sha256(utils.concat(msg)));
+};
 
 /**
  * Convert a Bitcoin transaction hash from its standard format to the format
@@ -131,5 +131,5 @@ export function txidFormattedToTxid(txidFormatted: string) {
  * string.
  */
 export function txidToTxidFormatted(txid: string) {
-    return utils.fromBase64(txid).reverse().toString("hex");
+    return utils.toHex(utils.fromBase64(txid).reverse());
 }

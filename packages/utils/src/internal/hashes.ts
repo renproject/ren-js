@@ -1,23 +1,27 @@
-import createHash from "create-hash";
-import { keccak256 as jsKeccak256 } from "js-sha3";
+import { sha256 as createSha256 } from "@noble/hashes/sha256";
+import { keccak_256 as createKeccak256 } from "@noble/hashes/sha3";
 
 import { assertType } from "./assert";
+import { concat } from "./common";
 
 /**
- * Return the keccak256 hash of an array of buffers. The inputs are concatenated
- * before being hashed.
+ * Returns the keccak256 hash of an array of Uint8Arrays. The inputs are
+ * concatenated before being hashed.
+ * @param msg One ore more Uint8Arrays to hash.
+ * @returns The keccak256 hash of the concatenated input Uint8Arrays.
  */
-export const keccak256 = (...msg: Buffer[]): Buffer => {
-    assertType<Buffer[]>("Buffer[]", { msg });
-
-    return Buffer.from(
-        (jsKeccak256 as unknown as { buffer: typeof jsKeccak256 }).buffer(
-            Buffer.concat(msg),
-        ),
-    );
+export const keccak256 = (...msg: Uint8Array[]): Uint8Array => {
+    assertType<Uint8Array[]>("Uint8Array[]", { msg });
+    return new Uint8Array(createKeccak256(concat(msg)));
 };
 
-export const sha256 = (...msg: Buffer[]): Buffer => {
-    assertType<Buffer[]>("Buffer[]", { msg });
-    return createHash("sha256").update(Buffer.concat(msg)).digest();
+/**
+ * Returns the sha256 hash of an array of Uint8Arrays. The inputs are concatenated
+ * before being hashed.
+ * @param msg One ore more Uint8Arrays to hash.
+ * @returns The sha256 hash of the concatenated input Uint8Arrays.
+ */
+export const sha256 = (...msg: Uint8Array[]): Uint8Array => {
+    assertType<Uint8Array[]>("Uint8Array[]", { msg });
+    return new Uint8Array(createSha256(concat(msg)));
 };

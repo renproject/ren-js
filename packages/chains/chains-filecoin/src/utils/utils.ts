@@ -8,7 +8,7 @@ import { CID } from "multiformats";
  * @returns The same Filecoin transaction hash formatted as a base64 string.
  */
 export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(Buffer.from(CID.parse(txidFormatted).bytes));
+    return utils.toURLBase64(new Uint8Array(CID.parse(txidFormatted).bytes));
 }
 
 /**

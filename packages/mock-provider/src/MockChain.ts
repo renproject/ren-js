@@ -4,6 +4,7 @@ import { BitcoinBaseChain } from "@renproject/chains-bitcoin";
 import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
 
 import { randomBytes } from "./utils";
+import { utils } from "@renproject/utils";
 
 export class MockChain extends BitcoinBaseChain {
     public mempool: Array<UTXO & { to: string }>;
@@ -26,7 +27,7 @@ export class MockChain extends BitcoinBaseChain {
                 averageConfirmationTime: 1,
 
                 isTestnet: true,
-                p2shPrefix: Buffer.from([0xc4]),
+                p2shPrefix: new Uint8Array([0xc4]),
                 explorer: {
                     url: "",
                     address: (_address: string) => "",
@@ -68,7 +69,7 @@ export class MockChain extends BitcoinBaseChain {
     public addUTXO = (to: string, amount: BigNumber | number): UTXO => {
         const tx: UTXO & { to: string } = {
             to,
-            txid: randomBytes(32).toString("hex"),
+            txid: utils.toHex(randomBytes(32)),
             txindex: "0",
             amount: amount.toString(),
             height: "0",

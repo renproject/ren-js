@@ -259,8 +259,8 @@ export class Terra
     public createGatewayAddress(
         asset: string,
         fromPayload: TerraInputPayload,
-        shardPublicKey: Buffer,
-        gHash: Buffer,
+        shardPublicKey: Uint8Array,
+        gHash: Uint8Array,
     ): string {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
@@ -286,16 +286,14 @@ export class Terra
         );
 
         // 33-byte compressed public key.
-        const newCompressedPublicKey: Buffer = Buffer.from(
+        const newCompressedPublicKey: Uint8Array = new Uint8Array(
             derivedPublicKey.getPublic().encodeCompressed(),
         );
 
         // Create Terra key from compressed public key, to calculate address.
-        const address: Key = new (Key as {
-            new (publicKey: SimplePublicKey): Key;
-        })(new SimplePublicKey(newCompressedPublicKey.toString("base64")));
+        const key = new SimplePublicKey(utils.toBase64(newCompressedPublicKey));
 
-        return address.accAddress;
+        return key.address();
     }
 
     public getOutputPayload(
@@ -305,8 +303,8 @@ export class Terra
         toPayload: TerraOutputPayload,
     ): {
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     } {
         this._assertAssetIsSupported(asset);
         const address = toPayload.params
@@ -317,10 +315,10 @@ export class Terra
         }
         return {
             to: address,
-            toBytes: Buffer.from(
+            toBytes: new Uint8Array(
                 bech32.fromWords(bech32.decode(address).words),
             ),
-            payload: Buffer.from([]),
+            payload: new Uint8Array(),
         };
     }
 

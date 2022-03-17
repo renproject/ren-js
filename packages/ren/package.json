@@ -59,7 +59,6 @@
     "dependencies": {
         "@renproject/provider": "^3.0.0-alpha.16",
         "@renproject/utils": "^3.0.0-alpha.16",
-        "@types/node": ">=10",
         "bignumber.js": "^9.0.2",
         "events": "^3.3.0",
         "immutable": "^4.0.0"

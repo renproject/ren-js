@@ -1,6 +1,12 @@
 import BigNumber from "bignumber.js";
 
-import { extractError, fromBase64, toNBytes } from "../../internal/common";
+import {
+    concat,
+    extractError,
+    fromBase64,
+    fromUTF8String,
+    toNBytes,
+} from "../../internal/common";
 import { isPackListType, isPackStructType } from "./common";
 import {
     PackListType,
@@ -77,12 +83,12 @@ export const encodePackType = (type: PackTypeDefinition): number => {
 };
 
 /**
- * Convert a JavaScript number to a big-endian Buffer of the provided length.
+ * Convert a JavaScript number to a big-endian Uint8Array of the provided length.
  */
 export const encodeUint = (
     value: BigNumber | string | number,
     bits: number,
-): Buffer => {
+): Uint8Array => {
     try {
         return toNBytes(
             typeof value === "number"
@@ -105,7 +111,7 @@ export const encodeUint = (
 
 export const encodeU =
     (bits: number) =>
-    (value: BigNumber | string | number): Buffer =>
+    (value: BigNumber | string | number): Uint8Array =>
         encodeUint(value, bits);
 export const encodeU8 = encodeU(8);
 export const encodeU16 = encodeU(16);
@@ -114,25 +120,25 @@ export const encodeU64 = encodeU(64);
 export const encodeU128 = encodeU(128);
 export const encodeU256 = encodeU(256);
 
-export const withLength = (value: Buffer): Buffer =>
-    Buffer.concat([encodeU32(value.length), value]);
+export const withLength = (value: Uint8Array): Uint8Array =>
+    concat([encodeU32(value.length), value]);
 
 /**
  * Encode a string, prefixed by its length.
  */
-export const encodeString = (value: string): Buffer =>
-    withLength(Buffer.from(value));
+export const encodeString = (value: string): Uint8Array =>
+    withLength(fromUTF8String(value));
 
 /**
  * Encode a struct type by prefixing the `struct` pack type ID and the number
  * of struct entries, and then each field name followed by the field's
  * encoded type definition.
  */
-export const encodePackStructType = (type: PackStructType): Buffer => {
+export const encodePackStructType = (type: PackStructType): Uint8Array => {
     const length = encodeU32(type.struct.length);
 
-    return Buffer.concat([
-        Buffer.from([encodePackType(type)]),
+    return concat([
+        new Uint8Array([encodePackType(type)]),
         length,
         ...type.struct.map((field) => {
             const keys = Object.keys(field);
@@ -144,7 +150,7 @@ export const encodePackStructType = (type: PackStructType): Buffer => {
             }
             const key = Object.keys(field)[0];
             const fieldType = field[key];
-            return Buffer.concat([
+            return concat([
                 encodeString(key),
                 encodePackTypeDefinition(fieldType),
             ]);
@@ -156,22 +162,24 @@ export const encodePackStructType = (type: PackStructType): Buffer => {
  * Encode a list type by concatenating the `list` pack type ID followed by the
  * encoded type definition of the list's sub-type.
  */
-export const encodePackListType = (type: PackListType): Buffer =>
-    Buffer.concat([
-        Buffer.from([encodePackType(type)]),
+export const encodePackListType = (type: PackListType): Uint8Array =>
+    concat([
+        new Uint8Array([encodePackType(type)]),
         encodePackTypeDefinition(type.list),
     ]);
 
 /**
  * Encode a pack type, as defined above for each type.
  */
-export const encodePackTypeDefinition = (type: PackTypeDefinition): Buffer => {
+export const encodePackTypeDefinition = (
+    type: PackTypeDefinition,
+): Uint8Array => {
     if (isPackStructType(type)) {
         return encodePackStructType(type);
     } else if (isPackListType(type)) {
         return encodePackListType(type);
     } else if (typeof type === "string") {
-        return Buffer.from([encodePackType(type)]);
+        return new Uint8Array([encodePackType(type)]);
     }
     throw new Error(`Unable to encode type ${String(type)}.`);
 };
@@ -179,13 +187,13 @@ export const encodePackTypeDefinition = (type: PackTypeDefinition): Buffer => {
 // === Pack Values =============================================================
 
 /**
- * Encode a JavaScript value with an associated pack type into a Buffer.
+ * Encode a JavaScript value with an associated pack type into a Uint8Array.
  */
 export const encodePackPrimitive = (
     type: PackPrimitive,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
-): Buffer => {
+): Uint8Array => {
     switch (type) {
         // Booleans
         case PackPrimitive.Bool:
@@ -210,16 +218,16 @@ export const encodePackPrimitive = (
         // Bytes
         case PackPrimitive.Bytes: {
             return withLength(
-                Buffer.isBuffer(value)
-                    ? Buffer.from(value)
+                value instanceof Uint8Array
+                    ? value
                     : // Supports base64 url format
                       fromBase64(value),
             );
         }
         case PackPrimitive.Bytes32:
         case PackPrimitive.Bytes65:
-            return Buffer.isBuffer(value)
-                ? Buffer.from(value)
+            return value instanceof Uint8Array
+                ? value
                 : // Supports base64 url format
                   fromBase64(value);
     }
@@ -232,8 +240,8 @@ export const encodePackPrimitive = (
 export const encodePackStruct = (
     type: PackStructType,
     value: unknown,
-): Buffer =>
-    Buffer.concat(
+): Uint8Array =>
+    concat(
         type.struct.map((member) => {
             const keys = Object.keys(member);
             if (keys.length === 0) {
@@ -273,9 +281,9 @@ export const encodePackStruct = (
 export const encodeListStruct = (
     type: PackListType,
     value: unknown[],
-): Buffer => {
+): Uint8Array => {
     const subtype = type.list;
-    return Buffer.concat(
+    return concat(
         value.map((element, i) => {
             try {
                 return encodePackValue(subtype, element);
@@ -299,13 +307,13 @@ export const encodePackValue = (
     type: PackTypeDefinition,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
-): Buffer => {
+): Uint8Array => {
     if (isPackStructType(type)) {
         return encodePackStruct(type, value);
     } else if (isPackListType(type)) {
         return encodeListStruct(type, value);
     } else if (typeof type === "string") {
-        if (type === "nil") return Buffer.from([]);
+        if (type === "nil") return new Uint8Array();
         return encodePackPrimitive(type, value);
     }
     throw new Error(
@@ -319,11 +327,11 @@ export const encodePackValue = (
  * Encode a `{ t, v }` pair by concatenating the pack type-encoding of `t`
  * followed by the pack value-encoding of `v`.
  */
-export function encodeTypedPackValue({ t, v }: TypedPackValue): Buffer {
+export function encodeTypedPackValue({ t, v }: TypedPackValue): Uint8Array {
     try {
         const encodedType = encodePackTypeDefinition(t);
         const encodedValue = encodePackValue(t, v);
-        return Buffer.concat([encodedType, encodedValue]);
+        return concat([encodedType, encodedValue]);
     } catch (error: unknown) {
         if (error instanceof Error) {
             error.message = `Error encoding typed pack value: ${error.message}`;

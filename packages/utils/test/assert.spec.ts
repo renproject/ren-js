@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import chai, { expect } from "chai";
 
-import { assert, assertObject, assertType } from "../src/assert";
+import { assert, assertObject, assertType } from "../src/internal/assert";
 
 chai.should();
 

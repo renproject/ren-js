@@ -431,8 +431,8 @@ export class Filecoin
     public createGatewayAddress(
         asset: string,
         fromPayload: FilecoinInputPayload,
-        shardPublicKey: Buffer,
-        gHash: Buffer,
+        shardPublicKey: Uint8Array,
+        gHash: Uint8Array,
     ): string {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
@@ -457,9 +457,9 @@ export class Filecoin
                 .add(gHashKey.getPublic()) as unknown as elliptic.ec.KeyPair,
         );
 
-        const bytes = Buffer.from(
+        const bytes = new Uint8Array(
             blake2b(
-                Buffer.from(derivedPublicKey.getPublic(false, "hex"), "hex"),
+                utils.fromHex(derivedPublicKey.getPublic(false, "hex")),
                 null,
                 20,
             ),
@@ -471,22 +471,22 @@ export class Filecoin
     /**
      * See [[LockChain.addressToBytes]].
      */
-    public addressToBytes(address: string): Buffer {
-        return Buffer.from(decodeAddress(address).str);
+    public addressToBytes(address: string): Uint8Array {
+        return new Uint8Array(decodeAddress(address).str);
     }
 
     /**
      * See [[LockChain.addressToBytes]].
      */
-    public bytesToAddress(bytes: Buffer): string {
+    public bytesToAddress(bytes: Uint8Array): string {
         if (bytes.length === 21) {
-            bytes = Buffer.from(bytes.slice(1, 21));
+            bytes = new Uint8Array(bytes.slice(1, 21));
         }
         // secp256k1 protocol prefix
         const protocol = 1;
 
         const addressObject = {
-            str: Buffer.concat([Buffer.from([protocol]), bytes]),
+            str: utils.concat([new Uint8Array([protocol]), bytes]),
             protocol: () => protocol,
             payload: () => bytes,
         };
@@ -511,8 +511,8 @@ export class Filecoin
         toPayload: FilecoinOutputPayload,
     ): {
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     } {
         this._assertAssetIsSupported(asset);
         const address = toPayload.params
@@ -523,8 +523,8 @@ export class Filecoin
         }
         return {
             to: address,
-            toBytes: Buffer.from(CID.parse(address).bytes),
-            payload: Buffer.from([]),
+            toBytes: new Uint8Array(CID.parse(address).bytes),
+            payload: new Uint8Array(),
         };
     }
 

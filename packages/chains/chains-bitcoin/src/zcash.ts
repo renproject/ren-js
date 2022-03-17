@@ -24,7 +24,7 @@ const ZcashMainnet: BitcoinNetworkConfig = {
     averageConfirmationTime: 75,
 
     explorer: SoChainExplorer("zcash", "ZEC"),
-    p2shPrefix: Buffer.from([0x1c, 0xbd]),
+    p2shPrefix: new Uint8Array([0x1c, 0xbd]),
     providers: [
         new Blockbook("https://zecblockexplorer.com/api/"),
         new Blockchair(BlockchairNetwork.ZCASH),
@@ -49,7 +49,7 @@ const ZcashTestnet: BitcoinNetworkConfig = {
 
     isTestnet: true,
     explorer: SoChainExplorer("testnet/zcash", "ZECTEST"),
-    p2shPrefix: Buffer.from([0x1c, 0xba]),
+    p2shPrefix: new Uint8Array([0x1c, 0xba]),
     providers: [
         new Insight("https://explorer.testnet.z.cash/api/"),
         { api: new SoChain(SoChainNetwork.ZECTEST), priority: 15 },

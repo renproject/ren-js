@@ -8,7 +8,7 @@ import { utils } from "@renproject/utils";
  * @returns The same Terra transaction hash formatted as a base64 string.
  */
 export function txidFormattedToTxid(txidFormatted: string) {
-    return utils.toURLBase64(Buffer.from(txidFormatted, "hex"));
+    return utils.toURLBase64(utils.fromHex(txidFormatted));
 }
 
 /**
@@ -19,5 +19,5 @@ export function txidFormattedToTxid(txidFormatted: string) {
  * string.
  */
 export function txidToTxidFormatted(txid: string) {
-    return utils.fromBase64(txid).toString("hex").toUpperCase();
+    return utils.toHex(utils.fromBase64(txid)).toUpperCase();
 }

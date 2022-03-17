@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { assertType } from "./internal/assert";
-import { Ox, toNBytes } from "./internal/common";
+import { concat, Ox, toNBytes } from "./internal/common";
 import { ChainTransaction } from "./types/chain";
 
 /**
@@ -54,14 +54,14 @@ export const decodeRenVMSelector = (
  * This is required before a mint or release signature can be submitted to a
  * MintGateway or LockGateway.
  *
- * @param signature The `r`, `s` and `v` values concatenated as a Buffer.
+ * @param signature The `r`, `s` and `v` values concatenated as a Uint8Array.
  * @returns The signature in the same format, with normalized values.
  */
-export const normalizeSignature = (signature: Buffer): Buffer => {
-    assertType<Buffer>("Buffer", { signature });
+export const normalizeSignature = (signature: Uint8Array): Uint8Array => {
+    assertType<Uint8Array>("Uint8Array", { signature });
 
-    const r: Buffer = signature.slice(0, 32);
-    const s: Buffer = signature.slice(32, 64);
+    const r: Uint8Array = signature.slice(0, 32);
+    const s: Uint8Array = signature.slice(32, 64);
     let v: number = signature.slice(64, 65)[0];
 
     let sBN = new BigNumber(Ox(s), 16);
@@ -85,7 +85,7 @@ export const normalizeSignature = (signature: Buffer): Buffer => {
         v = v === 27 ? 28 : 27;
     }
 
-    return Buffer.concat([r, toNBytes(sBN, 32), Buffer.from([v])]);
+    return concat([r, toNBytes(sBN, 32), new Uint8Array([v])]);
 };
 
 export function populateChainTransaction({

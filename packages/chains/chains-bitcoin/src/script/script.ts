@@ -1,53 +1,51 @@
-import { hash160, sha256 } from "../utils/utils";
+import { utils } from "@renproject/utils";
+import { hash160 } from "../utils/utils";
 import { Opcode } from "./opcodes";
 
-const checksum = (hash: Buffer) => sha256(sha256(hash)).slice(0, 4);
+const checksum = (hash: Uint8Array) =>
+    utils.sha256(utils.sha256(hash)).slice(0, 4);
 
 export class Script {
-    private script: Buffer;
+    private script: Uint8Array;
 
     public static OP = Opcode;
     public OP = Opcode;
 
     public constructor() {
-        this.script = Buffer.from([]);
+        this.script = new Uint8Array();
     }
 
     public addOp(op: Opcode): this {
-        this.script = Buffer.concat([this.script, Buffer.from([op])]);
+        this.script = new Uint8Array([...this.script, op]);
         return this;
     }
 
-    public addData(data: Buffer): this {
-        this.script = Buffer.concat([
-            this.script,
-            Buffer.from([data.length]),
-            data,
-        ]);
+    public addData(data: Uint8Array): this {
+        this.script = new Uint8Array([...this.script, data.length, ...data]);
         return this;
     }
 
-    public toBuffer(): Buffer {
+    public bytes(): Uint8Array {
         return this.script;
     }
 
-    public toScriptHashOut(): Buffer {
+    public toScriptHashOut(): Uint8Array {
         return new Script()
             .addOp(Script.OP.OP_HASH160)
-            .addData(hash160(this.toBuffer()))
+            .addData(hash160(this.bytes()))
             .addOp(Script.OP.OP_EQUAL)
-            .toBuffer();
+            .bytes();
     }
 
-    public toAddress(prefix: Buffer): Buffer {
+    public toAddress(prefix: Uint8Array | Uint8Array): Uint8Array {
         // Hash
-        const hash = hash160(this.toBuffer());
+        const hash = hash160(this.bytes());
 
         // Prepend prefix
-        const hashWithPrefix = Buffer.concat([prefix, hash]);
+        const hashWithPrefix = utils.concat([prefix, hash]);
 
         // Append checksum
-        const hashWithChecksum = Buffer.concat([
+        const hashWithChecksum = utils.concat([
             hashWithPrefix,
             checksum(hashWithPrefix),
         ]);

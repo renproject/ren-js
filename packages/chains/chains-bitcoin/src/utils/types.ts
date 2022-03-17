@@ -44,7 +44,7 @@ export interface BitcoinNetworkConfig {
     averageConfirmationTime: number;
 
     isTestnet?: boolean;
-    p2shPrefix: Buffer;
+    p2shPrefix: Uint8Array;
     explorer: {
         url: string;
         address: (address: string) => string;

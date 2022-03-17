@@ -50,7 +50,6 @@
         "@solana/spl-token": "0.2.0",
         "@solana/web3.js": "1.36.0",
         "@types/bs58": "^4.0.1",
-        "@types/node": ">=10",
         "bignumber.js": "^9.0.2",
         "bs58": "^5.0.0",
         "buffer-layout": "^1.2.2",

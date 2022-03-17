@@ -156,13 +156,13 @@ export class Gateway<
         return this._defaultGetter("_selector") || this._selector;
     }
 
-    private _gHash: Buffer | undefined;
-    public get gHash(): Buffer {
+    private _gHash: Uint8Array | undefined;
+    public get gHash(): Uint8Array {
         return this._defaultGetter("_gHash") || this._gHash;
     }
 
-    private _pHash: Buffer | undefined;
-    public get pHash(): Buffer {
+    private _pHash: Uint8Array | undefined;
+    public get pHash(): Uint8Array {
         return this._defaultGetter("_pHash") || this._pHash;
     }
 
@@ -319,7 +319,7 @@ export class Gateway<
                     );
                 }
 
-                // Convert nonce to Buffer (using `0` if no nonce is set.)
+                // Convert nonce to Uint8Array (using `0` if no nonce is set.)
                 const nonce =
                     typeof this.params.nonce === "string"
                         ? utils.fromBase64(this.params.nonce)
@@ -369,9 +369,8 @@ export class Gateway<
                     pHash: this.pHash,
                     to: payload.to,
                     nonce: nonce,
-                    nHash: Buffer.from(
+                    nHash: utils.fromBase64(
                         "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                        "base64",
                     ),
                     gPubKey: gPubKey,
                     gHash: gHash,
@@ -556,7 +555,7 @@ export class Gateway<
                     );
                 }
 
-                // Determine which nonce to use - converting it to a Buffer
+                // Determine which nonce to use - converting it to a Uint8Array
                 // to ensure it's in a standard format before calling
                 // utils.toURLBase64 again.
                 const nonce = utils.toURLBase64(
@@ -621,12 +620,11 @@ export class Gateway<
                     depositIdentifier,
                     await promise,
                 );
-            } catch (error) {
-                console.error(
-                    `Error processing deposit ${
-                        deposit.txidFormatted
-                    }: ${utils.extractError(error)}`,
-                );
+            } catch (error: any) {
+                error.message = `Error processing deposit ${
+                    deposit.txidFormatted
+                }: ${utils.extractError(error)}`;
+                console.error(error);
                 this.transactions = this.transactions.remove(depositIdentifier);
             }
         }

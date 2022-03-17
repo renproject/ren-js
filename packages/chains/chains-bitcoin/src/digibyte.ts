@@ -23,7 +23,7 @@ const DigiByteMainnet: BitcoinNetworkConfig = {
     },
     averageConfirmationTime: 15,
     explorer: StandardBitcoinExplorer("https://digiexplorer.info/"),
-    p2shPrefix: Buffer.from([0x3f]),
+    p2shPrefix: new Uint8Array([0x3f]),
     providers: [
         new Blockbook(
             "https://multichain-web-proxy.herokuapp.com/digibyte-mainnet",
@@ -49,7 +49,7 @@ const DigiByteTestnet: BitcoinNetworkConfig = {
     explorer: StandardBitcoinExplorer(
         "`https://testnetexplorer.digibyteservers.io/",
     ),
-    p2shPrefix: Buffer.from([0x8c]),
+    p2shPrefix: new Uint8Array([0x8c]),
     providers: [
         new Blockbook("https://testnetexplorer.digibyteservers.io/api"),
     ],

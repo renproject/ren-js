@@ -19,8 +19,6 @@ import {
     utils,
 } from "@renproject/utils";
 
-export const RENVM_CHAIN = "RenVM";
-
 export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
     implements
         TxSubmitter<
@@ -96,11 +94,11 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         };
 
         this.progress = {
-            chain: RENVM_CHAIN,
+            chain: this.chain,
             status: ChainTransactionStatus.Ready,
             target: 1,
             transaction: {
-                chain: RENVM_CHAIN,
+                chain: this.chain,
                 txid: this.tx.hash,
                 txidFormatted: this.tx.hash,
                 txindex: "0",

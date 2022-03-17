@@ -4,8 +4,9 @@ import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
 import { providers, Wallet } from "ethers";
 import SendCrypto from "send-crypto";
+import { Buffer } from "buffer";
 
-import { RenNetwork } from "@renproject/utils";
+import { RenNetwork, utils } from "@renproject/utils";
 
 import {
     EthProvider,
@@ -133,7 +134,7 @@ export const sendFunds = async (
     amount: BigNumber,
 ) => {
     const account = new SendCrypto(
-        Buffer.from(process.env.TESTNET_PRIVATE_KEY, "hex"),
+        Buffer.from(utils.fromHex(process.env.TESTNET_PRIVATE_KEY)),
         {
             network: "testnet",
             apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",

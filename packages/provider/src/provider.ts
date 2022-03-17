@@ -95,12 +95,12 @@ export interface RenVMProviderInterface
         gateway: string,
         params: {
             selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            payload: Buffer;
-            pHash: Buffer;
+            gHash: Uint8Array;
+            gPubKey: Uint8Array;
+            nHash: Uint8Array;
+            nonce: Uint8Array;
+            payload: Uint8Array;
+            pHash: Uint8Array;
             to: string;
         },
         retries?: number,
@@ -267,19 +267,19 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
         gateway: string,
         params: {
             selector: string;
-            gHash: Buffer;
-            gPubKey: Buffer;
-            nHash: Buffer;
-            nonce: Buffer;
-            payload: Buffer;
-            pHash: Buffer;
+            gHash: Uint8Array;
+            gPubKey: Uint8Array;
+            nHash: Uint8Array;
+            nonce: Uint8Array;
+            payload: Uint8Array;
+            pHash: Uint8Array;
             to: string;
         },
         retries?: number,
     ): Promise<string> => {
         const { selector, gHash, gPubKey, nHash, nonce, payload, pHash, to } =
             params;
-        assertType<Buffer>("Buffer", {
+        assertType<Uint8Array>("Uint8Array", {
             gHash,
             gPubKey,
             nHash,
@@ -395,7 +395,7 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
             throw new Error(`Unable to fetch RenVM public key for ${asset}.`);
         }
 
-        assertType<Buffer>("Buffer", { pubKey });
+        assertType<Uint8Array>("Uint8Array", { pubKey });
 
         return {
             gPubKey: utils.toURLBase64(pubKey),

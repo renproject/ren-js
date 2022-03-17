@@ -77,18 +77,18 @@ export type EVMParamValues = {
 
     // Available when minting or releasing.
     [EVMParam.EVM_AMOUNT]?: string; // in wei
-    [EVMParam.EVM_NHASH]?: Buffer;
-    [EVMParam.EVM_PHASH]?: Buffer;
-    [EVMParam.EVM_SIGNATURE]?: Buffer;
-    [EVMParam.EVM_SIGNATURE_R]?: Buffer;
-    [EVMParam.EVM_SIGNATURE_S]?: Buffer;
+    [EVMParam.EVM_NHASH]?: Uint8Array;
+    [EVMParam.EVM_PHASH]?: Uint8Array;
+    [EVMParam.EVM_SIGNATURE]?: Uint8Array;
+    [EVMParam.EVM_SIGNATURE_R]?: Uint8Array;
+    [EVMParam.EVM_SIGNATURE_S]?: Uint8Array;
     [EVMParam.EVM_SIGNATURE_V]?: number;
 
     // Available when locking or burning.
     [EVMParam.EVM_TO_CHAIN]?: string;
     [EVMParam.EVM_TO_ADDRESS]?: string;
-    [EVMParam.EVM_TO_ADDRESS_BYTES]?: Buffer;
-    [EVMParam.EVM_TO_PAYLOAD]?: Buffer;
+    [EVMParam.EVM_TO_ADDRESS_BYTES]?: Uint8Array;
+    [EVMParam.EVM_TO_PAYLOAD]?: Uint8Array;
     // Available when locking deposit assets (e.g. ETH on Ethereum, FTM on Fantom)
     [EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]?: boolean;
     [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]?: string;
@@ -134,8 +134,8 @@ export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
         getPayloadHandler: (payloadType: string) => PayloadHandler;
     }) => SyncOrPromise<{
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     }>;
     export: (params: {
         network: EvmNetworkConfig;
@@ -207,8 +207,8 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         evmParams: EVMParamValues;
     }): Promise<{
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     }> => {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
@@ -238,7 +238,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         const types = args.map((param) => param.type);
         const values = args.map((param): unknown => param.value);
 
-        let p: Buffer;
+        let p: Uint8Array;
         try {
             p = rawEncode(types, values);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -460,7 +460,7 @@ const getContractFromAccount = async (
                             {
                                 name: "recipientPayload",
                                 type: "bytes" as const,
-                                value: Buffer.from([]),
+                                value: new Uint8Array(),
                             },
                             {
                                 name: "amount",
@@ -711,8 +711,8 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         getPayloadHandler: (payloadType: string) => PayloadHandler;
     }): Promise<{
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     }> => {
         if (!contractPayloadHandler.getPayload) {
             throw new Error(`Missing contract payload handler.`);
@@ -727,7 +727,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
             return {
                 to,
                 toBytes: utils.fromHex(to),
-                payload: Buffer.from([]),
+                payload: new Uint8Array(),
             };
         }
         let p = await contractPayloadHandler.getPayload({

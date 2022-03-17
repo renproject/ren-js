@@ -3,10 +3,7 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
-import {
-    BinanceSmartChain,
-    Ethereum,
-} from "../packages/chains/chains-ethereum/src";
+import { Goerli, Ethereum } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
 import { RenNetwork, utils } from "../packages/utils/src";
 import { getEVMProvider, printChain } from "./testUtils";
@@ -15,8 +12,8 @@ chai.should();
 
 loadDotEnv();
 
-describe("ETH/toBinanceSmartChain", () => {
-    it("ETH/toBinanceSmartChain", async function () {
+describe.only("ETH/toGoerli", () => {
+    it("ETH/toGoerli", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -26,9 +23,9 @@ describe("ETH/toBinanceSmartChain", () => {
             network,
             ...getEVMProvider(Ethereum as any, network),
         });
-        const bscAlt = new BinanceSmartChain({
+        const bscAlt = new Goerli({
             network,
-            ...getEVMProvider(BinanceSmartChain as any, network, 1),
+            ...getEVMProvider(Goerli as any, network, 1),
         });
 
         console.log("eth address:", await ethereum.signer.getAddress());
@@ -39,7 +36,9 @@ describe("ETH/toBinanceSmartChain", () => {
         const gateway = await renJS.gateway({
             asset,
             from: ethereum.Account({ amount: 0.011, convertToWei: true }),
-            to: bscAlt.Address("0x0000000000000000000000000000000000000000"),
+            to: bscAlt.Address({
+                address: "0x0000000000000000000000000000000000000000",
+            }),
         });
 
         const balance = await ethereum.getBalance(gateway.params.asset);

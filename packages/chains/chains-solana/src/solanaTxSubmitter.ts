@@ -82,6 +82,24 @@ export class SolanaTxWaiter
         };
     }
 
+    /**
+     * Export the unsigned transasction details.
+     * @returns The Solana message that needs to be signed and submitted,
+     * serialized as a base58 string.
+     *
+     * @example
+     * // Export transaction
+     * const exportedTransaction = await tx.out.export();
+     *
+     * // Complete transaction
+     * const message = Message.from(exportedTransaction);
+     * const tx = Transaction.populate(message);
+     * const signed = await signer.signTransaction(tx);
+     * const confirmedSignature = await sendAndConfirmRawTransaction(
+     *     provider,
+     *     signed.serialize(),
+     * );
+     */
     public async export(): Promise<string> {
         return base58.encode((await this._getTransaction()).serializeMessage());
     }

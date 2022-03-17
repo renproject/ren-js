@@ -28,7 +28,7 @@ const BitcoinMainnet: BitcoinNetworkConfig = {
     averageConfirmationTime: 60 * 10,
 
     explorer: StandardBitcoinExplorer("https://live.blockcypher.com/btc/"),
-    p2shPrefix: Buffer.from([0x05]),
+    p2shPrefix: new Uint8Array([0x05]),
     providers: [
         new Blockstream(),
         new Blockchair(),
@@ -55,7 +55,7 @@ const BitcoinTestnet: BitcoinNetworkConfig = {
     explorer: StandardBitcoinExplorer(
         "https://live.blockcypher.com/btc-testnet/",
     ),
-    p2shPrefix: Buffer.from([0xc4]),
+    p2shPrefix: new Uint8Array([0xc4]),
     providers: [
         new Blockstream({ testnet: true }),
         { api: new Blockchain(BlockchainNetwork.BitcoinTestnet), priority: 20 },

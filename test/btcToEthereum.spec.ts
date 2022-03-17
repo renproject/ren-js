@@ -1,5 +1,6 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
+import { Goerli } from "packages/chains/chains/src";
 
 import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import { Ethereum } from "../packages/chains/chains-ethereum/src";
@@ -29,7 +30,7 @@ describe("BTC/toEthereum", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 6,
+            nonce: 7,
         });
 
         const minimumAmount = gateway.fees.minimumAmount.shiftedBy(

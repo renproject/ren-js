@@ -162,8 +162,8 @@ export interface DepositChain<
     createGatewayAddress: (
         asset: string,
         fromPayload: FromPayload,
-        shardPublicKey: Buffer,
-        gHash: Buffer,
+        shardPublicKey: Uint8Array,
+        gHash: Uint8Array,
     ) => SyncOrPromise<string>;
 
     /** Watch for deposits made to the provided address. */
@@ -184,8 +184,8 @@ export interface DepositChain<
         toPayload: ToPayload,
     ) => SyncOrPromise<{
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     }>;
 }
 
@@ -219,8 +219,8 @@ export interface ContractChain<
             toChain: string;
             toPayload: {
                 to: string;
-                toBytes: Buffer;
-                payload: Buffer;
+                toBytes: Uint8Array;
+                payload: Uint8Array;
             };
             gatewayAddress?: string;
         },
@@ -234,11 +234,11 @@ export interface ContractChain<
         outputType: OutputType,
         contractCall: ToContractCall,
         getParams: () => {
-            pHash: Buffer;
-            nHash: Buffer;
+            pHash: Uint8Array;
+            nHash: Uint8Array;
             amount?: BigNumber;
-            sigHash?: Buffer;
-            signature?: Buffer;
+            sigHash?: Uint8Array;
+            signature?: Uint8Array;
         },
     ) => SyncOrPromise<{
         [key: string]: TxSubmitter | TxWaiter;
@@ -260,8 +260,8 @@ export interface ContractChain<
             toChain: string;
             toPayload: {
                 to: string;
-                toBytes: Buffer;
-                payload: Buffer;
+                toBytes: Uint8Array;
+                payload: Uint8Array;
             };
             gatewayAddress?: string;
         },
@@ -280,15 +280,15 @@ export interface ContractChain<
         asset: string,
         contractCall: ToContractCall,
         params: () => {
-            sHash: Buffer;
-            pHash: Buffer;
-            nHash: Buffer;
+            sHash: Uint8Array;
+            pHash: Uint8Array;
+            nHash: Uint8Array;
 
             // Only available during the transaction submission, not when
             // getOutputTx is called.
             amount?: BigNumber;
-            sigHash?: Buffer;
-            signature?: Buffer;
+            sigHash?: Uint8Array;
+            signature?: Uint8Array;
         },
         confirmationTarget: number,
     ) => SyncOrPromise<TxSubmitter | TxWaiter>;
@@ -300,8 +300,8 @@ export interface ContractChain<
         contractCall: ToContractCall,
     ) => SyncOrPromise<{
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     }>;
 }
 

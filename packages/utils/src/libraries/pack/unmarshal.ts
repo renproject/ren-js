@@ -2,7 +2,7 @@
 
 /**
  * Takes a pack primitive value (bool, uint, string or bytes) and convert it to
- * its corresponding JavaScript value (bool, BigNumber, string or Buffer).
+ * its corresponding JavaScript value (bool, BigNumber, string or Uint8Array).
  */
 
 import BigNumber from "bignumber.js";
@@ -125,6 +125,7 @@ export function unmarshalTypedPackValue({ t, v }: TypedPackValue): any {
     try {
         return unmarshalPackValue(t, v);
     } catch (error: unknown) {
+        console.error(error);
         if (error instanceof Error) {
             error.message = `Error unmarshalling typed pack value: ${error.message}`;
             throw error;

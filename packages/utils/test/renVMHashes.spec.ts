@@ -1,8 +1,7 @@
 import BigNumber from "bignumber.js";
 import { expect } from "chai";
 
-import { Ox } from "../src/common";
-import { toNBytes } from "../src/index";
+import { toNBytes, Ox, fromHex } from "../src/internal/common";
 import {
     generateGHash,
     generateNHash,
@@ -12,7 +11,7 @@ import {
 } from "../src/renVMHashes";
 
 describe("renVMHashes", () => {
-    const payload: Buffer = toNBytes(1, 32);
+    const payload: Uint8Array = toNBytes(1, 32);
 
     context("generateSHash", () => {
         it("hashes correctly", () => {
@@ -41,9 +40,9 @@ describe("renVMHashes", () => {
     });
 
     it("generateGHash", () => {
-        const to = Buffer.from("00".repeat(20), "hex");
-        const sHash = Buffer.from("00".repeat(20), "hex");
-        const nonce = Buffer.from("00".repeat(32), "hex");
+        const to = fromHex("00".repeat(20));
+        const sHash = fromHex("00".repeat(20));
+        const nonce = fromHex("00".repeat(32));
 
         expect(
             Ox(generateGHash(generatePHash(payload), to, sHash, nonce)),
@@ -53,8 +52,8 @@ describe("renVMHashes", () => {
     });
 
     it("generateNHash", () => {
-        const nonce = Buffer.from("00".repeat(32), "hex");
-        const txid = Buffer.from("00".repeat(32), "hex");
+        const nonce = fromHex("00".repeat(32));
+        const txid = fromHex("00".repeat(32));
         const txindex = "1";
         expect(Ox(generateNHash(nonce, txid, txindex))).to.equal(
             "0xb92afca8929110484eee9b91373c9ed41205b90ce83867e5e9363041a70cfe3e",
@@ -62,11 +61,11 @@ describe("renVMHashes", () => {
     });
 
     it("generateSighash", () => {
-        const pHash = Buffer.from("12".repeat(32), "hex");
+        const pHash = fromHex("12".repeat(32));
         const amount = new BigNumber(102);
-        const to = Buffer.from("34".repeat(20), "hex");
-        const selectorHash = Buffer.from("56".repeat(32), "hex");
-        const nHash = Buffer.from("78".repeat(32), "hex");
+        const to = fromHex("34".repeat(20));
+        const selectorHash = fromHex("56".repeat(32));
+        const nHash = fromHex("78".repeat(32));
 
         expect(
             Ox(generateSighash(pHash, amount, to, selectorHash, nHash)),

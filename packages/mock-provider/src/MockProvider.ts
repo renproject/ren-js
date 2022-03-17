@@ -2,6 +2,7 @@ import BigNumber from "bignumber.js";
 import elliptic from "elliptic";
 import { ecsign, privateToAddress } from "ethereumjs-util";
 import { OrderedMap } from "immutable";
+import { Buffer } from "buffer";
 
 import {
     CrossChainParams,
@@ -69,7 +70,7 @@ export const responseQueryParamsType: PackStructType = {
 };
 
 export class MockProvider implements Provider<RPCParams, RPCResponses> {
-    public privateKey: Buffer;
+    public privateKey: Uint8Array;
     private transactions: Map<string, ResponseQueryTx>;
 
     // Map from chain name to chain class
@@ -77,16 +78,16 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     // Map from asset name to chain name
     private supportedAssets = OrderedMap<string, string>();
 
-    public constructor(privateKey?: Buffer) {
+    public constructor(privateKey?: Uint8Array) {
         this.privateKey = privateKey || randomBytes(32);
         this.transactions = new Map();
     }
 
     public mintAuthority(): string {
-        return utils.Ox(privateToAddress(this.privateKey).toString("hex"));
+        return utils.Ox(privateToAddress(Buffer.from(this.privateKey)));
     }
 
-    public updatePrivateKey(privateKey?: Buffer): this {
+    public updatePrivateKey(privateKey?: Uint8Array): this {
         this.privateKey = privateKey || randomBytes(32);
         return this;
     }
@@ -276,9 +277,12 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
 
             // Generate signature
             const sigHash = generateSighash(pHash, amountOut, to, sHash, nHash);
-            const sig = ecsign(sigHash, this.privateKey);
+            const sig = ecsign(
+                Buffer.from(sigHash),
+                Buffer.from(this.privateKey),
+            );
             const sigOut = utils.toURLBase64(
-                Buffer.concat([sig.r, sig.s, Buffer.from([sig.v])]),
+                utils.concat([sig.r, sig.s, new Uint8Array([sig.v])]),
             );
 
             completedTransaction = {
@@ -346,9 +350,9 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     }: ParamsQueryBlockState): ResponseQueryBlockState => {
         const ec = new elliptic.ec("secp256k1");
         const k = ec.keyFromPrivate(this.privateKey);
-        const key = Buffer.concat([
-            Buffer.from([3]),
-            k.getPublic().getX().toArrayLike(Buffer, "be", 32),
+        const key = utils.concat([
+            new Uint8Array([3]),
+            utils.toNBytes(k.getPublic().getX().toString(), 32, "be"),
         ]);
 
         const assetPackType: PackTypeDefinition = {

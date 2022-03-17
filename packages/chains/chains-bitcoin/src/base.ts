@@ -15,7 +15,7 @@ import {
 } from "@renproject/utils";
 
 import { APIWithPriority, BitcoinAPI, CombinedAPI } from "./APIs/API";
-import { createAddressBuffer } from "./script/index";
+import { createAddressArray } from "./script/index";
 import {
     BitcoinInputPayload,
     BitcoinNetworkConfig,
@@ -82,8 +82,8 @@ export abstract class BitcoinBaseChain
         toPayload: BitcoinOutputPayload,
     ): {
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     } {
         this._assertAssetIsSupported(asset);
         const address = toPayload.params
@@ -95,7 +95,7 @@ export abstract class BitcoinBaseChain
         return {
             to: address,
             toBytes: this.decodeAddress(address),
-            payload: Buffer.from([]),
+            payload: new Uint8Array(),
         };
     }
 
@@ -122,11 +122,11 @@ export abstract class BitcoinBaseChain
         return new BigNumber(0);
     };
 
-    public encodeAddress(bytes: Buffer): string {
+    public encodeAddress(bytes: Uint8Array): string {
         return base58.encode(bytes);
     }
 
-    public decodeAddress(address: string): Buffer {
+    public decodeAddress(address: string): Uint8Array {
         return addressToBytes(address);
     }
 
@@ -139,7 +139,7 @@ export abstract class BitcoinBaseChain
     }
 
     public formattedTransactionHash(transaction: { txid: string }): string {
-        return utils.fromBase64(transaction.txid).reverse().toString("hex");
+        return utils.toHex(utils.fromBase64(transaction.txid).reverse());
     }
 
     public validateTransaction(transaction: ChainTransaction): boolean {
@@ -295,8 +295,8 @@ export abstract class BitcoinBaseChain
     public createGatewayAddress(
         asset: string,
         fromPayload: BitcoinInputPayload,
-        shardPublicKey: Buffer,
-        gHash: Buffer,
+        shardPublicKey: Uint8Array,
+        gHash: Uint8Array,
     ): Promise<string> | string {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
@@ -305,7 +305,7 @@ export abstract class BitcoinBaseChain
             );
         }
         return this.encodeAddress(
-            createAddressBuffer(
+            createAddressArray(
                 hash160(shardPublicKey),
                 gHash,
                 this.network.p2shPrefix,

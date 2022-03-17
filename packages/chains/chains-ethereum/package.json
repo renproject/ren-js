@@ -43,15 +43,14 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@ethersproject/abi": "^5.5.0",
-        "@ethersproject/bytes": "^5.5.0",
-        "@ethersproject/providers": "^5.5.3",
+        "@ethersproject/abi": "^5.6.0",
+        "@ethersproject/bytes": "^5.6.0",
+        "@ethersproject/providers": "^5.6.1",
         "@renproject/utils": "^3.0.0-alpha.16",
         "@types/elliptic": "^6.4.14",
-        "@types/node": ">=10",
         "bignumber.js": "^9.0.2",
         "elliptic": "^6.5.4",
-        "ethers": "^5.5.4"
+        "ethers": "^5.6.1"
     },
     "resolutions": {
         "sha3": "^2.1.2"

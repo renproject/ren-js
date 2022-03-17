@@ -30,7 +30,7 @@ export const findABIMethod = (abi: AbiItem[], name: string): AbiItem => {
     return first;
 };
 
-export const getEventTopic = (abiItem: AbiItem): Buffer => {
+export const getEventTopic = (abiItem: AbiItem): Uint8Array => {
     const parameters =
         abiItem.inputs && abiItem.inputs.length > 0
             ? abiItem.inputs.map((input) => input.type).join(",")
@@ -41,7 +41,7 @@ export const getEventTopic = (abiItem: AbiItem): Buffer => {
         );
     }
     const eventSignature = `${abiItem.name}(${parameters})`;
-    return utils.keccak256(Buffer.from(eventSignature));
+    return utils.keccak256(utils.fromUTF8String(eventSignature));
 };
 
 export const getMintGatewayInstance = (

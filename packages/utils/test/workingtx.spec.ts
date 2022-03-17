@@ -1,9 +1,10 @@
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { PackPrimitive, toURLBase64 } from "@renproject/utils";
+import { toURLBase64 } from "../src/internal/common";
+import { PackPrimitive } from "../src/libraries/pack";
 
-import { hashTransaction } from "../../provider/src/transaction";
+import { generateTransactionHash } from "../src/renVMHashes";
 
 export const submit = {
     jsonrpc: "2.0",
@@ -102,7 +103,7 @@ describe("Pack", () => {
         const txIn = submit.params.tx.in;
 
         const actualHash = toURLBase64(
-            hashTransaction(version, selector, txIn),
+            generateTransactionHash(version, selector, txIn),
         );
         expect(actualHash).to.equal(hash);
     });

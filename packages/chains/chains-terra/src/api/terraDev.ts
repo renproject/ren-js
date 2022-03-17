@@ -209,7 +209,6 @@ export class TerraDev implements TerraAPI {
         //     page + 1
         // }&chainId=${this.chainId}`
         const url = `${this.apiUrl}/v1/txs?account=${address}&chainId=${this.chainId}`;
-
         const response = await utils.GET<MessagesResponse>(url);
 
         const { txs } = response;

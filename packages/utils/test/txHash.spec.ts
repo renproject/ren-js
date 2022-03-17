@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { Ox } from "../src/encodings";
-import { PackPrimitive, TypedPackValue } from "../src/pack/pack";
+import { Ox } from "../src/internal/common";
+import { PackPrimitive, TypedPackValue } from "../src/libraries/pack";
 import { generateTransactionHash } from "../src/renVMHashes";
 
 describe("txHash", () => {

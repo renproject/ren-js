@@ -1,6 +1,6 @@
 import { Script } from "./script";
 
-const gatewayScript = (gGubKeyHash: Buffer, gHash: Buffer): Script =>
+const gatewayScript = (gGubKeyHash: Uint8Array, gHash: Uint8Array): Script =>
     new Script()
         .addData(gHash)
         .addOp(Script.OP.OP_DROP)
@@ -10,13 +10,13 @@ const gatewayScript = (gGubKeyHash: Buffer, gHash: Buffer): Script =>
         .addOp(Script.OP.OP_EQUALVERIFY)
         .addOp(Script.OP.OP_CHECKSIG);
 
-export const createAddressBuffer = (
-    gGubKeyHash: Buffer,
-    gHash: Buffer,
-    prefix: Buffer,
-): Buffer => gatewayScript(gGubKeyHash, gHash).toAddress(prefix);
+export const createAddressArray = (
+    gGubKeyHash: Uint8Array,
+    gHash: Uint8Array,
+    prefix: Uint8Array,
+): Uint8Array => gatewayScript(gGubKeyHash, gHash).toAddress(prefix);
 
 export const calculatePubKeyScript = (
-    gGubKeyHash: Buffer,
-    gHash: Buffer,
-): Buffer => gatewayScript(gGubKeyHash, gHash).toScriptHashOut();
+    gGubKeyHash: Uint8Array,
+    gHash: Uint8Array,
+): Uint8Array => gatewayScript(gGubKeyHash, gHash).toScriptHashOut();

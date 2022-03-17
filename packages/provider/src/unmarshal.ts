@@ -15,7 +15,7 @@ export const unmarshalRenVMTransaction = <
 ): RenVMTransaction<Input, Output> => {
     // If the transaction has a signature output, apply standard signature fixes.
     const out = pack.unmarshal.unmarshalTypedPackValue(tx.out);
-    if (out && out.sig && Buffer.isBuffer(out.sig) && out.sig.length > 0) {
+    if (out && out.sig && out.sig instanceof Uint8Array && out.sig.length > 0) {
         out.sig = normalizeSignature(out.sig);
     }
 

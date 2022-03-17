@@ -47,7 +47,6 @@
         "@glif/filecoin-rpc-client": "^1.1.0",
         "@renproject/utils": "^3.0.0-alpha.16",
         "@types/elliptic": "^6.4.14",
-        "@types/node": ">=10",
         "bignumber.js": "^9.0.2",
         "blakejs": "^1.1.1",
         "elliptic": "^6.5.4",

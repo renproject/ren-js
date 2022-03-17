@@ -41,7 +41,7 @@ export const assert = (
  *   | "function"
  *   | "null"
  *   | "any"
- *   | "Buffer"
+ *   | "Uint8Array"
  *   | "BigNumber"
  * ```
  *
@@ -50,7 +50,7 @@ export const assert = (
  */
 export const assertType = <
     // Type extends string,
-    // T = Type extends "Buffer" ? Buffer : any
+    // T = Type extends "Uint8Array" ? Uint8Array : any
     T = unknown,
 >(
     type: string,
@@ -83,15 +83,15 @@ type PrimitiveTypeName =
     | "null"
     | "any"
     | "BigNumber"
-    | "Buffer";
+    | "Uint8Array";
 
 const typeOf = (v: unknown): PrimitiveTypeName =>
     v === null
         ? "null"
         : BigNumber.isBigNumber(v)
         ? "BigNumber"
-        : Buffer.isBuffer(v)
-        ? "Buffer"
+        : v instanceof Uint8Array
+        ? "Uint8Array"
         : typeof v;
 
 const assertTypeCheck = <T = unknown>(

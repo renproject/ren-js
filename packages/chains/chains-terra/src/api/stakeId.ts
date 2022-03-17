@@ -91,7 +91,7 @@
 //         > = [];
 //         try {
 //             const decodedMsgs: DecodedMsg[] = JSON.parse(
-//                 Buffer.from(tx.msg, "base64").toString(),
+//                 utils.fromBase64(tx.msg).toString(),
 //             );
 //             for (let i = 0; i < decodedMsgs.length; i++) {
 //                 const msg = decodedMsgs[i];

@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
+import { Buffer } from "buffer";
 
 import {
     createAssociatedTokenAccount,
@@ -117,7 +118,7 @@ export class Solana
      */
     public validateTransaction(transaction: ChainTransaction): boolean {
         try {
-            const decoded = Buffer.from(
+            const decoded = new Uint8Array(
                 base58.decode(transaction.txidFormatted),
             );
             return (
@@ -226,7 +227,9 @@ export class Solana
         { publicKey }: { publicKey?: ReturnPublicKey } = {},
     ): Promise<ReturnPublicKey extends true ? PublicKey : string> {
         const program = await this.getMintGateway(asset, { publicKey: true });
-        const sHash = utils.keccak256(Buffer.from(`${asset}/toSolana`));
+        const sHash = utils.keccak256(
+            utils.fromUTF8String(`${asset}/toSolana`),
+        );
 
         const tokenMintId = await PublicKey.findProgramAddress(
             [sHash],
@@ -260,8 +263,8 @@ export class Solana
         contractCall: SolanaOutputPayload,
     ): Promise<{
         to: string;
-        toBytes: Buffer;
-        payload: Buffer;
+        toBytes: Uint8Array;
+        payload: Uint8Array;
     }> {
         const associatedTokenAccount = await this.getAssociatedTokenAccount(
             asset,
@@ -269,8 +272,8 @@ export class Solana
         );
         return {
             to: associatedTokenAccount.toBase58(),
-            toBytes: associatedTokenAccount.toBuffer(),
-            payload: Buffer.from([]),
+            toBytes: new Uint8Array(associatedTokenAccount.toBuffer()),
+            payload: new Uint8Array(),
         };
     }
 
@@ -284,23 +287,25 @@ export class Solana
         asset: string,
         contractCall: SolanaOutputPayload,
         params: () => {
-            sHash: Buffer;
-            pHash: Buffer;
-            nHash: Buffer;
+            sHash: Uint8Array;
+            pHash: Uint8Array;
+            nHash: Uint8Array;
 
             amount?: BigNumber;
-            sigHash?: Buffer;
-            signature?: Buffer;
+            sigHash?: Uint8Array;
+            signature?: Uint8Array;
         },
         confirmationTarget: number,
     ): Promise<TxSubmitter | TxWaiter> {
         const program = await this.getMintGateway(asset, { publicKey: true });
 
         const gatewayAccountId = await PublicKey.findProgramAddress(
-            [new Uint8Array(Buffer.from(GatewayStateKey))],
+            [utils.fromUTF8String(GatewayStateKey)],
             program,
         );
-        const sHash = utils.keccak256(Buffer.from(`${asset}/toSolana`));
+        const sHash = utils.keccak256(
+            utils.fromUTF8String(`${asset}/toSolana`),
+        );
 
         const isSigner = false;
         const isWritable = false;
@@ -513,14 +518,14 @@ export class Solana
 
             // The instruction to check the signature
             const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
-                ethAddress: Buffer.from(gatewayState.renvm_authority),
+                ethAddress: gatewayState.renvm_authority,
                 message: renVMMessageSlice,
                 signature: signature.slice(0, 64),
                 recoveryId: signature[64] - 27,
             };
             this._logger.debug(
                 "authority address",
-                secpParams.ethAddress.toString("hex"),
+                utils.toHex(gatewayState.renvm_authority),
             );
             this._logger.debug("secp params", secpParams);
 
@@ -586,7 +591,7 @@ export class Solana
             toChain: string;
             toPayload: {
                 to: string;
-                payload: Buffer;
+                payload: Uint8Array;
             };
             gatewayAddress?: string;
         },
@@ -653,7 +658,7 @@ export class Solana
                 params: { amount },
             } = contractCall;
 
-            const recipient = Buffer.from(getParams().toPayload.to);
+            const recipient = utils.fromUTF8String(getParams().toPayload.to);
 
             const tokenMintId = await this.getMintAsset(asset, {
                 publicKey: true,
@@ -678,7 +683,7 @@ export class Solana
             );
 
             const gatewayAccountId = await PublicKey.findProgramAddress(
-                [new Uint8Array(Buffer.from(GatewayStateKey))],
+                [utils.fromUTF8String(GatewayStateKey)],
                 program,
             );
 
@@ -745,9 +750,7 @@ export class Solana
             tx.feePayer = this.signer.publicKey;
 
             onReceiptCallback = (signature: string) => {
-                const txid = utils.toURLBase64(
-                    Buffer.from(base58.decode(signature)),
-                );
+                const txid = utils.toURLBase64(base58.decode(signature));
                 onInput({
                     chain: this.chain,
                     txid: txid,

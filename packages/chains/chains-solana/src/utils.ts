@@ -1,5 +1,5 @@
 import base58 from "bs58";
-import * as Layout from "buffer-layout";
+import * as Layout from "@solana/buffer-layout";
 import tweetnacl from "tweetnacl";
 import { Buffer } from "buffer";
 
@@ -34,7 +34,7 @@ import BigNumber from "bignumber.js";
 const ETHEREUM_ADDRESS_BYTES = 20;
 const SIGNATURE_OFFSETS_SERIALIZED_SIZE = 11;
 
-const SECP256K1_INSTRUCTION_LAYOUT = Layout.struct([
+const SECP256K1_INSTRUCTION_LAYOUT = Layout.struct<Layout.UInt>([
     Layout.u8("numSignatures"),
     Layout.u16("signatureOffset"),
     Layout.u8("signatureInstructionIndex"),
@@ -93,7 +93,7 @@ export const createInstructionWithEthAddress2 = (
             signature: Buffer.from(signature),
             ethAddress: Buffer.from([0, ...ethAddress]),
             recoveryId,
-        },
+        } as any,
         instructionData,
     );
     instructionData.fill(

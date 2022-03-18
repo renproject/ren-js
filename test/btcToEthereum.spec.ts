@@ -1,8 +1,9 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { Goerli } from "packages/chains/chains/src";
+import { GatewayParams } from "packages/ren/src/params";
 
-import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
+import { BitcoinCash } from "../packages/chains/chains-bitcoin/src";
 import { Ethereum } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
 import { RenNetwork, utils } from "../packages/utils/src";
@@ -12,13 +13,13 @@ chai.should();
 
 loadDotEnv();
 
-describe("BTC/toEthereum", () => {
-    it("BTC/toEthereum", async function () {
+describe.only("BCH/toEthereum", () => {
+    it("BCH/toEthereum", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const asset = Bitcoin.assets.BTC;
-        const from = new Bitcoin({ network });
+        const asset = BitcoinCash.assets.BCH;
+        const from = new BitcoinCash({ network });
         const to = new Ethereum({
             network,
             ...getEVMProvider(Ethereum, network),
@@ -26,12 +27,20 @@ describe("BTC/toEthereum", () => {
 
         const renJS = new RenJS(network).withChains(from, to);
 
-        const gateway = await renJS.gateway({
+        const gatewayParams: GatewayParams = {
             asset,
-            from: from.GatewayAddress(),
+            from: from.Transaction({
+                txidFormatted:
+                    "41b46049c6f3c8503a25b009995bb2934325c1ef46f906189df0f5741c58dbb4",
+                txindex: "0",
+            }),
             to: to.Account(),
             nonce: 7,
-        });
+        };
+        const fees = await renJS.getFees(gatewayParams);
+        console.log(fees);
+
+        const gateway = await renJS.gateway(gatewayParams);
 
         const minimumAmount = gateway.fees.minimumAmount.shiftedBy(
             -(await from.assetDecimals(asset)),
@@ -71,7 +80,7 @@ describe("BTC/toEthereum", () => {
                     gateway.gatewayAddress
                 } (to receive at least ${receivedAmount.toFixed()})`,
             );
-            const SEND_FUNDS = true;
+            const SEND_FUNDS = false;
             if (SEND_FUNDS) {
                 try {
                     await sendFunds(
@@ -95,6 +104,7 @@ describe("BTC/toEthereum", () => {
             gateway.on("transaction", (tx) => {
                 (async () => {
                     foundDeposits += 1;
+                    console.log(tx.in.progress.transaction);
 
                     console.log(
                         `[${printChain(from.chain)}⇢${printChain(to.chain)}][${

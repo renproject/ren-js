@@ -52,9 +52,6 @@
         "elliptic": "^6.5.4",
         "ethers": "^5.6.1"
     },
-    "resolutions": {
-        "sha3": "^2.1.2"
-    },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [

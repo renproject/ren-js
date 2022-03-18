@@ -53,9 +53,6 @@
         "immutable": "^4.0.0",
         "stream": "^0.0.2"
     },
-    "resolutions": {
-        "sha3": "^2.1.2"
-    },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [

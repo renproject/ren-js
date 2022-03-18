@@ -58,9 +58,6 @@
         "qs": "^6.10.3",
         "wallet-address-validator": "^0.2.4"
     },
-    "resolutions": {
-        "sha3": "^2.1.2"
-    },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [

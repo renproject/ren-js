@@ -99,7 +99,7 @@ export class Solana
         this.provider = provider;
         this.signer = signer;
         this.network = resolveNetwork(network);
-        this._logger = config?.logger || nullLogger;
+        this._logger = config && config.logger ? config.logger : nullLogger;
     }
 
     /**

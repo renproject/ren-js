@@ -52,11 +52,8 @@
         "@types/bs58": "^4.0.1",
         "bignumber.js": "^9.0.2",
         "bs58": "^5.0.0",
-        "buffer-layout": "^1.2.2",
+        "@solana/buffer-layout": "^4.0.0",
         "tweetnacl": "^1.0.3"
-    },
-    "resolutions": {
-        "sha3": "^2.1.2"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

@@ -50,9 +50,6 @@
         "@renproject/chains-terra": "^3.0.0-alpha.17",
         "@renproject/utils": "^3.0.0-alpha.17"
     },
-    "resolutions": {
-        "sha3": "^2.1.2"
-    },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [

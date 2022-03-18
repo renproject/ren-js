@@ -48,9 +48,6 @@
         "axios": "^0.26.1",
         "bignumber.js": "^9.0.2"
     },
-    "resolutions": {
-        "sha3": "^2.1.2"
-    },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",
         "exclude": [

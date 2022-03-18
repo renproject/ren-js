@@ -101,7 +101,7 @@ export function populateChainTransaction({
     txidFormattedToTxid: (txidFormatted: string) => string;
     defaultTxindex?: string;
 }): ChainTransaction {
-    if (!partialTx.txid || !partialTx.txidFormatted) {
+    if (!partialTx.txid && !partialTx.txidFormatted) {
         throw new Error(
             `Must provide either 'txid' or 'txidFormatted' for ${chain} transaction.`,
         );

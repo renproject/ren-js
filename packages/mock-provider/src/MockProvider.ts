@@ -132,6 +132,8 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                     return this.handle_queryBlockState(
                         request as ParamsQueryBlockState,
                     ) as RPCResponses[Method];
+                case RPCMethod.SubmitGateway:
+                    return {} as RPCResponses[Method];
             }
             throw new Error(`Method ${method} not supported.`);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-solana",
-    "version": "3.0.0-alpha.17",
+    "version": "3.0.0-alpha.18",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -46,13 +46,13 @@
         "@project-serum/associated-token": "^0.1.1",
         "@project-serum/borsh": "^0.2.5",
         "@project-serum/sol-wallet-adapter": "^0.2.6",
-        "@renproject/utils": "^3.0.0-alpha.17",
+        "@renproject/utils": "^3.0.0-alpha.18",
+        "@solana/buffer-layout": "^4.0.0",
         "@solana/spl-token": "0.2.0",
         "@solana/web3.js": "1.36.0",
         "@types/bs58": "^4.0.1",
         "bignumber.js": "^9.0.2",
         "bs58": "^5.0.0",
-        "@solana/buffer-layout": "^4.0.0",
         "tweetnacl": "^1.0.3"
     },
     "nyc": {

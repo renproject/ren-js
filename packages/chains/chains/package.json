@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "3.0.0-alpha.17",
+    "version": "3.0.0-alpha.18",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,12 +43,12 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^3.0.0-alpha.17",
-        "@renproject/chains-ethereum": "^3.0.0-alpha.17",
-        "@renproject/chains-filecoin": "^3.0.0-alpha.17",
-        "@renproject/chains-solana": "^3.0.0-alpha.17",
-        "@renproject/chains-terra": "^3.0.0-alpha.17",
-        "@renproject/utils": "^3.0.0-alpha.17"
+        "@renproject/chains-bitcoin": "^3.0.0-alpha.18",
+        "@renproject/chains-ethereum": "^3.0.0-alpha.18",
+        "@renproject/chains-filecoin": "^3.0.0-alpha.18",
+        "@renproject/chains-solana": "^3.0.0-alpha.18",
+        "@renproject/chains-terra": "^3.0.0-alpha.18",
+        "@renproject/utils": "^3.0.0-alpha.18"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

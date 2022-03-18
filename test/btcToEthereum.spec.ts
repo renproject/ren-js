@@ -13,7 +13,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.only("BCH/toEthereum", () => {
+describe("BCH/toEthereum", () => {
     it("BCH/toEthereum", async function () {
         this.timeout(100000000000);
 

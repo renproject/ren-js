@@ -118,9 +118,9 @@ export function populateChainTransaction({
     return {
         ...partialTx,
         chain: chain,
-        txid: partialTx.txid || txidToTxidFormatted(partialTx.txidFormatted!),
+        txid: partialTx.txid || txidFormattedToTxid(partialTx.txidFormatted!),
         txidFormatted:
-            partialTx.txidFormatted || txidFormattedToTxid(partialTx.txid!),
+            partialTx.txidFormatted || txidToTxidFormatted(partialTx.txid!),
         txindex: partialTx.txindex || defaultTxindex!,
     };
 }

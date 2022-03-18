@@ -31,7 +31,10 @@ describe("BTC/fromEthereum", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 0.0005, convertToWei: true }),
+            from: ethereum.Transaction({
+                txidFormatted:
+                    "0x36d57617c6233766d64c0c53b03847635bf6e838addf11c0350264fb8b2efb30",
+            }),
             to: bitcoin.Address("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6"),
         });
 
@@ -73,7 +76,9 @@ describe("BTC/fromEthereum", () => {
             ),
         );
 
-        await gateway.in.submit();
+        if (gateway.in.submit) {
+            await gateway.in.submit();
+        }
 
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);

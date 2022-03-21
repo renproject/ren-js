@@ -70,7 +70,7 @@ export const tryNTimes = async <T>(
 
 export const tryIndefinitely = async <T>(
     fnCall: (attempt: number, retries: number) => Promise<T>,
-) => tryNTimes(fnCall, -1, 15 * sleep.SECONDS, console);
+): Promise<T> => tryNTimes(fnCall, -1, 15 * sleep.SECONDS, console);
 
 /**
  * isDefined returns true if the parameter is defined and not null.
@@ -142,12 +142,6 @@ export function toNBytes(
     return bytes;
 }
 
-/**
- * @type function
- * @param input
- * @param endian
- * @returns
- */
 export function fromBytes(
     input: Uint8Array,
     endian: "be" | "le" = "be",
@@ -290,11 +284,11 @@ export const toUTF8String = (input: Uint8Array): string => {
 
         // Pad characterCode.
         if (hexCode.length < 2) {
-            hexCode = "0" + hexCode;
+            hexCode = "0" + (hexCode as string);
         }
 
         // Add character to output.
-        output += "%" + hexCode;
+        output += "%" + (hexCode as string);
     }
     return decodeURIComponent(output);
 };
@@ -486,6 +480,7 @@ export const extractError = (error: unknown): string => {
 
 /**
  * Concatenate an array of Uint8Arrays into a single Uint8Array.
+ *
  * @param uint8Arrays One or more Uint8Arrays.
  * @returns A single Uint8Array containing the values of each input array,
  * in the same order as the inputs.

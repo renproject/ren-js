@@ -536,7 +536,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                     },
                     unassigned: "0",
                     unclaimed: "0",
-                } as any,
+                },
                 gasCap: "2",
                 gasLimit: "400",
                 gasPrice: "2",

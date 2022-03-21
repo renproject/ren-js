@@ -101,7 +101,14 @@ export function populateChainTransaction({
     txidFormattedToTxid: (txidFormatted: string) => string;
     defaultTxindex?: string;
 }): ChainTransaction {
-    if (!partialTx.txid && !partialTx.txidFormatted) {
+    const txid =
+        partialTx.txid ||
+        (partialTx.txidFormatted &&
+            txidFormattedToTxid(partialTx.txidFormatted));
+    const txidFormatted =
+        partialTx.txidFormatted ||
+        (partialTx.txid && txidToTxidFormatted(partialTx.txid));
+    if (!txid || !txidFormatted) {
         throw new Error(
             `Must provide either 'txid' or 'txidFormatted' for ${chain} transaction.`,
         );
@@ -111,16 +118,16 @@ export function populateChainTransaction({
             `Unexpected chain (expected '${chain}', got '$partialTx.chain}').`,
         );
     }
-    if (!partialTx.txindex && !defaultTxindex) {
+    const txindex = partialTx.txindex || defaultTxindex;
+    if (!txindex) {
         throw new Error(`Must provide txindex for ${chain} transaction.`);
     }
 
     return {
         ...partialTx,
-        chain: chain,
-        txid: partialTx.txid || txidFormattedToTxid(partialTx.txidFormatted!),
-        txidFormatted:
-            partialTx.txidFormatted || txidToTxidFormatted(partialTx.txid!),
-        txindex: partialTx.txindex || defaultTxindex!,
+        chain,
+        txid,
+        txidFormatted,
+        txindex,
     };
 }

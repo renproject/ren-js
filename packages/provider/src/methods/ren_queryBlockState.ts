@@ -39,6 +39,10 @@ export interface ResponseQueryBlockState {
                         lastEpochClaimed: Marshalled<PackPrimitive.U64>;
                     }>;
                     unassigned: Marshalled<PackPrimitive.U256>;
+                    unclaimed: Marshalled<PackPrimitive.U256>;
+                    reserved: {
+                        fund: Marshalled<PackPrimitive.U256>;
+                    };
                 };
                 shards: Array<{
                     shard: Marshalled<PackPrimitive.Bytes32>;
@@ -88,6 +92,10 @@ export interface BlockState {
                 lastEpochClaimed: BigNumber;
             }>;
             unassigned: BigNumber;
+            unclaimed: BigNumber;
+            reserved: {
+                fund: BigNumber;
+            };
         };
         shards: Array<{
             shard: Uint8Array;

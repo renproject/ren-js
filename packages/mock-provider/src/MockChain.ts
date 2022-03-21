@@ -63,6 +63,7 @@ export class MockChain extends BitcoinBaseChain {
         }
         throw new Error(`UTXO ${txid}, ${txindex} not found`);
     };
+    // eslint-disable-next-line @typescript-eslint/require-await
     public fetchUTXOs = async (address: string): Promise<UTXO[]> =>
         this.mempool.filter((x) => x.to === address);
 

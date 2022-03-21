@@ -17,7 +17,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.only("BTC/fromSolana", () => {
+describe("BTC/fromSolana", () => {
     it("BTC/fromSolana", async function () {
         this.timeout(100000000000);
 

@@ -270,6 +270,20 @@ export class DefaultTxWaiter implements TxWaiter {
 
             target = isDefined(target) ? target : this.progress.target;
 
+            // If the txid is missing, then assume that the transaction
+            // is confirmed. In some situations its known that a transaction
+            // has taken place (e.g. by looking at the current state of the
+            // chain) but there's no way of finding the transaction's details.
+            // In this case, the txid will be set to "".
+            if (tx.txid === "") {
+                this.updateProgress({
+                    ...this.progress,
+                    confirmations: target,
+                    status: ChainTransactionStatus.Done,
+                });
+                return this.progress;
+            }
+
             let currentConfidenceRatio = -1;
             while (true) {
                 try {

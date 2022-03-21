@@ -12,7 +12,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.only("ETH/toGoerli", () => {
+describe("ETH/toGoerli", () => {
     it("ETH/toGoerli", async function () {
         this.timeout(100000000000);
 
@@ -109,7 +109,16 @@ describe.only("ETH/toGoerli", () => {
 
                     while (true) {
                         try {
-                            console.log(`Submitting to RenVM`);
+                            console.log(
+                                `[${printChain(
+                                    gateway.params.from.chain,
+                                )}⇢${printChain(
+                                    gateway.params.to.chain,
+                                )}][${tx.hash.slice(
+                                    0,
+                                    6,
+                                )}]: Submitting to RenVM`,
+                            );
                             tx.renVM.eventEmitter.on("progress", (progress) =>
                                 console.log(
                                     `[${printChain(

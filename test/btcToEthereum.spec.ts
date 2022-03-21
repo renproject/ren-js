@@ -1,9 +1,8 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
-import { Goerli } from "packages/chains/chains/src";
 import { GatewayParams } from "packages/ren/src/params";
 
-import { BitcoinCash } from "../packages/chains/chains-bitcoin/src";
+import { Bitcoin } from "../packages/chains/chains-bitcoin/src";
 import { Ethereum } from "../packages/chains/chains-ethereum/src";
 import RenJS from "../packages/ren/src";
 import { RenNetwork, utils } from "../packages/utils/src";
@@ -13,13 +12,13 @@ chai.should();
 
 loadDotEnv();
 
-describe("BCH/toEthereum", () => {
-    it("BCH/toEthereum", async function () {
+describe("BTC/toEthereum", () => {
+    it("BTC/toEthereum", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const asset = BitcoinCash.assets.BCH;
-        const from = new BitcoinCash({ network });
+        const asset = Bitcoin.assets.BTC;
+        const from = new Bitcoin({ network });
         const to = new Ethereum({
             network,
             ...getEVMProvider(Ethereum, network),
@@ -29,16 +28,11 @@ describe("BCH/toEthereum", () => {
 
         const gatewayParams: GatewayParams = {
             asset,
-            from: from.Transaction({
-                txidFormatted:
-                    "41b46049c6f3c8503a25b009995bb2934325c1ef46f906189df0f5741c58dbb4",
-                txindex: "0",
-            }),
+            from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 7,
+            nonce: 8,
         };
         const fees = await renJS.getFees(gatewayParams);
-        console.log(fees);
 
         const gateway = await renJS.gateway(gatewayParams);
 
@@ -80,7 +74,7 @@ describe("BCH/toEthereum", () => {
                     gateway.gatewayAddress
                 } (to receive at least ${receivedAmount.toFixed()})`,
             );
-            const SEND_FUNDS = false;
+            const SEND_FUNDS = true;
             if (SEND_FUNDS) {
                 try {
                     await sendFunds(

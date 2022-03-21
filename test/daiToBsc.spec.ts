@@ -2,7 +2,6 @@
 
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
-import { LogLevel } from "packages/utils/build/main";
 
 import {
     BinanceSmartChain,
@@ -40,14 +39,14 @@ describe("DAI/toBinanceSmartChain", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            // from: ethereum.Account({ amount: 1, convertToWei: true }),
-            from: ethereum.Transaction({
-                chain: "Ethereum",
-                txidFormatted:
-                    "0x27a7df5508abf38946ee418c120c7ad9ae1c682ea5b7d9c6a5fa92b730cf3946",
-                txid: "J6ffVQir84lG7kGMEgx62a4caC6lt9nGpfqStzDPOUY",
-                txindex: "0",
-            }),
+            from: ethereum.Account({ amount: 1, convertToWei: true }),
+            // from: ethereum.Transaction({
+            //     chain: "Ethereum",
+            //     txidFormatted:
+            //         "0x27a7df5508abf38946ee418c120c7ad9ae1c682ea5b7d9c6a5fa92b730cf3946",
+            //     txid: "J6ffVQir84lG7kGMEgx62a4caC6lt9nGpfqStzDPOUY",
+            //     txindex: "0",
+            // }),
             to: bsc.Account(),
         });
 
@@ -66,7 +65,14 @@ describe("DAI/toBinanceSmartChain", () => {
                     gateway.params.to.chain,
                 )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
             );
-            setup.eventEmitter.on("progress", console.log);
+            setup.eventEmitter.on("progress", (progress) =>
+                console.log(
+                    `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                        gateway.params.to.chain,
+                    )}]`,
+                    progress,
+                ),
+            );
             await setup.submit();
             await setup.wait();
         }
@@ -79,27 +85,35 @@ describe("DAI/toBinanceSmartChain", () => {
             })}`,
         );
 
-        gateway.in.eventEmitter.on("progress", console.log);
+        gateway.in.eventEmitter.on("progress", (progress) =>
+            console.log(
+                `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                    gateway.params.to.chain,
+                )}]`,
+                progress,
+            ),
+        );
         if (gateway.in.submit) {
             await gateway.in.submit();
         }
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await gateway.in.wait(1);
-        console.log("transaction", gateway.in.progress.transaction);
 
         await new Promise<void>((resolve, reject) => {
             gateway.on("transaction", (tx) => {
                 (async () => {
                     console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
+                        `[${printChain(gateway.fromChain.chain)}⇢${printChain(
+                            gateway.toChain.chain,
                         )}]: RenVM hash: ${tx.hash}`,
                     );
 
                     tx.in.eventEmitter.on("progress", (progress) =>
                         console.log(
-                            `[${printChain(bsc.chain)}⇢${printChain(
-                                ethereum.chain,
+                            `[${printChain(
+                                gateway.fromChain.chain,
+                            )}⇢${printChain(
+                                gateway.toChain.chain,
                             )}][${tx.hash.slice(0, 6)}]: ${
                                 progress.confirmations || 0
                             }/${progress.target} confirmations`,
@@ -110,7 +124,16 @@ describe("DAI/toBinanceSmartChain", () => {
 
                     while (true) {
                         try {
-                            console.log(`Submitting to RenVM`);
+                            console.log(
+                                `[${printChain(
+                                    gateway.params.from.chain,
+                                )}⇢${printChain(
+                                    gateway.params.to.chain,
+                                )}][${tx.hash.slice(
+                                    0,
+                                    6,
+                                )}]: Submitting to RenVM`,
+                            );
                             tx.renVM.eventEmitter.on("progress", (progress) =>
                                 console.log(
                                     `[${printChain(
@@ -135,17 +158,26 @@ describe("DAI/toBinanceSmartChain", () => {
                         }
                     }
                     console.log(
-                        `[${printChain(bsc.chain)}⇢${printChain(
-                            ethereum.chain,
+                        `[${printChain(gateway.fromChain.chain)}⇢${printChain(
+                            gateway.toChain.chain,
                         )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
-                            ethereum.chain,
+                            gateway.toChain.chain,
                             {
                                 pad: false,
                             },
                         )}`,
                     );
 
-                    tx.out.eventEmitter.on("progress", console.log);
+                    tx.out.eventEmitter.on("progress", (progress) =>
+                        console.log(
+                            `[${printChain(
+                                gateway.params.from.chain,
+                            )}⇢${printChain(
+                                gateway.params.to.chain,
+                            )}][${tx.hash.slice(0, 6)}]`,
+                            progress,
+                        ),
+                    );
 
                     if (tx.out.submit) {
                         await tx.out.submit();

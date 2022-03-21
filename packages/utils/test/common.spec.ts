@@ -21,7 +21,7 @@ import {
 
 chai.use(chaiAsPromised);
 
-describe.only("common utils", () => {
+describe("common utils", () => {
     context("sleep", () => {
         it("correct amount of time passes", async () => {
             const timeBefore = Date.now();
@@ -238,13 +238,13 @@ describe.only("common utils", () => {
         });
     });
 
-    context.only("toUTF8String", () => {
+    context("toUTF8String", () => {
         it("should correctly convert to utf8-string", () => {
             expect(toUTF8String(new Uint8Array([97, 98]))).to.equal("ab");
         });
     });
 
-    context.only("fromUTF8String", () => {
+    context("fromUTF8String", () => {
         it("should correctly convert from utf8-string", () => {
             expect(toHex(fromUTF8String("BTC/toEthereum"))).to.equal(
                 "4254432f746f457468657265756d",

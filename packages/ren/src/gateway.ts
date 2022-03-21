@@ -35,9 +35,11 @@ class TransactionEmitter<
     implements
         EventEmitterTyped<{ transaction: [GatewayTransaction<ToPayload>] }>
 {
-    private getTransactions: () => GatewayTransaction<ToPayload>[];
+    private getTransactions: () => Array<GatewayTransaction<ToPayload>>;
 
-    public constructor(getTransactions: () => GatewayTransaction<ToPayload>[]) {
+    public constructor(
+        getTransactions: () => Array<GatewayTransaction<ToPayload>>,
+    ) {
         super();
 
         this.getTransactions = getTransactions;
@@ -423,45 +425,6 @@ export class Gateway<
 
         if (isContractChain(this.fromChain)) {
             const processInput = (input: InputChainTransaction) => {
-                const nonce = utils.toURLBase64(
-                    // Check if the deposit has an associated nonce. This will
-                    // be true for contract-based inputs.
-                    input.nonce
-                        ? utils.fromBase64(input.nonce)
-                        : // Check if the params have a nonce - this can be
-                        // a base64 string or a number. If no nonce is set,
-                        // default to `0`.
-                        typeof this.params.nonce === "string"
-                        ? utils.fromBase64(this.params.nonce)
-                        : utils.toNBytes(this.params.nonce || 0, 32),
-                );
-
-                const gHash = generateGHash(
-                    payload.payload,
-                    sHash,
-                    payload.toBytes,
-                    utils.fromBase64(nonce),
-                );
-                this._gHash = gHash;
-
-                if (!gHash || gHash.length === 0) {
-                    throw ErrorWithCode.from(
-                        new Error(
-                            "Invalid gateway hash being passed to gateway address generation.",
-                        ),
-                        RenJSError.PARAMETER_ERROR,
-                    );
-                }
-
-                if (!asset || asset.length === 0) {
-                    throw ErrorWithCode.from(
-                        new Error(
-                            "Invalid asset being passed to gateway address generation.",
-                        ),
-                        RenJSError.PARAMETER_ERROR,
-                    );
-                }
-
                 // TODO: Add to queue instead so that it can be retried on error.
                 this.processDeposit(input).catch(console.error);
             };
@@ -549,7 +512,7 @@ export class Gateway<
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!existingTransaction) {
             const createGatewayTransaction = async () => {
-                if (!this.pHash || !this.gHash) {
+                if (!this.pHash) {
                     throw new Error(
                         "Gateway address must be generated before calling 'processDeposit'.",
                     );
@@ -621,11 +584,11 @@ export class Gateway<
                     await promise,
                 );
             } catch (error: any) {
+                this.transactions = this.transactions.remove(depositIdentifier);
                 error.message = `Error processing deposit ${
                     deposit.txidFormatted
                 }: ${utils.extractError(error)}`;
-                console.error(error);
-                this.transactions = this.transactions.remove(depositIdentifier);
+                throw error;
             }
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -653,6 +616,11 @@ export class Gateway<
         return this[name];
     }
 
+    /**
+     * Internal method that fetches deposits to the gateway address. If there
+     * are no listeners to the "transaction" event, then it pauses fetching
+     * deposits.
+     */
     private async _watchForDeposits(): Promise<void> {
         if (
             !this.gatewayAddress ||

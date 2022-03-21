@@ -24,13 +24,14 @@ import {
     utils,
 } from "@renproject/utils";
 import {
-    TOKEN_PROGRAM_ID,
     createBurnCheckedInstruction,
+    TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
     Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
     PublicKey,
+    Signer,
     SystemProgram,
     SYSVAR_INSTRUCTIONS_PUBKEY,
     SYSVAR_RENT_PUBKEY,
@@ -558,9 +559,22 @@ export class Solana
      */
     public async getBalance(
         asset: string,
-        address: string,
+        address?: string,
     ): Promise<BigNumber> {
-        // TODO: Get native asset name from network config.
+        if (!address) {
+            if (!this.signer) {
+                throw new Error(
+                    `Must provide address or connect ${this.chain} signer.`,
+                );
+            }
+            if (!this.signer.publicKey) {
+                throw new Error(
+                    `${this.chain} signer not connected - must provide address or call \`signer.connect()\`.`,
+                );
+            }
+            address = this.signer.publicKey.toString();
+        }
+
         if (asset === this.network.nativeAsset.symbol) {
             return new BigNumber(
                 await this.provider.getBalance(new PublicKey(address)),
@@ -670,7 +684,7 @@ export class Solana
             );
 
             const checkedBurnInst = createBurnCheckedInstruction(
-                TOKEN_PROGRAM_ID,
+                source,
                 tokenMintId,
                 this.signer.publicKey,
                 BigInt(
@@ -705,35 +719,47 @@ export class Solana
                 program,
             );
 
-            // sensible defaults
-            const isSigner = false;
-            const isWritable = false;
-
             const renBurnInst = new TransactionInstruction({
                 keys: [
                     {
                         isSigner: true,
-                        isWritable,
+                        isWritable: false,
                         pubkey: this.signer.publicKey,
                     },
-                    { isSigner, isWritable: true, pubkey: source },
-                    { isSigner, isWritable: true, pubkey: gatewayAccountId[0] },
-                    { isSigner, isWritable: true, pubkey: tokenMintId },
-                    { isSigner, isWritable: true, pubkey: burnLogAccountId[0] },
+                    {
+                        isSigner: false,
+                        isWritable: true,
+                        pubkey: source,
+                    },
+                    {
+                        isSigner: false,
+                        isWritable: true,
+                        pubkey: gatewayAccountId[0],
+                    },
+                    {
+                        isSigner: false,
+                        isWritable: true,
+                        pubkey: tokenMintId,
+                    },
+                    {
+                        isSigner: false,
+                        isWritable: true,
+                        pubkey: burnLogAccountId[0],
+                    },
                     {
                         pubkey: SystemProgram.programId,
-                        isSigner,
-                        isWritable,
+                        isSigner: false,
+                        isWritable: false,
                     },
                     {
                         pubkey: SYSVAR_INSTRUCTIONS_PUBKEY,
-                        isSigner,
-                        isWritable,
+                        isSigner: false,
+                        isWritable: false,
                     },
                     {
                         pubkey: SYSVAR_RENT_PUBKEY,
-                        isSigner,
-                        isWritable,
+                        isSigner: false,
+                        isWritable: false,
                     },
                 ],
                 data: Buffer.from([2, recipient.length, ...recipient]),
@@ -758,7 +784,7 @@ export class Solana
                     asset,
                     txidFormatted: signature,
                     amount: new BigNumber(amount).toFixed(),
-                    nonce: nonceBN.toString(),
+                    nonce: utils.toURLBase64(utils.toNBytes(nonceBN, 32)),
                     toRecipient: recipient.toString(),
                 });
             };
@@ -793,14 +819,14 @@ export class Solana
         });
     }
 
-    public async associatedTokenAccountExists(asset: string) {
-        const getAssociatedTokenAddress = await this.getAssociatedTokenAccount(
+    public async associatedTokenAccountExists(asset: string): Promise<boolean> {
+        const associatedTokenAddress = await this.getAssociatedTokenAccount(
             asset,
         );
         let setupRequired = false;
         try {
             const tokenAccount = await this.provider.getAccountInfo(
-                getAssociatedTokenAddress,
+                associatedTokenAddress,
                 "processed",
             );
 

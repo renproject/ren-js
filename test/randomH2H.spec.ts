@@ -148,7 +148,16 @@ describe("Random H2H", () => {
 
                             while (true) {
                                 try {
-                                    console.log(`Submitting to RenVM`);
+                                    console.log(
+                                        `[${printChain(
+                                            gateway.params.from.chain,
+                                        )}⇢${printChain(
+                                            gateway.params.to.chain,
+                                        )}][${tx.hash.slice(
+                                            0,
+                                            6,
+                                        )}]: Submitting to RenVM`,
+                                    );
                                     tx.renVM.eventEmitter.on(
                                         "progress",
                                         (progress) =>

@@ -15,7 +15,6 @@ import {
 import {
     ParamsQueryBlock,
     ParamsQueryBlocks,
-    ParamsQueryTxs,
     ParamsSubmitTx,
     ResponseQueryTx,
     RPCMethod,

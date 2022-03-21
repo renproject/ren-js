@@ -591,7 +591,7 @@ export class EthereumBaseChain
         }
 
         return new EVMTxSubmitter({
-            signer: this.signer,
+            getSigner: () => this.signer,
             network: this.network,
             chain: this.chain,
             payload: contractCall,
@@ -750,7 +750,7 @@ export class EthereumBaseChain
         }
 
         return new EVMTxSubmitter({
-            signer: this.signer,
+            getSigner: () => this.signer,
             network: this.network,
             chain: this.chain,
             payload: contractCall,
@@ -818,7 +818,7 @@ export class EthereumBaseChain
                 });
             } else {
                 txSubmitted[callKey] = new EVMTxSubmitter({
-                    signer: this.signer,
+                    getSigner: () => this.signer,
                     network: this.network,
                     chain: this.chain,
                     payload: calls[callKey],
@@ -886,7 +886,7 @@ export class EthereumBaseChain
                 });
             } else {
                 txSubmitted[callKey] = new EVMTxSubmitter({
-                    signer: this.signer,
+                    getSigner: () => this.signer,
                     network: this.network,
                     chain: this.chain,
                     payload: calls[callKey],

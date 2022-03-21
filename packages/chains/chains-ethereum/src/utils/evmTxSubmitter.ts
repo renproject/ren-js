@@ -11,11 +11,9 @@ import {
     TransactionResponse,
 } from "@ethersproject/providers";
 import {
-    Chain,
     ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
-    DefaultTxWaiter,
     ErrorWithCode,
     eventEmitter,
     EventEmitterTyped,
@@ -100,7 +98,7 @@ export class EVMTxSubmitter
     }>;
 
     private network: EvmNetworkConfig;
-    private signer: Signer;
+    private getSigner: () => Signer | undefined;
     private payload: EVMPayload;
     private tx?: TransactionResponse;
     private getPayloadHandler: (payloadType: string) => PayloadHandler;
@@ -121,7 +119,7 @@ export class EVMTxSubmitter
 
     public constructor({
         network,
-        signer,
+        getSigner,
         chain,
         payload,
         target,
@@ -131,7 +129,7 @@ export class EVMTxSubmitter
         findExistingTransaction,
     }: {
         network: EvmNetworkConfig;
-        signer: Signer;
+        getSigner: () => Signer | undefined;
         chain: string;
         payload: EVMPayload;
         target: number;
@@ -141,7 +139,7 @@ export class EVMTxSubmitter
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
     }) {
         this.network = network;
-        this.signer = signer;
+        this.getSigner = getSigner;
         this.chain = chain;
         this.payload = payload;
         this.getPayloadHandler = getPayloadHandler;
@@ -168,7 +166,7 @@ export class EVMTxSubmitter
     ): Promise<PopulatedTransaction> {
         return await this.getPayloadHandler(this.payload.type).export({
             network: this.network,
-            signer: this.signer,
+            signer: this.getSigner(),
             payload: this.payload,
             evmParams: this.getParams(),
             overrides: options,
@@ -196,7 +194,11 @@ export class EVMTxSubmitter
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
-            if (this.findExistingTransaction && this.signer.provider) {
+            const signer = this.getSigner();
+            if (!signer) {
+                throw new Error(`Must connect ${this.chain} signer.`);
+            }
+            if (this.findExistingTransaction && signer.provider) {
                 const existingTransaction =
                     await this.findExistingTransaction();
 
@@ -208,28 +210,31 @@ export class EVMTxSubmitter
                         });
                         return this.progress;
                     }
-                    this.tx = await this.signer.provider.getTransaction(
+                    this.tx = await signer.provider.getTransaction(
                         existingTransaction.txidFormatted,
                     );
                 }
             }
 
             if (!this.tx) {
-                if (!this.signer.provider) {
+                if (!signer.provider) {
                     throw new Error("EVM signer has no connected provider.");
                 }
                 const tx = await this.getPayloadHandler(
                     this.payload.type,
                 ).export({
                     network: this.network,
-                    signer: this.signer,
+                    signer: signer,
                     payload: this.payload,
                     evmParams: this.getParams(),
                     overrides: options,
                     getPayloadHandler: this.getPayloadHandler,
                 });
-                const populatedTx = await this.signer.populateTransaction(tx);
-                this.tx = await this.signer.sendTransaction(populatedTx);
+                // `populateTransaction` fills in the missing details - e.g.
+                // gas details. It's commented out because it seems that it's
+                // better to calculate this in the `sendTransaction` step.
+                // const populatedTx = await signer.populateTransaction(tx);
+                this.tx = await signer.sendTransaction(tx);
             }
 
             this.updateProgress({

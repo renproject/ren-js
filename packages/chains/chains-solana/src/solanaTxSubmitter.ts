@@ -12,7 +12,6 @@ import {
 } from "@renproject/utils";
 import {
     Connection,
-    Message,
     sendAndConfirmRawTransaction,
     Transaction,
 } from "@solana/web3.js";
@@ -84,6 +83,7 @@ export class SolanaTxWaiter
 
     /**
      * Export the unsigned transasction details.
+     *
      * @returns The Solana message that needs to be signed and submitted,
      * serialized as a base58 string.
      *
@@ -147,7 +147,7 @@ export class SolanaTxWaiter
             //     );
             // }
 
-            const signer = await this._getSigner();
+            const signer = this._getSigner();
             if (!signer) {
                 throw new Error(`Must connect ${this.chain} signer.`);
             }

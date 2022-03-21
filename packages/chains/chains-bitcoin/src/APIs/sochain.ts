@@ -1,14 +1,7 @@
 import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
-import {
-    BitcoinAPI,
-    DEFAULT_TIMEOUT,
-    fixUTXO,
-    fixUTXOs,
-    sortUTXOs,
-    UTXO,
-} from "./API";
+import { BitcoinAPI, fixUTXO, fixUTXOs, sortUTXOs, UTXO } from "./API";
 
 export enum SoChainNetwork {
     BTC = "BTC",

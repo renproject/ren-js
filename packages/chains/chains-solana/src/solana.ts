@@ -31,7 +31,6 @@ import {
     Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
     PublicKey,
-    Signer,
     SystemProgram,
     SYSVAR_INSTRUCTIONS_PUBKEY,
     SYSVAR_RENT_PUBKEY,
@@ -109,7 +108,7 @@ export class Solana
     public validateAddress(address: string): boolean {
         try {
             return base58.decode(address).length === 32;
-        } catch (error) {
+        } catch (error: unknown) {
             return false;
         }
     }
@@ -126,7 +125,7 @@ export class Solana
                 decoded.length === 64 &&
                 utils.toURLBase64(decoded) === transaction.txid
             );
-        } catch (error) {
+        } catch (error: unknown) {
             return false;
         }
     }
@@ -373,7 +372,7 @@ export class Solana
                     this.chain,
                     (mintSignatures[0] && mintSignatures[0].signature) || "",
                 );
-            } catch (error) {
+            } catch (error: unknown) {
                 // If getSignaturesForAddress threw an error, the network may be
                 // on a version before 1.7, so this second method should be tried.
                 // Once all relevant networks have been updated, this can be removed.

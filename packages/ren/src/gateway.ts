@@ -24,11 +24,12 @@ import {
 
 import { defaultRenJSConfig, RenJSConfig } from "./config";
 import { estimateTransactionFee, GatewayFees } from "./fees";
-import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
-import { GatewayParams } from "./params";
+import { GatewayTransaction } from "./gatewayTransaction";
+import { GatewayParams, TransactionParams } from "./params";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 
 class TransactionEmitter<
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ToPayload extends { chain: string; txConfig?: any } = any,
     >
     extends EventEmitter
@@ -101,11 +102,11 @@ class TransactionEmitter<
  *    await RenJS.defaultDepositHandler(deposit);
  * });
  * ```
- *
- * @noInheritDoc
  */
 export class Gateway<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FromPayload extends { chain: string; txConfig?: any } = any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToPayload extends { chain: string; txConfig?: any } = any,
 > {
     // Public
@@ -144,6 +145,8 @@ export class Gateway<
             this.transactions
                 // Check that the transaction isn't a promise.
                 // The result of promises will be emitted when they resolve.
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .filter((tx) => (tx as any).then === undefined)
                 .map((tx) => tx as GatewayTransaction<ToPayload>)
                 .valueSeq()
@@ -246,7 +249,7 @@ export class Gateway<
             this.outputType === OutputType.Release &&
             !isContractChain(this.fromChain)
         ) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Cannot release from non-contract chain ${this.fromChain.chain}`,
                 ),
@@ -258,7 +261,7 @@ export class Gateway<
             this.outputType === OutputType.Mint &&
             !isContractChain(this.toChain)
         ) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Cannot mint ${asset} to non-contract chain ${this.toChain.chain}`,
                 ),
@@ -315,8 +318,8 @@ export class Gateway<
                 }
 
                 if (!this.params.shard) {
-                    throw ErrorWithCode.from(
-                        new Error(`RenVM shard not selected.`),
+                    throw new ErrorWithCode(
+                        `RenVM shard not selected.`,
                         RenJSError.INTERNAL_ERROR,
                     );
                 }
@@ -338,7 +341,7 @@ export class Gateway<
                 this.config.logger.debug("gPubKey:", utils.Ox(gPubKey));
 
                 if (!gPubKey || gPubKey.length === 0) {
-                    throw ErrorWithCode.from(
+                    throw ErrorWithCode.updateError(
                         new Error("Unable to fetch RenVM shard public key."),
                         RenJSError.NETWORK_ERROR,
                     );
@@ -413,10 +416,11 @@ export class Gateway<
                     "gateway address:",
                     this.gatewayAddress,
                 );
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-                throw error;
+            } catch (error: unknown) {
+                throw ErrorWithCode.updateError(
+                    error,
+                    (error as ErrorWithCode).code || RenJSError.INTERNAL_ERROR,
+                );
             }
 
             // Will fetch deposits as long as there's at least one subscription.
@@ -583,11 +587,16 @@ export class Gateway<
                     depositIdentifier,
                     await promise,
                 );
-            } catch (error: any) {
+            } catch (error: unknown) {
                 this.transactions = this.transactions.remove(depositIdentifier);
-                error.message = `Error processing deposit ${
+                const message = `Error processing deposit ${
                     deposit.txidFormatted
                 }: ${utils.extractError(error)}`;
+                if (error instanceof Error) {
+                    error.message = message;
+                } else {
+                    error = new Error(message);
+                }
                 throw error;
             }
         }
@@ -642,7 +651,7 @@ export class Gateway<
                     continue;
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
+            } catch (error: unknown) {
                 this.config.logger.error(utils.extractError(error));
             }
 
@@ -651,7 +660,7 @@ export class Gateway<
                 try {
                     // TODO: Handle error.
                     this.processDeposit(deposit).catch(console.error);
-                } catch (error) {
+                } catch (error: unknown) {
                     this.config.logger.error(error);
                 }
             };
@@ -669,7 +678,7 @@ export class Gateway<
                     listenerCancelled,
                 );
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
+            } catch (error: unknown) {
                 this.config.logger.error(utils.extractError(error));
             }
 

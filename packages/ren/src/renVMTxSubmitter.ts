@@ -106,7 +106,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         };
     }
 
-    public export() {
+    public export(): TransactionInput<TypedPackValue> {
         return this.tx;
     }
 
@@ -161,13 +161,13 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 try {
                     await this.provider.submitTx(this.tx, 1);
                     break;
-                } catch (error) {
+                } catch (error: unknown) {
                     errorInner = error;
                 }
                 try {
                     await this.provider.queryTx(this.tx.hash, 1);
                     break;
-                } catch (error) {
+                } catch (error: unknown) {
                     // Ignore error.
                 }
                 if (i === retries - 1) {
@@ -240,7 +240,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                                 response: tx,
                                 status: ChainTransactionStatus.Done,
                             });
-                        } catch (error) {
+                        } catch (error: unknown) {
                             // Ignore non-critical error.
                         }
                     }
@@ -260,7 +260,8 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 await utils.sleep(15 * utils.sleep.SECONDS);
             }
 
-            const maybeCrossChainTx = tx as any as RenVMCrossChainTransaction;
+            const maybeCrossChainTx =
+                tx as unknown as RenVMCrossChainTransaction;
             if (
                 maybeCrossChainTx.out &&
                 maybeCrossChainTx.out.revert &&

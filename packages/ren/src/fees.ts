@@ -60,7 +60,7 @@ export const estimateTransactionFee = async (
     const blockState: BlockState = await renVM.queryBlockState(asset, 5);
 
     if (!blockState[asset]) {
-        throw ErrorWithCode.from(
+        throw ErrorWithCode.updateError(
             new Error(`No fee details found for ${asset}`),
             RenJSError.UNKNOWN_ERROR,
         );

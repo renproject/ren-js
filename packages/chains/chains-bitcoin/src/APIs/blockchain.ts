@@ -47,7 +47,7 @@ interface BlockchainTransaction {
         },
     ];
     block: {
-        height?: number; //1489379
+        height?: number; // 1489379
         position?: number; // 0
         mempool?: number;
     };

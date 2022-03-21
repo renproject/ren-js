@@ -4,6 +4,7 @@ import { extractError, sleep } from "./common";
 // Default timeout for network requests.
 export const DEFAULT_TIMEOUT = 30 * sleep.SECONDS;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const GET = async <T = unknown, D = any>(
     url: string,
     config?: AxiosRequestConfig<D>,
@@ -15,11 +16,12 @@ export const GET = async <T = unknown, D = any>(
         });
 
         return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
         throw new Error(extractError(error));
     }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const POST = async <T = unknown, D = any>(
     url: string,
     data?: D,
@@ -32,7 +34,7 @@ export const POST = async <T = unknown, D = any>(
         });
 
         return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
         throw new Error(extractError(error));
     }
 };

@@ -136,8 +136,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                     return {} as RPCResponses[Method];
             }
             throw new Error(`Method ${method} not supported.`);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             throw error;
         }
     }

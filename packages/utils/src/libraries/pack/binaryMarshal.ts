@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import { ErrorWithCode, RenJSError } from "../../errors";
 
 import {
     concat,
@@ -98,14 +99,12 @@ export const encodeUint = (
                 : value.toString(),
             bits / 8,
         );
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-        if (error instanceof Error) {
-            error.message = `Unable to encode uint${bits} '${String(
-                value,
-            )}': ${String(error.message)}`;
-        }
-        throw error;
+    } catch (error: unknown) {
+        throw ErrorWithCode.updateError(
+            error,
+            (error as ErrorWithCode).code || RenJSError.INTERNAL_ERROR,
+            `Unable to encode uint${bits} '${String(value)}'`,
+        );
     }
 };
 
@@ -262,14 +261,12 @@ export const encodePackStruct = (
             const memberType = member[key];
             try {
                 return encodePackValue(memberType, value[key]);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
-                if (error instanceof Error) {
-                    error.message = `Unable to encode struct field ${key}: ${String(
-                        error.message,
-                    )}`;
-                }
-                throw error;
+            } catch (error: unknown) {
+                throw ErrorWithCode.updateError(
+                    error,
+                    (error as ErrorWithCode).code || RenJSError.INTERNAL_ERROR,
+                    `Unable to encode struct field ${key}`,
+                );
             }
         }),
     );

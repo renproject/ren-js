@@ -14,13 +14,11 @@ import {
     generateNHash,
     generatePHash,
     generateSHash,
-    InputChainTransaction,
     InputType,
     isContractChain,
     isDepositChain,
     OutputType,
     RenJSError,
-    RenVMShard,
     TxStatus,
     TxSubmitter,
     TxWaiter,
@@ -31,31 +29,10 @@ import {
 import { defaultRenJSConfig, RenJSConfig } from "./config";
 import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
-
-export interface TransactionParams<
-    ToPayload extends { chain: string; txConfig?: any } = {
-        chain: string;
-    },
-> {
-    asset: string;
-    to: ToPayload;
-    /**
-     * The public key of the RenVM shard selected when `fromTx` was submitted.
-     * If the input is contract/event-based then it should be left empty.
-     */
-    shard?: RenVMShard;
-    /**
-     * The nonce is a free variable for generating unique gateway addresses.
-     */
-    nonce?: string;
-
-    /**
-     * A gateway transaction always has a input transaction on the origin-chain.
-     */
-    fromTx: InputChainTransaction;
-}
+import { TransactionParams } from "./params";
 
 export class GatewayTransaction<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToPayload extends { chain: string; txConfig?: any } = {
         chain: string;
     },
@@ -113,7 +90,7 @@ export class GatewayTransaction<
         fromChain: Chain,
         toChain: Chain,
         params: TransactionParams<ToPayload>,
-        fromTxWaiter?: TxSubmitter<ChainTransactionProgress, any> | TxWaiter,
+        fromTxWaiter?: TxSubmitter<ChainTransactionProgress> | TxWaiter,
         config?: RenJSConfig,
     ) {
         this.provider = renVM;
@@ -125,9 +102,11 @@ export class GatewayTransaction<
         this.fromChain = fromChain;
         this.toChain = toChain;
 
-        const nonce = utils.isDefined(params.nonce)
-            ? utils.fromBase64(params.nonce)
-            : utils.toNBytes(0, 32);
+        const nonce =
+            typeof params.nonce === "string"
+                ? utils.fromBase64(params.nonce)
+                : utils.toNBytes(params.nonce || 0, 32);
+
         this.nHash = generateNHash(
             nonce,
             utils.fromBase64(params.fromTx.txid),
@@ -135,7 +114,10 @@ export class GatewayTransaction<
         );
 
         if (fromTxWaiter) {
-            this.in = new TxWaiterProxy(fromTxWaiter, params.fromTx) as any;
+            this.in = new TxWaiterProxy(
+                fromTxWaiter,
+                params.fromTx,
+            ) as unknown as TxWaiter;
         } else {
             this.in = undefined as never;
         }
@@ -175,11 +157,10 @@ export class GatewayTransaction<
 
         this.pHash = generatePHash(payload.payload);
 
-        const nonceBytes: Uint8Array = nonce
-            ? (nonce as any) instanceof Uint8Array
-                ? (nonce as unknown as Uint8Array)
-                : utils.fromBase64(nonce)
-            : utils.toNBytes(0, 32);
+        const nonceBytes: Uint8Array =
+            typeof nonce === "string"
+                ? utils.fromBase64(nonce)
+                : utils.toNBytes(nonce || 0, 32);
 
         this.gHash = generateGHash(
             this.pHash,
@@ -279,7 +260,7 @@ export class GatewayTransaction<
 
         try {
             await this.renVM.query();
-        } catch (error) {
+        } catch (error: unknown) {
             // Ignore error, possible submitted too soon before RenVM's nodes
             // have seen the transaction.
         }

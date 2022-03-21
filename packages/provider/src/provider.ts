@@ -336,17 +336,23 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
                 { txHash },
                 retries,
             );
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            if (error.message.match(/^invalid params: /)) {
-                throw ErrorWithCode.from(error, RenJSError.PARAMETER_ERROR);
-            } else if (error.message.match(/not found$/)) {
-                throw ErrorWithCode.from(
+        } catch (error: unknown) {
+            const message = (error as Error).message || "";
+            if (message.match(/^invalid params: /)) {
+                throw ErrorWithCode.updateError(
+                    error,
+                    RenJSError.PARAMETER_ERROR,
+                );
+            } else if (message.match(/not found$/)) {
+                throw ErrorWithCode.updateError(
                     error,
                     RenJSError.TRANSACTION_NOT_FOUND,
                 );
             } else {
-                throw ErrorWithCode.from(error, RenJSError.UNKNOWN_ERROR);
+                throw ErrorWithCode.updateError(
+                    error,
+                    RenJSError.UNKNOWN_ERROR,
+                );
             }
         }
 
@@ -355,9 +361,11 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
                 tx: unmarshalRenVMTransaction(response.tx),
                 txStatus: response.txStatus,
             } as T;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            throw ErrorWithCode.from(error, RenJSError.INTERNAL_ERROR);
+        } catch (error: unknown) {
+            throw ErrorWithCode.updateError(
+                error,
+                (error as ErrorWithCode).code || RenJSError.INTERNAL_ERROR,
+            );
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     };
@@ -374,13 +382,11 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
         try {
             // Call the ren_queryBlockState RPC.
             blockState = await this.queryBlockState(asset, 5);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            throw ErrorWithCode.from(
-                new Error(
-                    `Error fetching RenVM shards: ${String(error.message)}`,
-                ),
+        } catch (error: unknown) {
+            throw ErrorWithCode.updateError(
+                error,
                 RenJSError.NETWORK_ERROR,
+                `Error fetching RenVM shards`,
             );
         }
 

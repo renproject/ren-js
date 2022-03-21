@@ -13,8 +13,8 @@ import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";
 import { estimateTransactionFee, GatewayFees } from "./fees";
 import { Gateway } from "./gateway";
-import { GatewayTransaction, TransactionParams } from "./gatewayTransaction";
-import { GatewayParams } from "./params";
+import { GatewayTransaction } from "./gatewayTransaction";
+import { GatewayParams, TransactionParams } from "./params";
 
 export { Gateway } from "./gateway";
 export { GatewayTransaction } from "./gatewayTransaction";
@@ -92,8 +92,9 @@ export class RenJS {
     /**
      * Accepts the name of a network, or a network object.
      *
-     * @param providerOrNetwork Provider the name of a RenNetwork or a RenVM provider instance.
-     * @param config
+     * @param providerOrNetwork Provider the name of a RenNetwork or a RenVM
+     * provider instance.
+     * @param config Provider RenJS config such as a logger.
      */
     public constructor(
         providerOrNetwork:
@@ -122,7 +123,7 @@ export class RenJS {
 
     public getChain = (name: string): Chain => {
         if (!this.chains[name]) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Chain ${name} not found. (Must call 'renJS.withChains(${name.toLowerCase()})')`,
                 ),
@@ -155,7 +156,7 @@ export class RenJS {
                     (await fromChain.isMintAsset(asset)))
             )
         ) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Asset not supported by chain ${fromChain.chain}.`),
                 RenJSError.PARAMETER_ERROR,
             );
@@ -166,7 +167,7 @@ export class RenJS {
                 (isContractChain(toChain) && (await toChain.isMintAsset(asset)))
             )
         ) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Asset not supported by chain ${toChain.chain}.`),
                 RenJSError.PARAMETER_ERROR,
             );
@@ -206,7 +207,9 @@ export class RenJS {
      * @param params See [[LockAndMintParams]].
      */
     public readonly gateway = async <
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         FromPayload extends { chain: string; txConfig?: any } = any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ToPayload extends { chain: string; txConfig?: any } = any,
     >(
         params: GatewayParams<FromPayload, ToPayload>,
@@ -224,6 +227,7 @@ export class RenJS {
         ).initialize();
 
     public readonly gatewayTransaction = async <
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ToPayload extends { chain: string; txConfig?: any } = {
             chain: string;
         },

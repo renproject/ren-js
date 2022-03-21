@@ -197,8 +197,7 @@ describe("DAI/to*", () => {
                                             await tx.renVM.submit();
                                             await tx.renVM.wait();
                                             break;
-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                        } catch (error: any) {
+                                        } catch (error: unknown) {
                                             console.error(error);
                                             await utils.sleep(
                                                 10 * utils.sleep.SECONDS,
@@ -232,8 +231,7 @@ describe("DAI/to*", () => {
                                 })().catch(reject);
                             });
                         });
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         console.warn(
                             `Errored for chain ${From.chain}, ${From.chain}`,
                         );

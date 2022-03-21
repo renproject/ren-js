@@ -105,8 +105,7 @@ describe("BTC/toSolana", () => {
                         try {
                             await tx.in.wait();
                             break;
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        } catch (error: any) {
+                        } catch (error: unknown) {
                             console.error(error);
                             await utils.sleep(10 * utils.sleep.SECONDS);
                         }
@@ -129,8 +128,7 @@ describe("BTC/toSolana", () => {
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        } catch (error: any) {
+                        } catch (error: unknown) {
                             console.error(error);
                             await utils.sleep(10 * utils.sleep.SECONDS);
                         }

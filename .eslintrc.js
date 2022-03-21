@@ -71,7 +71,6 @@ module.exports = {
             },
         ],
         "@typescript-eslint/await-thenable": "warn",
-        "@typescript-eslint/promise-function-async": "warn",
         "spaced-comment": [
             "warn",
             "always",
@@ -134,7 +133,7 @@ module.exports = {
         "jsdoc/check-tag-names": [
             "warn",
             {
-                definedTags: ["category"],
+                definedTags: ["category", "hidden"],
             },
         ],
         "jsdoc/require-jsdoc": [
@@ -184,6 +183,8 @@ module.exports = {
 
         "require-await": "off",
         "@typescript-eslint/require-await": "warn",
+        "@typescript-eslint/promise-function-async": "off",
+        "@typescript-elint/no-explicit-any": "off",
 
         // Often causing issues in CI.
         "@typescript-eslint/no-unnecessary-type-assertion": "warn",

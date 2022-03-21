@@ -1,5 +1,5 @@
 import { utils } from "@renproject/utils";
-import { BitcoinAPI, DEFAULT_TIMEOUT, sortUTXOs, UTXO } from "./API";
+import { BitcoinAPI, sortUTXOs, UTXO } from "./API";
 
 export class Blockstream implements BitcoinAPI {
     public testnet: boolean;

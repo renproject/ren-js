@@ -4,6 +4,7 @@ import { CID } from "multiformats";
 /**
  * Convert a Filecoin transaction hash from its standard format to the format
  * required by RenVM.
+ *
  * @param txidFormatted A Filecoin transaction hash formatted as a CID string.
  * @returns The same Filecoin transaction hash formatted as a base64 string.
  */
@@ -14,6 +15,7 @@ export function txidFormattedToTxid(txidFormatted: string): string {
 /**
  * Convert a Filecoin transaction hash from the format required by RenVM to its
  * standard format.
+ *
  * @param txid A Filecoin transaction hash formatted as a base64 string.
  * @returns The same Filecoin transaction hash formatted as a CID string.
  */

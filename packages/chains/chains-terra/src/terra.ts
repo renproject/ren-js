@@ -16,7 +16,7 @@ import {
     RenNetworkString,
     utils,
 } from "@renproject/utils";
-import { AccAddress, Key, SimplePublicKey } from "@terra-money/terra.js";
+import { AccAddress, SimplePublicKey } from "@terra-money/terra.js";
 
 import { TerraDev } from "./api/terraDev";
 import { isTerraNetworkConfig, TerraNetworkConfig } from "./api/types";
@@ -225,18 +225,16 @@ export class Terra
             }
             const txs = await this.api.fetchDeposits(address);
 
-            await Promise.all(
-                txs.map(async (tx) =>
-                    onInput({
-                        chain: this.chain,
-                        txid: txidFormattedToTxid(tx.hash),
-                        txidFormatted: tx.hash.toUpperCase(),
-                        txindex: "0",
+            txs.map((tx) =>
+                onInput({
+                    chain: this.chain,
+                    txid: txidFormattedToTxid(tx.hash),
+                    txidFormatted: tx.hash.toUpperCase(),
+                    txindex: "0",
 
-                        asset,
-                        amount: tx.amount,
-                    }),
-                ),
+                    asset,
+                    amount: tx.amount,
+                }),
             );
         }
     }
@@ -335,7 +333,7 @@ export class Terra
         assertType<string>("string", { address });
 
         if (!this.validateAddress(address)) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Invalid ${this.chain} address: ${String(address)}`),
                 RenJSError.PARAMETER_ERROR,
             );

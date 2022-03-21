@@ -1,5 +1,5 @@
 import { utils } from "@renproject/utils";
-import { BitcoinAPI, DEFAULT_TIMEOUT, sortUTXOs, UTXO } from "./API";
+import { BitcoinAPI, sortUTXOs, UTXO } from "./API";
 
 export enum BlockchairNetwork {
     BITCOIN = "bitcoin",

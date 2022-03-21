@@ -213,7 +213,7 @@ export abstract class BitcoinBaseChain
                             amount: tx.amount,
                         });
                         break;
-                    } catch (error) {
+                    } catch (error: unknown) {
                         console.error(error);
                     }
                 }
@@ -240,7 +240,7 @@ export abstract class BitcoinBaseChain
                     amount: tx.amount,
                 }),
             );
-        } catch (error) {
+        } catch (error: unknown) {
             // Ignore error and fallback to getUTXOs.
         }
 
@@ -263,8 +263,7 @@ export abstract class BitcoinBaseChain
                         amount: tx.amount,
                     }),
                 );
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error(error);
             }
             await utils.sleep(15 * utils.sleep.SECONDS);
@@ -326,7 +325,7 @@ export abstract class BitcoinBaseChain
         assertType<string>("string", { address });
 
         if (!this.validateAddress(address)) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Invalid ${this.chain} address: ${String(address)}`),
                 RenJSError.PARAMETER_ERROR,
             );

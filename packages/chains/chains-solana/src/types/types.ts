@@ -7,6 +7,7 @@ import { ChainTransaction } from "@renproject/utils";
 export type SolanaProvider = Connection;
 export type SolanaSigner = Wallet;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface SolanaPayloadInterface<Name extends string = string, T = any> {
     chain: string;
     type: Name;

@@ -31,24 +31,27 @@ export const tryNTimes = async <T>(
     logger?: Logger,
 ): Promise<T> => {
     if (retries === 0 || typeof retries !== "number" || isNaN(retries)) {
-        throw ErrorWithCode.from(
+        throw ErrorWithCode.updateError(
             new Error(`Invalid retry amount '${retries}'.`),
             RenJSError.PARAMETER_ERROR,
         );
     }
 
-    let returnError;
+    let returnError: Error | undefined;
     const errorMessages = new Set();
     for (let i = 0; retries === -1 || i < retries; i++) {
         try {
             return await fnCall(i, retries);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             // console.error(extractError(error));
             // Fix error message.
             const errorMessage = extractError(error);
             errorMessages.add(errorMessage);
-            returnError = error || returnError;
+            returnError =
+                ErrorWithCode.updateError(
+                    error,
+                    (error as ErrorWithCode).code || RenJSError.INTERNAL_ERROR,
+                ) || returnError;
 
             if (i < retries - 1 || retries === -1) {
                 await sleep(timeout);
@@ -87,8 +90,7 @@ export const doesntError =
         try {
             const response = f(...p);
             return response === undefined || response === true ? true : false;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             return false;
         }
     };
@@ -280,15 +282,15 @@ export const fromHex = (hexString: string): Uint8Array => {
 export const toUTF8String = (input: Uint8Array): string => {
     let output = "";
     for (const characterCode of input) {
-        let hexCode = characterCode.toString(16);
+        let hexCode: string = characterCode.toString(16);
 
         // Pad characterCode.
         if (hexCode.length < 2) {
-            hexCode = "0" + (hexCode as string);
+            hexCode = "0" + hexCode;
         }
 
         // Add character to output.
-        output += "%" + (hexCode as string);
+        output += "%" + hexCode;
     }
     return decodeURIComponent(output);
 };

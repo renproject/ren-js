@@ -167,8 +167,7 @@ const assertTypeUnion = <T = unknown>(
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                         assertArray(type, { [key]: v as unknown[] });
                         return true;
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         return false;
                     }
                 }

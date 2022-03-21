@@ -212,15 +212,11 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
     }> => {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            throw ErrorWithCode.from(
-                new Error(
-                    `Error getting contract-call payload: ${String(
-                        error.message,
-                    )}`,
-                ),
+        } catch (error: unknown) {
+            throw ErrorWithCode.updateError(
+                error,
                 RenJSError.PARAMETER_ERROR,
+                `Error getting contract-call payload`,
             );
         }
 
@@ -228,8 +224,8 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         for (const arg of args) {
             if (arg.value === undefined) {
-                throw ErrorWithCode.from(
-                    new Error(`Payload parameter '${arg.name}' is undefined.`),
+                throw new ErrorWithCode(
+                    `Payload parameter '${arg.name}' is undefined.`,
                     RenJSError.PARAMETER_ERROR,
                 );
             }
@@ -241,15 +237,11 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         let p: Uint8Array;
         try {
             p = rawEncode(types, values);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            throw ErrorWithCode.from(
-                new Error(
-                    `Error encoding ${network.selector} parameters: ${String(
-                        error.message,
-                    )}`,
-                ),
+        } catch (error: unknown) {
+            throw new ErrorWithCode(
+                error,
                 RenJSError.PARAMETER_ERROR,
+                `Error encoding ${network.selector} parameters`,
             );
         }
 
@@ -279,15 +271,11 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
     }): Promise<PopulatedTransaction> => {
         try {
             payload = await resolveEvmContractParams(payload, evmParams);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            throw ErrorWithCode.from(
-                new Error(
-                    `Error resolving parameters for contract-call: ${String(
-                        error.message,
-                    )}`,
-                ),
+        } catch (error: unknown) {
+            throw ErrorWithCode.updateError(
+                error,
                 RenJSError.PARAMETER_ERROR,
+                `Error resolving parameters for contract-call`,
             );
         }
 
@@ -306,7 +294,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         for (const param of params) {
             if (param.value === undefined) {
-                throw ErrorWithCode.from(
+                throw ErrorWithCode.updateError(
                     new Error(`Parameter '${param.name}' is undefined.`),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -315,15 +303,11 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         try {
             rawEncode(paramTypes, paramValues);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            throw ErrorWithCode.from(
-                new Error(
-                    `Error encoding ${network.selector} parameters: ${String(
-                        error.message,
-                    )}`,
-                ),
+        } catch (error: unknown) {
+            throw new ErrorWithCode(
+                error,
                 RenJSError.PARAMETER_ERROR,
+                `Error encoding ${network.selector} parameters`,
             );
         }
 
@@ -365,7 +349,7 @@ const getContractFromAccount = async (
     switch (evmParams[EVMParam.EVM_TRANSACTION_TYPE]) {
         case InputType.Lock:
             if (!amount) {
-                throw ErrorWithCode.from(
+                throw ErrorWithCode.updateError(
                     new Error(`Must provide amount to .Account()`),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -433,7 +417,7 @@ const getContractFromAccount = async (
             };
         case InputType.Burn:
             if (!amount) {
-                throw ErrorWithCode.from(
+                throw ErrorWithCode.updateError(
                     new Error(`Must provide amount to .Account()`),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -922,7 +906,7 @@ export type EVMTxPayload = EVMPayloadInterface<
 >;
 
 export const txPayloadHandler: PayloadHandler<EVMTxPayload> = {
-    export: async (): Promise<PopulatedTransaction> => {
+    export: (): PopulatedTransaction => {
         throw new Error(`Unable to export transaction payload.`);
     },
 };

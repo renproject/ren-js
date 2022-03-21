@@ -1,10 +1,16 @@
-import { RenVMShard, UrlBase64String } from "@renproject/utils";
+import {
+    InputChainTransaction,
+    RenVMShard,
+    UrlBase64String,
+} from "@renproject/utils";
 
 /**
  * The parameters for a cross-chain transfer onto Ethereum.
  */
 export interface GatewayParams<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FromPayload extends { chain: string; txConfig?: any } = any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToPayload extends { chain: string; txConfig?: any } = any,
 > {
     /**
@@ -13,13 +19,18 @@ export interface GatewayParams<
     asset: string;
 
     /**
-     * The chain that the asset is native to - e.g. `Bitcoin()` for bridging the
-     * asset `"BTC"`.
+     * A payload for the chain being bridged from.
+     *
+     * @example
+     * ethereum.Account({ amount: 1 })
      */
     from: FromPayload;
 
     /**
-     * The chain that the asset is being bridged to - e.g. `Ethereum(provider)`.
+     * A payload for the chain being bridged to.
+     *
+     * @example
+     * bitcoin.Address("miMi...")
      */
     to: ToPayload;
 
@@ -32,7 +43,7 @@ export interface GatewayParams<
      *
      * It defaults to 0 (32 empty bytes).
      *
-     * @warning If the nonce is lost between detecting a deposit and
+     * WARNING: If the nonce is lost between detecting a deposit and
      * submitting it to RenVM, the deposit's funds can't be recovered.
      * A nonce should only be provided if it's guaranteed to be stored in
      * persistent storage before a deposit address is shown to the user.
@@ -59,6 +70,10 @@ export interface GatewayParams<
      */
     nonce?: UrlBase64String | number;
 
+    /**
+     * The public key of the RenVM shard selected when `fromTx` was submitted.
+     * If the input is contract/event-based then it should be left empty.
+     */
     shard?: RenVMShard;
 
     /**
@@ -66,4 +81,39 @@ export interface GatewayParams<
      * lightnode.
      */
     tag?: string;
+}
+
+export interface TransactionParams<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ToPayload extends { chain: string; txConfig?: any } = {
+        chain: string;
+    },
+> {
+    /**
+     * The asset being minted or burned - e.g. `"BTC"`.
+     */
+    asset: string;
+
+    /**
+     * A payload for the chain being bridged to.
+     *
+     * @example
+     * bitcoin.Address("miMi...")
+     */
+    to: ToPayload;
+
+    /**
+     * A gateway transaction always has a input transaction on the origin-chain.
+     */
+    fromTx: InputChainTransaction;
+
+    /**
+     * See {{GatewayParams["shard"]}}.
+     */
+    shard?: GatewayParams["shard"];
+
+    /**
+     * See {{GatewayParams["nonce"]}}.
+     */
+    nonce?: GatewayParams["nonce"];
 }

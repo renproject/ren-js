@@ -302,7 +302,7 @@ export class EVMTxSubmitter
                             confirmations: this.tx.confirmations,
                         });
                     }
-                } catch (error) {
+                } catch (error: unknown) {
                     if (ErrorWithCode.isErrorWithCode(error)) {
                         if (error.code === Logger.errors.TRANSACTION_REPLACED) {
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion,@typescript-eslint/no-explicit-any

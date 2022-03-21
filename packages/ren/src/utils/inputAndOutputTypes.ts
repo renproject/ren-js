@@ -28,7 +28,7 @@ export const getInputAndOutputTypes = async ({
         // Burn and release
 
         if (!isContractChain(fromChain)) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Cannot burn from non-contract chain ${fromChain.chain}.`,
                 ),
@@ -36,7 +36,7 @@ export const getInputAndOutputTypes = async ({
             );
         }
         if (!(await fromChain.isMintAsset(asset))) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${fromChain.chain}.`,
                 ),
@@ -52,7 +52,7 @@ export const getInputAndOutputTypes = async ({
         // Lock and mint
 
         if (!isContractChain(toChain)) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Cannot mint to non-contract chain ${toChain.chain}.`,
                 ),
@@ -60,7 +60,7 @@ export const getInputAndOutputTypes = async ({
             );
         }
         if (!(await toChain.isMintAsset(asset))) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${toChain.chain}.`,
                 ),
@@ -76,7 +76,7 @@ export const getInputAndOutputTypes = async ({
         // Burn and mint
 
         if (!isContractChain(toChain)) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Cannot mint to non-contract chain ${toChain.chain}.`,
                 ),
@@ -84,7 +84,7 @@ export const getInputAndOutputTypes = async ({
             );
         }
         if (!(await toChain.isMintAsset(asset))) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${toChain.chain}.`,
                 ),
@@ -93,7 +93,7 @@ export const getInputAndOutputTypes = async ({
         }
 
         if (!isContractChain(fromChain)) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Cannot burn from non-contract chain ${fromChain.chain}.`,
                 ),
@@ -101,7 +101,7 @@ export const getInputAndOutputTypes = async ({
             );
         }
         if (!(await fromChain.isMintAsset(asset))) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${fromChain.chain}.`,
                 ),

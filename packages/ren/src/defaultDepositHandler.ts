@@ -29,7 +29,7 @@ const defaultTransactionHandler = async (
                 await utils.tryNTimes(async (i: number) => {
                     try {
                         tx.submit && (await tx.submit());
-                    } catch (error) {
+                    } catch (error: unknown) {
                         // Log error every 10 attempts.
                         if ((i + 1) % 10 === 0) {
                             console.error(error);
@@ -42,7 +42,7 @@ const defaultTransactionHandler = async (
                 await utils.tryNTimes(async (i: number) => {
                     try {
                         await tx.wait();
-                    } catch (error) {
+                    } catch (error: unknown) {
                         // Log error every 10 attempts.
                         if ((i + 1) % 10 === 0) {
                             console.error(error);

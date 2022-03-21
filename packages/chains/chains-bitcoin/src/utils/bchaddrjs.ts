@@ -118,7 +118,7 @@ const decodeBase58Address = (address: string) => {
                     type: Type.P2SH,
                 };
         }
-    } catch (error) {
+    } catch (error: unknown) {
         // Ignore error.
     }
     throw new InvalidAddressError();
@@ -146,7 +146,7 @@ const decodeCashAddressWithPrefix = (address: string) => {
                     type: type,
                 };
         }
-    } catch (error) {
+    } catch (error: unknown) {
         // Ignore error.
     }
     throw new InvalidAddressError();
@@ -156,7 +156,7 @@ const decodeCashAddress = (address: string) => {
     if (address.indexOf(":") !== -1) {
         try {
             return decodeCashAddressWithPrefix(address);
-        } catch (error) {
+        } catch (error: unknown) {
             // Ignore error.
         }
     } else {
@@ -165,7 +165,7 @@ const decodeCashAddress = (address: string) => {
             try {
                 const prefix = prefixes[i];
                 return decodeCashAddressWithPrefix(prefix + ":" + address);
-            } catch (error) {
+            } catch (error: unknown) {
                 // Ignore error.
             }
         }
@@ -187,7 +187,7 @@ const getTypeBits = (type: string) => {
 export const decodeBitcoinCashAddress = (address: string): Uint8Array => {
     try {
         return new Uint8Array(decodeBase58Address(address).hash);
-    } catch (error) {
+    } catch (error: unknown) {
         // Ignore error.
     }
     try {
@@ -196,7 +196,7 @@ export const decodeBitcoinCashAddress = (address: string): Uint8Array => {
             new Uint8Array([getTypeBits(type)]),
             new Uint8Array(hash),
         ]);
-    } catch (error) {
+    } catch (error: unknown) {
         // Ignore error.
     }
     throw new InvalidAddressError();

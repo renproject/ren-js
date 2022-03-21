@@ -52,7 +52,7 @@ const SECP256K1_INSTRUCTION_LAYOUT = Layout.struct<Layout.UInt>([
  * Create an secp256k1 instruction with an Ethereum address.
  *
  * We need to add an extra byte to the ethAddress to match our secp offset
- * */
+ */
 export const createInstructionWithEthAddress2 = (
     params: CreateSecp256k1InstructionWithEthAddressParams,
 ): TransactionInstruction => {
@@ -93,7 +93,7 @@ export const createInstructionWithEthAddress2 = (
             signature: Buffer.from(signature),
             ethAddress: Buffer.from([0, ...ethAddress]),
             recoveryId,
-        } as any,
+        } as unknown as Layout.UInt,
         instructionData,
     );
     instructionData.fill(
@@ -115,7 +115,7 @@ export const createInstructionWithEthAddress2 = (
 export const finalizeTransaction = async (
     connection: Connection,
     signature: TransactionSignature,
-) => {
+): Promise<void> => {
     // Wait up to 20 seconds for the transaction to be finalized.
     await Promise.race([
         connection.confirmTransaction(signature, "finalized"),
@@ -130,7 +130,7 @@ export const constructRenVMMsg = (
     to: string,
     n_hash: Uint8Array,
     logger: Logger = nullLogger,
-) => {
+): Uint8Array[] => {
     try {
         const renvmmsg = Buffer.from(new Array(160));
         const preencode = {
@@ -174,7 +174,8 @@ export const makeTestSigner = (privatekey: Uint8Array): Wallet => {
     const pubk = new PublicKey(key.publicKey);
     return {
         publicKey: pubk,
-        signTransaction: async (x: Transaction) => {
+        // eslint-disable-next-line @typescript-eslint/require-await
+        signTransaction: async (x: Transaction): Promise<Transaction> => {
             const sig = tweetnacl.sign.detached(
                 x.serializeMessage(),
                 key.secretKey,
@@ -298,19 +299,21 @@ export const getBurnFromNonce = async (
 /**
  * Convert a Solana transaction hash from its standard format to the format
  * required by RenVM.
+ *
  * @param txidFormatted A Solana transaction hash formatted as a base58 string.
  * @returns The same Solana transaction hash formatted as a base64 string.
  */
-export function txidFormattedToTxid(txidFormatted: string) {
+export function txidFormattedToTxid(txidFormatted: string): string {
     return utils.toURLBase64(new Uint8Array(base58.decode(txidFormatted)));
 }
 
 /**
  * Convert a Solana transaction hash from the format required by RenVM to its
  * standard format.
+ *
  * @param txid A Solana transaction hash formatted as a base64 string.
  * @returns The same Solana transaction hash formatted as a base58 string.
  */
-export function txidToTxidFormatted(txid: string) {
+export function txidToTxidFormatted(txid: string): string {
     return base58.encode(utils.fromBase64(txid));
 }

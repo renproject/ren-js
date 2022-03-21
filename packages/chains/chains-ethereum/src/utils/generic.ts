@@ -31,6 +31,7 @@ import { EvmNetworkConfig } from "./types";
 /**
  * Convert an Ethereum transaction hash from its standard format to the format
  * required by RenVM.
+ *
  * @param txidFormatted An Ethereum transaction hash formatted as a 0x-prefixed
  * hex string.
  * @returns The same Ethereum transaction hash formatted as a base64 string.
@@ -42,6 +43,7 @@ export function txidFormattedToTxid(txidFormatted: string): string {
 /**
  * Convert an Ethereum transaction hash from the format required by RenVM to its
  * standard format.
+ *
  * @param txid An Ethereum transaction hash formatted as a base64 string.
  * @returns The same Ethereum transaction hash formatted as a 0x-prefixed hex
  * string.

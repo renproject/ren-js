@@ -2,7 +2,6 @@ import { utils } from "@renproject/utils";
 
 import {
     BitcoinAPI,
-    DEFAULT_TIMEOUT,
     fixUTXO,
     fixUTXOs,
     fixValue,

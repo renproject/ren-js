@@ -53,7 +53,9 @@ export interface TxWaiter<
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submit?(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         params?: { overrides?: any[] },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         txConfig?: any,
     ): PromiEvent<
         Progress,
@@ -317,7 +319,7 @@ export class DefaultTxWaiter implements TxWaiter {
                             });
                         }
                     }
-                } catch (error) {
+                } catch (error: unknown) {
                     console.error(error);
                 }
                 await sleep(15 * sleep.SECONDS);

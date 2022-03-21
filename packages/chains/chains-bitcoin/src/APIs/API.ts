@@ -1,3 +1,4 @@
+import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
 // Numeric fields are represented as strings in case any Bitcoin chain has
@@ -215,10 +216,13 @@ export class CombinedAPI implements BitcoinAPI {
                     this.apis[previousIndex].priority -= 5;
                 }
                 return result;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
+            } catch (error: unknown) {
                 previousIndices.push(index);
-                firstError = firstError || error;
+                firstError =
+                    firstError ||
+                    (error instanceof Error
+                        ? error
+                        : new Error(utils.extractError(error)));
             }
         }
         throw firstError;

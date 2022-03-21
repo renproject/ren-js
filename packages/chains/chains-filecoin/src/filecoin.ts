@@ -251,7 +251,7 @@ export class Filecoin
                                 inputTx.txidFormatted,
                             );
                         } else {
-                            tx = await await fetchMessage(
+                            tx = await fetchMessage(
                                 this.client,
                                 inputTx.txidFormatted,
                                 this.network.addressPrefix,
@@ -267,7 +267,7 @@ export class Filecoin
                             amount: tx.amount,
                         });
                         break;
-                    } catch (error) {
+                    } catch (error: unknown) {
                         console.error(error);
                     }
                 }
@@ -291,8 +291,7 @@ export class Filecoin
             let height: number = 0;
             try {
                 height = await getHeight(this.client);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error(error);
             }
 
@@ -345,7 +344,7 @@ export class Filecoin
                         await utils.sleep(10 * utils.sleep.SECONDS);
                     }
                     fetched = true;
-                } catch (error) {
+                } catch (error: unknown) {
                     // Ignore error.
                 }
             }
@@ -394,8 +393,7 @@ export class Filecoin
                 cid,
                 this.network.addressPrefix,
             );
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             if (this.filfox) {
                 try {
                     msg = await this.filfox.fetchMessage(cid);
@@ -541,7 +539,7 @@ export class Filecoin
         assertType<string>("string", { address });
 
         if (!this.validateAddress(address)) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Invalid ${this.chain} address: ${String(address)}`),
                 RenJSError.PARAMETER_ERROR,
             );

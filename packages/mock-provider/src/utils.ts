@@ -22,8 +22,7 @@ export const randomBytes = (bytes: number): Uint8Array => {
             }
             return utils.fromHex(str);
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Ignore error
     }
     // eslint-disable-next-line @typescript-eslint/no-var-requires

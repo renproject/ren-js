@@ -21,7 +21,7 @@ export const addressToBytes = (address: string): Uint8Array => {
             new Uint8Array([type]),
             new Uint8Array(bech32.fromWords(words)),
         ]);
-    } catch (error) {
+    } catch (error: unknown) {
         try {
             return new Uint8Array(base58.decode(address));
         } catch (internalError) {
@@ -115,21 +115,23 @@ export const hash160 = (...msg: Uint8Array[]): Uint8Array => {
 /**
  * Convert a Bitcoin transaction hash from its standard format to the format
  * required by RenVM.
+ *
  * @param txidFormatted A Bitcoin transaction hash formatted as an unprefixed
  * hex string.
  * @returns The same Bitcoin transaction hash formatted as a base64 string.
  */
-export function txidFormattedToTxid(txidFormatted: string) {
+export function txidFormattedToTxid(txidFormatted: string): string {
     return utils.toURLBase64(utils.fromHex(txidFormatted).reverse());
 }
 
 /**
  * Convert a Bitcoin transaction hash from the format required by RenVM to its
  * standard format.
+ *
  * @param txid A Bitcoin transaction hash formatted as a base64 string.
  * @returns The same Bitcoin transaction hash formatted as an unprefixed hex
  * string.
  */
-export function txidToTxidFormatted(txid: string) {
+export function txidToTxidFormatted(txid: string): string {
     return utils.toHex(utils.fromBase64(txid).reverse());
 }

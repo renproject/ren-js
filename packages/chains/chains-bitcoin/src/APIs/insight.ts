@@ -3,14 +3,7 @@ import BigNumber from "bignumber.js";
 
 import { utils } from "@renproject/utils";
 
-import {
-    BitcoinAPI,
-    DEFAULT_TIMEOUT,
-    fixUTXO,
-    fixValue,
-    sortUTXOs,
-    UTXO,
-} from "./API";
+import { BitcoinAPI, fixUTXO, fixValue, sortUTXOs, UTXO } from "./API";
 
 export class Insight implements BitcoinAPI {
     public url: string;

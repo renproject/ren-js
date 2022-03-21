@@ -199,13 +199,13 @@ export class EthereumBaseChain
         if (!this.signer) {
             try {
                 this.signer = this.provider.getSigner();
-            } catch (error) {
+            } catch (error: unknown) {
                 // Ignore error.
             }
         } else {
             try {
                 this.signer.connect(this.provider);
-            } catch (error) {
+            } catch (error: unknown) {
                 // Ignore - doesnt' work on all signers.
                 // e.g. JsonRpc signer throws:
                 // `cannot alter JSON-RPC Signer connection`.
@@ -218,7 +218,7 @@ export class EthereumBaseChain
         this.signer = signer;
         try {
             this.signer.connect(this.provider);
-        } catch (error) {
+        } catch (error: unknown) {
             // Ignore - doesnt' work on all signers.
             // e.g. JsonRpc signer throws:
             // `cannot alter JSON-RPC Signer connection`.
@@ -227,7 +227,7 @@ export class EthereumBaseChain
     }
 
     public async checkProviderNetwork(): Promise<void> {
-        const actualChainID = await (await this.provider.getNetwork()).chainId;
+        const actualChainID = (await this.provider.getNetwork()).chainId;
         const expectedChainID = new BigNumber(
             this.network.network.chainId,
         ).toNumber();
@@ -252,7 +252,7 @@ export class EthereumBaseChain
         await this.checkProviderNetwork();
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler.getPayload) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `'${contractCall.type}' payload type can only be used as a setup payload.`,
                 ),
@@ -298,8 +298,7 @@ export class EthereumBaseChain
                     if (await this.getLockAsset(assetSymbol)) {
                         return true;
                     }
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any) {
+                } catch (error: unknown) {
                     return false;
                 }
 
@@ -422,7 +421,7 @@ export class EthereumBaseChain
             this.formattedTransactionHash(transaction),
         );
         if (receipt === null) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(
                     `${String(
                         transaction.chain,
@@ -584,7 +583,7 @@ export class EthereumBaseChain
         }
 
         if (!this.signer) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Must connect signer.`),
                 RenJSError.PARAMETER_ERROR,
             );
@@ -743,7 +742,7 @@ export class EthereumBaseChain
         }
 
         if (!this.signer) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Must connect signer.`),
                 RenJSError.PARAMETER_ERROR,
             );
@@ -788,7 +787,7 @@ export class EthereumBaseChain
             return {};
         }
         if (!this.signer) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Must connect signer.`),
                 RenJSError.PARAMETER_ERROR,
             );
@@ -856,7 +855,7 @@ export class EthereumBaseChain
             return {};
         }
         if (!this.signer) {
-            throw ErrorWithCode.from(
+            throw ErrorWithCode.updateError(
                 new Error(`Must connect signer.`),
                 RenJSError.PARAMETER_ERROR,
             );
@@ -997,7 +996,7 @@ export class EthereumBaseChain
                 await this.assetDecimals(asset),
             [EVMParam.EVM_ACCOUNT]: async () => {
                 if (!this.signer) {
-                    throw ErrorWithCode.from(
+                    throw ErrorWithCode.updateError(
                         new Error(`Must connect signer.`),
                         RenJSError.PARAMETER_ERROR,
                     );
@@ -1006,7 +1005,7 @@ export class EthereumBaseChain
             },
             [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: async () => {
                 if (!this.signer) {
-                    throw ErrorWithCode.from(
+                    throw ErrorWithCode.updateError(
                         new Error(`Must connect signer.`),
                         RenJSError.PARAMETER_ERROR,
                     );
@@ -1108,14 +1107,14 @@ export class EthereumBaseChain
                 ? amount
                 : new BigNumber(amount.toString());
             if (fixedAmount.isNaN()) {
-                throw ErrorWithCode.from(
+                throw ErrorWithCode.updateError(
                     new Error(
                         `Invalid numeric-value 'amount'. (amount: ${amount.toString()})`,
                     ),
                     RenJSError.PARAMETER_ERROR,
                 );
             } else if (!convertToWei && fixedAmount.decimalPlaces() !== 0) {
-                throw ErrorWithCode.from(
+                throw ErrorWithCode.updateError(
                     new Error(
                         `Amount must be provided in Wei as an integer, or 'convertToWei' must be set to 'true'. (amount: ${amount.toString()})`,
                     ),

@@ -48,15 +48,12 @@ const createGatewayRegistryFetcher =
                 );
             }
             return registryAddress;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            if (error instanceof Error) {
-                error.message = `Error looking up ${asset} ${lookup}${
-                    error.message ? `: ${String(error.message)}` : "."
-                }`;
-                (error as ErrorWithCode).code = ETHEREUM_ERROR.NETWORK_ERROR;
-            }
-            throw error;
+        } catch (error: unknown) {
+            throw ErrorWithCode.updateError(
+                error,
+                ETHEREUM_ERROR.NETWORK_ERROR,
+                `Error looking up ${asset} ${lookup}`,
+            );
         }
     };
 

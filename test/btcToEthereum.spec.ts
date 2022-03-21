@@ -82,7 +82,7 @@ describe("BTC/toEthereum", () => {
                         gateway.gatewayAddress,
                         minimumAmount.times(5),
                     );
-                } catch (error) {
+                } catch (error: unknown) {
                     // console.log(error.request);
                     // console.log(error.response);
                     throw error;
@@ -136,8 +136,7 @@ describe("BTC/toEthereum", () => {
                             await tx.renVM.submit();
                             await tx.renVM.wait();
                             break;
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        } catch (error: any) {
+                        } catch (error: unknown) {
                             console.error(error);
                             await utils.sleep(10 * utils.sleep.SECONDS);
                         }

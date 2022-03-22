@@ -2,7 +2,7 @@
 
 import chai from "chai";
 
-import { Ox } from "@renproject/utils";
+import { utils } from "@renproject/utils";
 
 import { RenVMProvider } from "../src";
 
@@ -10,7 +10,7 @@ chai.should();
 
 describe("RenVMProvider v2", () => {
     it("selectShard", async () => {
-        const renVMProvider = new RenVMProvider("testnet", {
+        const renVMProvider = new RenVMProvider({
             sendMessage: (method) => {
                 switch (method) {
                     case "ren_queryState":
@@ -24,6 +24,8 @@ describe("RenVMProvider v2", () => {
                 }
             },
         } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
-        Ox((await renVMProvider.selectShard("BTC")).gPubKey).should.equal("");
+        utils
+            .Ox((await renVMProvider.selectShard("BTC")).gPubKey)
+            .should.equal("0xA6Auk8-MR7JQB1sK9h-W69EDdsCqp2NRSOiJyytRyWkn");
     });
 });

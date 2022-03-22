@@ -9,16 +9,16 @@ import {
     RenVMShard,
 } from "@renproject/utils";
 
-import { RenJSConfig } from "./config";
-import { defaultDepositHandler } from "./defaultDepositHandler";
-import { estimateTransactionFee, GatewayFees } from "./fees";
+import { RenJSConfig } from "./utils/config";
+import { defaultTransactionHandler } from "./utils/defaultTransactionHandler";
+import { estimateTransactionFee, GatewayFees } from "./utils/fees";
 import { Gateway } from "./gateway";
 import { GatewayTransaction } from "./gatewayTransaction";
 import { GatewayParams, TransactionParams } from "./params";
 
 export { Gateway } from "./gateway";
 export { GatewayTransaction } from "./gatewayTransaction";
-export { GatewayFees } from "./fees";
+export { GatewayFees } from "./utils/fees";
 export { RenVMTxSubmitter } from "./renVMTxSubmitter";
 
 /**
@@ -45,16 +45,11 @@ export { RenVMTxSubmitter } from "./renVMTxSubmitter";
  * Also see:
  * 1. [[getFees]] - for estimating the fees that will be incurred by minting or
  * burning.
- * 2. [[defaultDepositHandler]]
+ * 2. [[defaultTransactionHandler]] - a static function for handling
+ * GatewayTransactions.
  *
  */
 export class RenJS {
-    // /**
-    //  * [STATIC] `Tokens` exposes the tokens that can be passed in to the lockAndMint and
-    //  * burnAndRelease methods.
-    //  */
-    // public static Tokens = Tokens;
-
     /**
      * `Networks` exposes the network options that can be passed in to the RenJS
      * constructor. `Networks.Mainnet` resolves to the string `"mainnet"`.
@@ -62,7 +57,7 @@ export class RenJS {
     public static Networks = RenNetwork;
 
     /**
-     * `RenJS.defaultDepositHandler` can be passed as a deposit callback when
+     * `RenJS.defaultTransactionHandler` can be passed as a transaction callback when
      * minting. It will handle submitting to RenVM and then to the mint-chain,
      * as long as a valid provider for the mint-chain is given.
      *
@@ -70,11 +65,19 @@ export class RenJS {
      * pop-up unexpectedly when the mint is ready to be submitted.
      *
      * ```ts
-     * lockAndMint.on("deposit", RenJS.defaultDepositHandler);
+     * gateway.on("transaction", RenJS.defaultTransactionHandler);
      * ```
      */
-    public static defaultDepositHandler = defaultDepositHandler;
+    public static defaultTransactionHandler = defaultTransactionHandler;
+    /**
+     * @deprecated Use `defaultTransactionHandler` instead.
+     */
+    public static defaultDepositHandler = defaultTransactionHandler;
 
+    /**
+     * In order to add support for chains, `withChains` must be called,
+     * providing chain handlers that implement the Chain interface.
+     */
     public readonly chains: { [chain: string]: Chain } = {};
 
     /**
@@ -112,7 +115,15 @@ export class RenJS {
                 : providerOrNetwork;
     }
 
-    // eslint-disable-next-line @typescript-eslint/array-type
+    /**
+     * Register one or more chain handlers, each implementing the Chain
+     * interface. By default, RenJS has no chain handlers, so this is required
+     * for all chains being bridged from or to.
+     *
+     * Note that any Gateway or GatewayTransaction instance that has already
+     * been created will continue pointing to the chain handler at the time it
+     * was created.
+     */
     public withChains = <T extends Chain[]>(...chains: T): this => {
         for (const chain of chains) {
             this.chains[chain.chain] = chain;
@@ -121,6 +132,9 @@ export class RenJS {
     };
     public withChain = this.withChains;
 
+    /**
+     * Return the chain handler previously added using [[withChains]].
+     */
     public getChain = (name: string): Chain => {
         if (!this.chains[name]) {
             throw ErrorWithCode.updateError(
@@ -133,6 +147,23 @@ export class RenJS {
         return this.chains[name];
     };
 
+    /**
+     * Calculate the RenVM and blockchain fees for a transaction.
+     *
+     * @example
+     * renJS.getFees({
+     *   asset: "BTC",
+     *   from: "Bitcoin",
+     *   to: "Ethereum",
+     * })
+     *
+     * @example
+     * renJS.getFees({
+     *   asset: "BTC",
+     *   from: bitcoin.GatewayAddress(),
+     *   to: ethereum.Account(),
+     * })
+     */
     public getFees = async ({
         asset,
         from,
@@ -181,21 +212,21 @@ export class RenJS {
         );
     };
 
+    /**
+     * Return the recommended shard for processing transactions of the specified
+     * asset.
+     */
     public readonly selectShard = async (asset: string): Promise<RenVMShard> =>
         this.provider.selectShard(asset);
 
     /**
-     * `lockAndMint` initiates the process of bridging an asset from its native
-     * chain to a host chain.
+     * `gateway` inistiates a new Gateway for bridging an asset between two
+     * chains.
      *
-     * See [[LockAndMintParams]] for all the options that can be set.
+     * See [[Gateway]] for all the options that can be set.
      *
-     * Returns a [[LockAndMint]] object.
-     *
-     * Example initialization:
-     *
-     * ```js
-     * const lockAndMint = renJS.lockAndMint({
+     * @example
+     * const gateway = renJS.gateway({
      *     asset: "BTC",
      *     from: Bitcoin(),
      *     to: Ethereum(web3Provider).Account({
@@ -204,7 +235,9 @@ export class RenJS {
      * });
      * ```
      *
-     * @param params See [[LockAndMintParams]].
+     * @param params See [[GatewayParams]]. This is a serializable object,
+     * allowing gateways to be re-created.
+     * @param config Optional RenJS config, such as a logger.
      */
     public readonly gateway = async <
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -226,6 +259,14 @@ export class RenJS {
             },
         ).initialize();
 
+    /**
+     * `gatewayTransaction` allows you to re-create a transaction emitted
+     * by `gateway.on("transaction", (tx) => {...})`.
+     *
+     * @param params The same type as `tx.params` on an emitted `tx`. This is a
+     * serializable object.
+     * @param config Optional RenJS config, such as a logger.
+     */
     public readonly gatewayTransaction = async <
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ToPayload extends { chain: string; txConfig?: any } = {

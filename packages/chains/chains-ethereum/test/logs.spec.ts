@@ -11,8 +11,10 @@ import { findABIMethod, LockGatewayABI } from "../src/contracts";
 import { LogLockToChainEvent } from "../src/contracts/typechain/LockGatewayV3";
 import { Ethereum } from "../src/ethereum";
 import { getMintGateway } from "../src/utils/gatewayRegistry";
-import { filterLogs } from "../src/utils/generic";
-import { mapLockLogToInputChainTransaction } from "../src/utils/utils";
+import {
+    filterLogs,
+    mapLockLogToInputChainTransaction,
+} from "../src/utils/generic";
 
 loadDotEnv();
 
@@ -23,9 +25,7 @@ describe("Logs", () => {
         const network = RenNetwork.Testnet;
         const ethNetwork = Ethereum.configMap[network];
 
-        const infuraURL = ethNetwork.rpcUrl({
-            infura: process.env.INFURA_KEY,
-        });
+        const infuraURL = ethNetwork.network.rpcUrls[0];
 
         const provider = new providers.JsonRpcProvider(infuraURL);
 
@@ -37,7 +37,7 @@ describe("Logs", () => {
         const lockDetails = filterLogs<LogLockToChainEvent>(
             receipt.logs,
             logLockABI,
-        ).map(mapLockLogToInputChainTransaction);
+        ).map((e) => mapLockLogToInputChainTransaction("Ethereun", "BTC", e));
         console.log(lockDetails);
     });
 
@@ -45,9 +45,7 @@ describe("Logs", () => {
         const network = RenNetwork.Testnet;
         const ethNetwork = BinanceSmartChain.configMap[network];
 
-        const infuraURL = ethNetwork.rpcUrl({
-            infura: process.env.INFURA_KEY,
-        });
+        const infuraURL = ethNetwork.network.rpcUrls[0];
 
         const provider = new providers.JsonRpcProvider(infuraURL);
 

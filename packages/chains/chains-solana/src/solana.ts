@@ -638,6 +638,7 @@ export class Solana
                     )}.`,
                 );
             }
+            onInput(chainTransaction);
             return new DefaultTxWaiter({
                 chainTransaction,
                 chain: this,
@@ -986,7 +987,9 @@ export class Solana
                 chain: this.chain,
                 type: "burnToAddress",
                 params: {
-                    amount,
+                    amount: BigNumber.isBigNumber(amount)
+                        ? amount.toFixed()
+                        : amount,
                 },
             };
             return payload;
@@ -1040,6 +1043,21 @@ export class Solana
                     txidFormattedToTxid,
                     defaultTxindex: "0",
                 }),
+            },
+        };
+    }
+
+    public BurnNonce(
+        burnNonce: Uint8Array | string | number,
+    ): SolanaInputPayload {
+        return {
+            chain: this.chain,
+            type: "burnNonce",
+            params: {
+                burnNonce:
+                    burnNonce instanceof Uint8Array
+                        ? utils.fromBytes(burnNonce).toString()
+                        : burnNonce.toString(),
             },
         };
     }

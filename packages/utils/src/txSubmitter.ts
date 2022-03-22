@@ -1,4 +1,5 @@
-import { isDefined, newPromiEvent, sleep } from "./internal/common";
+import { isDefined, newPromiEvent } from "./internal/common";
+import { sleep } from "./internal/sleep";
 import { Chain, ChainTransaction, SyncOrPromise } from "./types/chain";
 import {
     eventEmitter,

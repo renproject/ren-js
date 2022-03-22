@@ -1,5 +1,6 @@
 import Axios, { AxiosRequestConfig } from "axios";
-import { extractError, sleep } from "./common";
+import { extractError } from "./extractError";
+import { sleep } from "./sleep";
 
 // Default timeout for network requests.
 export const DEFAULT_TIMEOUT = 30 * sleep.SECONDS;

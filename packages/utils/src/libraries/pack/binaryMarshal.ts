@@ -1,13 +1,7 @@
 import BigNumber from "bignumber.js";
 import { ErrorWithCode, RenJSError } from "../../errors";
 
-import {
-    concat,
-    extractError,
-    fromBase64,
-    fromUTF8String,
-    toNBytes,
-} from "../../internal/common";
+import { utils } from "../../internal";
 import { isPackListType, isPackStructType } from "./common";
 import {
     PackListType,
@@ -91,7 +85,7 @@ export const encodeUint = (
     bits: number,
 ): Uint8Array => {
     try {
-        return toNBytes(
+        return utils.toNBytes(
             typeof value === "number"
                 ? value
                 : BigNumber.isBigNumber(value)
@@ -120,13 +114,13 @@ export const encodeU128 = encodeU(128);
 export const encodeU256 = encodeU(256);
 
 export const withLength = (value: Uint8Array): Uint8Array =>
-    concat([encodeU32(value.length), value]);
+    utils.concat([encodeU32(value.length), value]);
 
 /**
  * Encode a string, prefixed by its length.
  */
 export const encodeString = (value: string): Uint8Array =>
-    withLength(fromUTF8String(value));
+    withLength(utils.fromUTF8String(value));
 
 /**
  * Encode a struct type by prefixing the `struct` pack type ID and the number
@@ -136,7 +130,7 @@ export const encodeString = (value: string): Uint8Array =>
 export const encodePackStructType = (type: PackStructType): Uint8Array => {
     const length = encodeU32(type.struct.length);
 
-    return concat([
+    return utils.concat([
         new Uint8Array([encodePackType(type)]),
         length,
         ...type.struct.map((field) => {
@@ -149,7 +143,7 @@ export const encodePackStructType = (type: PackStructType): Uint8Array => {
             }
             const key = Object.keys(field)[0];
             const fieldType = field[key];
-            return concat([
+            return utils.concat([
                 encodeString(key),
                 encodePackTypeDefinition(fieldType),
             ]);
@@ -162,7 +156,7 @@ export const encodePackStructType = (type: PackStructType): Uint8Array => {
  * encoded type definition of the list's sub-type.
  */
 export const encodePackListType = (type: PackListType): Uint8Array =>
-    concat([
+    utils.concat([
         new Uint8Array([encodePackType(type)]),
         encodePackTypeDefinition(type.list),
     ]);
@@ -220,7 +214,7 @@ export const encodePackPrimitive = (
                 value instanceof Uint8Array
                     ? value
                     : // Supports base64 url format
-                      fromBase64(value),
+                      utils.fromBase64(value),
             );
         }
         case PackPrimitive.Bytes32:
@@ -228,7 +222,7 @@ export const encodePackPrimitive = (
             return value instanceof Uint8Array
                 ? value
                 : // Supports base64 url format
-                  fromBase64(value);
+                  utils.fromBase64(value);
     }
 };
 
@@ -240,7 +234,7 @@ export const encodePackStruct = (
     type: PackStructType,
     value: unknown,
 ): Uint8Array =>
-    concat(
+    utils.concat(
         type.struct.map((member) => {
             const keys = Object.keys(member);
             if (keys.length === 0) {
@@ -280,7 +274,7 @@ export const encodeListStruct = (
     value: unknown[],
 ): Uint8Array => {
     const subtype = type.list;
-    return concat(
+    return utils.concat(
         value.map((element, i) => {
             try {
                 return encodePackValue(subtype, element);
@@ -328,14 +322,14 @@ export function encodeTypedPackValue({ t, v }: TypedPackValue): Uint8Array {
     try {
         const encodedType = encodePackTypeDefinition(t);
         const encodedValue = encodePackValue(t, v);
-        return concat([encodedType, encodedValue]);
+        return utils.concat([encodedType, encodedValue]);
     } catch (error: unknown) {
         if (error instanceof Error) {
             error.message = `Error encoding typed pack value: ${error.message}`;
             throw error;
         }
         throw new Error(
-            `Error encoding typed pack value: ${extractError(error)}`,
+            `Error encoding typed pack value: ${utils.extractError(error)}`,
         );
     }
 }

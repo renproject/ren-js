@@ -8,7 +8,7 @@ import {
     RenJSError,
 } from "@renproject/utils";
 
-export { Gateway as LockAndMint } from "./gateway";
+export { Gateway as LockAndMint } from "../gateway";
 
 export const BIP_DENOMINATOR = 10000;
 

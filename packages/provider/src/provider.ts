@@ -51,7 +51,7 @@ export interface RenVMProviderInterface
 
     /**
      * Queries the result of a RenVM transaction and unmarshals the result into
-     * a [[LockAndMintTransaction]] or [[BurnAndReleaseTransaction]].
+     * a [[RenVMCrossChainTransaction]].
      *
      * @param txHash The transaction hash in URL-base64.
      */

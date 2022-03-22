@@ -6,6 +6,7 @@ import { computeAddress } from "ethers/lib/utils";
 import {
     ExternalProvider,
     JsonRpcFetchFunc,
+    Provider,
     Web3Provider,
 } from "@ethersproject/providers";
 import {
@@ -95,7 +96,7 @@ export class EthereumBaseChain
         [network in RenNetwork]?: EvmNetworkConfig;
     } = {};
 
-    public provider: Web3Provider;
+    public provider: Provider;
     public signer?: EthSigner;
     public network: EvmNetworkConfig;
     public explorer: EvmExplorer;
@@ -189,16 +190,14 @@ export class EthereumBaseChain
     }
 
     public withProvider(web3Provider: EthProvider): this {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.provider = (web3Provider as any)._isProvider
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (web3Provider as any)
+        this.provider = (web3Provider as Provider)._isProvider
+            ? (web3Provider as Provider)
             : new ethers.providers.Web3Provider(
                   web3Provider as ExternalProvider | JsonRpcFetchFunc,
               );
         if (!this.signer) {
             try {
-                this.signer = this.provider.getSigner();
+                this.signer = (this.provider as Web3Provider).getSigner();
             } catch (error: unknown) {
                 // Ignore error.
             }

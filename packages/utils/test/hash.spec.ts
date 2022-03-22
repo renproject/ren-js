@@ -1,4 +1,5 @@
 import chai, { expect } from "chai";
+import { utils } from "../src";
 
 import { keccak256 } from "../src/internal/hashes";
 
@@ -35,8 +36,8 @@ describe("keccak256", () => {
         for (const testCase of testCases) {
             for (const hash of Object.keys(testCase.hashes)) {
                 const result = hashers[hash](testCase.msg);
-                expect(Buffer.isBuffer(result));
-                expect(result.toString("hex")).to.equal(testCase.hashes[hash]);
+                expect(result instanceof Uint8Array).to.be.true;
+                expect(utils.toHex(result)).to.equal(testCase.hashes[hash]);
             }
         }
     });

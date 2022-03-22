@@ -7,9 +7,9 @@ import {
     utils,
 } from "@renproject/utils";
 
-import { GatewayTransaction } from "./gatewayTransaction";
+import { GatewayTransaction } from "../gatewayTransaction";
 
-const defaultTransactionHandler = async (
+const chainTransactionHandler = async (
     tx: TxWaiter | TxSubmitter,
     {
         retries = 1,
@@ -69,25 +69,26 @@ const defaultTransactionHandler = async (
 };
 
 /**
- * See [[RenJS.defaultDepositHandler]].
+ * See [[RenJS.defaultTransactionHandler]].
  */
-const createDepositHandler = (retries = -1) => {
+const createTransactionHandler = (retries = -1) => {
     const fn: ((tx: GatewayTransaction) => Promise<void>) & {
         withRetries: (newRetries: number) => void;
     } = async (tx: GatewayTransaction): Promise<void> => {
-        await defaultTransactionHandler(tx.in, { retries });
-        await defaultTransactionHandler(tx.renVM, { retries });
+        await chainTransactionHandler(tx.in, { retries });
+        await chainTransactionHandler(tx.renVM, { retries });
         for (const setupKey of Object.keys(tx.outSetup || {})) {
-            await defaultTransactionHandler(tx.outSetup[setupKey], { retries });
+            await chainTransactionHandler(tx.outSetup[setupKey], { retries });
         }
-        await defaultTransactionHandler(tx.out, { retries });
+        await chainTransactionHandler(tx.out, { retries });
     };
 
-    fn.withRetries = (newRetries: number) => createDepositHandler(newRetries);
+    fn.withRetries = (newRetries: number) =>
+        createTransactionHandler(newRetries);
     return fn;
 };
 
 /**
- * See [[RenJS.defaultDepositHandler]].
+ * See [[RenJS.defaultTransactionHandler]].
  */
-export const defaultDepositHandler = createDepositHandler();
+export const defaultTransactionHandler = createTransactionHandler();

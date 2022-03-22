@@ -5,17 +5,14 @@ import { config as loadDotEnv } from "dotenv";
 import { Filecoin } from "../src";
 
 import FilecoinClient from "@glif/filecoin-rpc-client";
-
-import { fetchDeposits } from "../src/api/lotus";
+import { fetchDeposits, getHeight } from "../src/utils/lotus";
 
 chai.should();
 
 loadDotEnv();
 
 describe("Filecoin", () => {
-    it.skip("mint to contract", async function () {
-        this.timeout(100000000000);
-
+    it("mint to contract", function () {
         const gHash = Buffer.from(
             "o5LfFXW33It6I0gFYNArjX5p_zLnRT28lqzIVFvh_kY",
             "base64",
@@ -26,27 +23,36 @@ describe("Filecoin", () => {
         );
 
         console.log(
-            await Filecoin("testnet").getGatewayAddress("FIL", pubKey, gHash),
+            new Filecoin({ network: "testnet" }).createGatewayAddress(
+                "FIL",
+                {
+                    chain: "Filecoin",
+                },
+                pubKey,
+                gHash,
+            ),
         );
     });
 });
 
-describe("Filecoin", () => {
-    it.skip("lotus", async function () {
+// Slow test.
+describe.skip("Filecoin", () => {
+    it("lotus", async function () {
         this.timeout(100000000000);
 
         const client = new FilecoinClient({
-            apiAddress:
-                "https://multichain-staging.renproject.io/testnet/lotus/rpc/v0",
+            apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
         });
+
+        const height = await getHeight(client);
 
         console.log(
             await fetchDeposits(
                 client,
                 "t1gvyvits5chiahib7cz6uyh6kijgqgycnaiuj47i",
                 "",
-                "testnet",
                 0,
+                height,
             ),
         );
     });

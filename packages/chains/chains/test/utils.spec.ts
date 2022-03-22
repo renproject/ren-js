@@ -12,6 +12,7 @@ import {
     Ethereum,
     Zcash,
 } from "../src";
+import { providers } from "ethers";
 
 const addresses = {
     [Bitcoin.chain]: {
@@ -50,16 +51,15 @@ describe("Chain utils", () => {
     for (const ChainClass of [Bitcoin, Zcash, BitcoinCash, Dogecoin]) {
         for (const network of [RenNetwork.Mainnet, RenNetwork.Testnet]) {
             it(ChainClass.chain, () => {
-                const chain = new ChainClass();
-                chain.initialize(network);
+                const chain = new ChainClass({ network });
 
-                console.log(chain.name, network);
+                console.log(chain.chain, network);
 
-                expect(ChainClass.utils).not.to.equal(undefined);
-                expect(chain.utils).not.to.equal(undefined);
+                expect(ChainClass.chain).not.to.equal(undefined);
+                expect(ChainClass.chain).to.equal(chain.chain);
 
-                expect(ChainClass.utils.p2shPrefix).to.equal(
-                    chain.utils.p2shPrefix,
+                expect(ChainClass.configMap[network].p2shPrefix).to.equal(
+                    chain.network.p2shPrefix,
                 );
 
                 const address = addresses[chain.chain][network];
@@ -69,21 +69,9 @@ describe("Chain utils", () => {
                     ];
                 const invalidAddress = "1234";
 
-                expect(
-                    ChainClass.utils.addressIsValid(
-                        address,
-                        network as "mainnet" | "testnet",
-                    ),
-                ).to.equal(true);
-
-                expect(chain.utils.addressIsValid(address)).to.equal(true);
-
-                expect(chain.utils.addressIsValid(wrongAddress)).to.equal(
-                    false,
-                );
-                expect(chain.utils.addressIsValid(invalidAddress)).to.equal(
-                    false,
-                );
+                expect(chain.validateAddress(address)).to.equal(true);
+                expect(chain.validateAddress(wrongAddress)).to.equal(false);
+                expect(chain.validateAddress(invalidAddress)).to.equal(false);
             });
         }
     }
@@ -100,11 +88,17 @@ describe("Chain utils", () => {
     ]) {
         for (const network of [RenNetwork.Mainnet, RenNetwork.Testnet]) {
             it(ChainClass.chain, () => {
-                const chain = new ChainClass(undefined, network);
-                chain.initialize(network);
+                const provider = (ChainClass.configMap[network] as any).network
+                    ? new providers.JsonRpcProvider(
+                          (
+                              ChainClass.configMap["testnet"] as any
+                          ).network.rpcUrls[0],
+                      )
+                    : undefined;
+                const chain = new ChainClass({ network, provider });
 
-                expect(ChainClass.utils).not.to.equal(undefined);
-                expect(chain.utils).not.to.equal(undefined);
+                expect(ChainClass.chain).not.to.equal(undefined);
+                expect(ChainClass.chain).to.equal(chain.chain);
 
                 const address = addresses[chain.chain][network];
                 const wrongAddress =
@@ -113,27 +107,15 @@ describe("Chain utils", () => {
                     ];
                 const invalidAddress = "1234";
 
-                expect(
-                    ChainClass.utils.addressIsValid(
-                        address,
-                        network as "mainnet" | "testnet",
-                    ),
-                ).to.equal(true);
+                expect(chain.validateAddress(address)).to.equal(true);
 
-                expect(chain.utils.addressIsValid(address)).to.equal(true);
-
-                console.log(chain.name, network);
                 if (
                     ChainClass.chain !== Ethereum.chain &&
                     ChainClass.chain !== BinanceSmartChain.chain
                 ) {
-                    expect(chain.utils.addressIsValid(wrongAddress)).to.equal(
-                        false,
-                    );
+                    expect(chain.validateAddress(wrongAddress)).to.equal(false);
                 }
-                expect(chain.utils.addressIsValid(invalidAddress)).to.equal(
-                    false,
-                );
+                expect(chain.validateAddress(invalidAddress)).to.equal(false);
             });
         }
     }
@@ -142,35 +124,40 @@ describe("Chain utils", () => {
 // TODO: Move to Ethereum tests.
 describe("Ethereum utils", () => {
     it("addressIsValid", () => {
+        const ethereum = new Ethereum({
+            network: "testnet",
+            provider: new providers.JsonRpcProvider(
+                Ethereum.configMap["testnet"].network.rpcUrls[0],
+            ),
+        });
+
         expect(
-            Ethereum.utils.addressIsValid(
+            ethereum.validateAddress(
                 "0x05a56E2D52c817161883f50c441c3228CFe54d9f",
             ),
         ).to.equal(true);
 
         expect(
-            Ethereum.utils.addressIsValid(
+            ethereum.validateAddress(
                 "0x05a56e2d52c817161883f50c441c3228cfe54d9f",
             ),
         ).to.equal(true);
 
         // ENS domain
-        expect(Ethereum.utils.addressIsValid("vitalik.eth")).to.equal(true);
+        expect(ethereum.validateAddress("vitalik.eth")).to.equal(true);
 
         // Bad casing
 
         expect(
-            Ethereum.utils.addressIsValid(
+            ethereum.validateAddress(
                 "0x05a56E2D52c817161883f50c441c3228CFe54d9F",
             ),
         ).to.equal(false);
 
         // Too short.
-        expect(Ethereum.utils.addressIsValid("0x05a56E2D52c81")).to.equal(
-            false,
-        );
+        expect(ethereum.validateAddress("0x05a56E2D52c81")).to.equal(false);
 
         // Not an ENS domain
-        expect(Ethereum.utils.addressIsValid("vitalik.ethos")).to.equal(false);
+        expect(ethereum.validateAddress("vitalik.ethos")).to.equal(false);
     });
 });

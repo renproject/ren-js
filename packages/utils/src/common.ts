@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { assertType } from "./internal/assert";
-import { concat, Ox, toNBytes } from "./internal/common";
+import { utils } from "./internal";
 import { ChainTransaction } from "./types/chain";
 
 /**
@@ -58,13 +57,13 @@ export const decodeRenVMSelector = (
  * @returns The signature in the same format, with normalized values.
  */
 export const normalizeSignature = (signature: Uint8Array): Uint8Array => {
-    assertType<Uint8Array>("Uint8Array", { signature });
+    utils.assertType<Uint8Array>("Uint8Array", { signature });
 
     const r: Uint8Array = signature.slice(0, 32);
     const s: Uint8Array = signature.slice(32, 64);
     let v: number = signature.slice(64, 65)[0];
 
-    let sBN = new BigNumber(Ox(s), 16);
+    let sBN = new BigNumber(utils.Ox(s), 16);
 
     // Normalize v value
     v = ((v || 0) % 27) + 27;
@@ -85,7 +84,7 @@ export const normalizeSignature = (signature: Uint8Array): Uint8Array => {
         v = v === 27 ? 28 : 27;
     }
 
-    return concat([r, toNBytes(sBN, 32), new Uint8Array([v])]);
+    return utils.concat([r, utils.toNBytes(sBN, 32), new Uint8Array([v])]);
 };
 
 export function populateChainTransaction({

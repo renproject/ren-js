@@ -1,8 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { assertType } from "./internal/assert";
-import { concat, padUint8Array, toNBytes } from "./internal/common";
-import { keccak256, sha256 } from "./internal/hashes";
+import { utils } from "./internal";
 import { pack, TypedPackValue } from "./libraries/pack";
 
 /**
@@ -35,7 +33,7 @@ import { pack, TypedPackValue } from "./libraries/pack";
 /**
  * Calculate the RenVM pHash (payload hash) from a payload (alias for keccak256).
  */
-export const generatePHash = keccak256;
+export const generatePHash = utils.keccak256;
 
 /**
  * Calculate the RenVM sHash (selector hash). Normalizes the selector to remove
@@ -48,13 +46,13 @@ export const generatePHash = keccak256;
  * ```
  */
 export const generateSHash = (selector: string): Uint8Array => {
-    assertType<string>("string", { selector });
+    utils.assertType<string>("string", { selector });
 
     const encoder = new TextEncoder();
     const toSelector: Uint8Array = encoder.encode(
         selector.replace(/\/.*To/, "/to"),
     );
-    return keccak256(toSelector);
+    return utils.keccak256(toSelector);
 };
 
 /**
@@ -70,9 +68,9 @@ export const generateGHash = (
     to: Uint8Array,
     nonce: Uint8Array,
 ): Uint8Array => {
-    assertType<Uint8Array>("Uint8Array", { pHash, nonce, sHash, to });
+    utils.assertType<Uint8Array>("Uint8Array", { pHash, nonce, sHash, to });
 
-    return keccak256(pHash, sHash, to, nonce);
+    return utils.keccak256(pHash, sHash, to, nonce);
 };
 
 /**
@@ -84,10 +82,10 @@ export const generateNHash = (
     txid: Uint8Array,
     txindex: string,
 ): Uint8Array => {
-    assertType<Uint8Array>("Uint8Array", { nonce, txid });
-    assertType<string>("string", { txindex });
+    utils.assertType<Uint8Array>("Uint8Array", { nonce, txid });
+    utils.assertType<string>("string", { txindex });
 
-    return keccak256(nonce, txid, toNBytes(txindex, 4));
+    return utils.keccak256(nonce, txid, utils.toNBytes(txindex, 4));
 };
 
 /**
@@ -101,8 +99,8 @@ export const generateSighash = (
     sHash: Uint8Array,
     nHash: Uint8Array,
 ): Uint8Array => {
-    assertType<Uint8Array>("Uint8Array", { pHash, nHash, sHash, to });
-    assertType<BigNumber>("BigNumber", { amount });
+    utils.assertType<Uint8Array>("Uint8Array", { pHash, nHash, sHash, to });
+    utils.assertType<BigNumber>("BigNumber", { amount });
 
     if (pHash.length !== 32) {
         throw new Error(
@@ -122,15 +120,15 @@ export const generateSighash = (
         );
     }
 
-    const encoded = concat([
+    const encoded = utils.concat([
         pHash,
-        toNBytes(amount, 32),
+        utils.toNBytes(amount, 32),
         sHash,
-        padUint8Array(to, 32),
+        utils.padUint8Array(to, 32),
         nHash,
     ]);
 
-    return keccak256(encoded);
+    return utils.keccak256(encoded);
 };
 
 /**
@@ -144,8 +142,8 @@ export const generateTransactionHash = (
     selector: string,
     packValue: TypedPackValue,
 ): Uint8Array => {
-    assertType<string>("string", { version, selector });
-    return sha256(
+    utils.assertType<string>("string", { version, selector });
+    return utils.sha256(
         pack.binaryMarshal.encodeString(version),
         pack.binaryMarshal.encodeString(selector),
         pack.binaryMarshal.encodeTypedPackValue(packValue),

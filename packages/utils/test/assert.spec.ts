@@ -1,54 +1,61 @@
 import BigNumber from "bignumber.js";
 import chai, { expect } from "chai";
 
-import { assert, assertObject, assertType } from "../src/internal/assert";
+import { utils } from "../src/internal";
 
 chai.should();
 
 describe("assert", () => {
     it("basic assert", () => {
-        expect(assert(true, "test")).to.equal(true);
-        expect(() => assert(false, "test")).to.throw("Failed assertion: test");
-        expect(() => assert(false)).to.throw("Failed assertion");
+        expect(utils.assert(true, "test")).to.equal(true);
+        expect(() => utils.assert(false, "test")).to.throw(
+            "Failed assertion: test",
+        );
+        expect(() => utils.assert(false)).to.throw("Failed assertion");
     });
 
     it("return true for correct types", () => {
         const buffer = Buffer.from([]);
 
-        assertType<undefined>("undefined", { a: undefined }).should.be.true;
-        assertType<null>("null", { a: null }).should.be.true;
-        assertType<Buffer | string>("Buffer | string", { a: buffer }).should.be
+        utils.assertType<undefined>("undefined", { a: undefined }).should.be
             .true;
-        assertType<Buffer | string>("Buffer | string", { b: "1" }).should.be
-            .true;
-        assertType<BigNumber>("BigNumber", { b: new BigNumber(1) }).should.be
-            .true;
-        assertType<Buffer | string | undefined>("Buffer | string | undefined", {
-            c: undefined,
+        utils.assertType<null>("null", { a: null }).should.be.true;
+        utils.assertType<Uint8Array | string>("Uint8Array | string", {
+            a: buffer,
         }).should.be.true;
-        assertType<number[]>("number[]", {
+        utils.assertType<Uint8Array | string>("Uint8Array | string", { b: "1" })
+            .should.be.true;
+        utils.assertType<BigNumber>("BigNumber", { b: new BigNumber(1) }).should
+            .be.true;
+        utils.assertType<Uint8Array | string | undefined>(
+            "Uint8Array | string | undefined",
+            {
+                c: undefined,
+            },
+        ).should.be.true;
+        utils.assertType<number[]>("number[]", {
             a: [1, 2, 3],
         }).should.be.true;
         // eslint-disable-next-line @typescript-eslint/array-type
-        assertType<Array<number>>("Array<number>", {
+        utils.assertType<Array<number>>("Array<number>", {
             a: [1, 2, 3],
         }).should.be.true;
-        assertType<number | number[]>("number | number[]", {
+        utils.assertType<number | number[]>("number | number[]", {
             a: [1, 2, 3],
         }).should.be.true;
 
-        assertType<number | number[]>("number | number[]", {
+        utils.assertType<number | number[]>("number | number[]", {
             a: 1,
         }).should.be.true;
 
-        assertType<string[] | number[]>("string[] | number[]", {
+        utils.assertType<string[] | number[]>("string[] | number[]", {
             a: [1, 2, 3],
         }).should.be.true;
 
-        assertType<string[] | number[]>("string[] | number[]", {
+        utils.assertType<string[] | number[]>("string[] | number[]", {
             a: ["1", "2", "3"],
         }).should.be.true;
-        assertObject(
+        utils.assertObject(
             {
                 first: "number",
                 second: "string",
@@ -61,7 +68,7 @@ describe("assert", () => {
             },
         ).should.be.true;
 
-        assertObject(
+        utils.assertObject(
             {
                 first: {
                     innerFirst: "number",
@@ -80,22 +87,24 @@ describe("assert", () => {
     });
 
     it("throw error for wrong types", () => {
-        expect(() => assertType("undefined", { b: null })).to.throw(
+        expect(() => utils.assertType("undefined", { b: null })).to.throw(
             "Expected 'b' to be of type 'undefined', instead got 'null'.",
         );
-        expect(() => assertType("null", { b: undefined })).to.throw(
+        expect(() => utils.assertType("null", { b: undefined })).to.throw(
             "Expected 'b' to be of type 'null', instead got 'undefined'.",
         );
-        expect(() => assertType("Buffer | string", { b: 1 })).to.throw(
-            "Expected 'b' to be of type 'Buffer | string', instead got 'number'.",
-        );
         expect(() =>
-            assertType("Buffer | string | undefined", { d: null }),
+            utils.assertType("Uint8Array | string", { b: 1 }),
         ).to.throw(
-            "Expected 'd' to be of type 'Buffer | string | undefined', instead got 'null'.",
+            "Expected 'b' to be of type 'Uint8Array | string', instead got 'number'.",
         );
         expect(() =>
-            assertType("Array<number>", {
+            utils.assertType("Uint8Array | string | undefined", { d: null }),
+        ).to.throw(
+            "Expected 'd' to be of type 'Uint8Array | string | undefined', instead got 'null'.",
+        );
+        expect(() =>
+            utils.assertType("Array<number>", {
                 a: [1, 2, "a"],
             }),
         ).to.throw(
@@ -103,14 +112,14 @@ describe("assert", () => {
         );
 
         expect(() =>
-            assertType("string | number[]", {
+            utils.assertType("string | number[]", {
                 a: ["1", "2", "3"],
             }),
         ).to.throw(
             "Expected 'a' to be of type 'string | number[]', instead got 'any[]'.",
         );
         expect(() =>
-            assertObject(
+            utils.assertObject(
                 {
                     first: {
                         innerFirst: "number",
@@ -131,7 +140,7 @@ describe("assert", () => {
         );
 
         expect(() =>
-            assertObject(
+            utils.assertObject(
                 {
                     first: "number",
                     second: "string",
@@ -149,12 +158,12 @@ describe("assert", () => {
     });
 
     it("edge cases", () => {
-        expect(assertType("number", { v: 1 })).to.equal(true);
-        expect(assertType("Array<number>", { v: [1] })).to.equal(true);
-        expect(assertType("number[]", { v: [1] })).to.equal(true);
+        expect(utils.assertType("number", { v: 1 })).to.equal(true);
+        expect(utils.assertType("Array<number>", { v: [1] })).to.equal(true);
+        expect(utils.assertType("number[]", { v: [1] })).to.equal(true);
 
         expect(() =>
-            assertObject(
+            utils.assertObject(
                 {
                     first: null,
                 },
@@ -167,7 +176,7 @@ describe("assert", () => {
         ).to.throw("Cannot convert undefined or null to object");
 
         expect(() =>
-            assertObject(
+            utils.assertObject(
                 {
                     first: undefined,
                 },
@@ -179,7 +188,7 @@ describe("assert", () => {
             ),
         ).to.throw("Invalid object type definition undefined");
 
-        assertObject(
+        utils.assertObject(
             // @ts-expect-error Should complain about missing field "first".
             {},
             {

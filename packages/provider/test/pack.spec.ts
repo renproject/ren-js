@@ -2,9 +2,9 @@ import BigNumber from "bignumber.js";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { fromBase64, unmarshalPackValue } from "@renproject/utils";
-
-import { burnParamsType, mintParamsType } from "../src/transaction";
+import { utils } from "@renproject/utils";
+import { unmarshalPackValue } from "../../utils/src/libraries/pack/unmarshal";
+import { burnParamsType, crossChainParamsType } from "../src";
 
 describe("Pack", () => {
     it("Unmarshal burn - 1", () => {
@@ -19,9 +19,9 @@ describe("Pack", () => {
             to,
         });
 
-        expect(result).to.equal({
+        expect(result).to.deep.equal({
             amount: new BigNumber(amount),
-            nonce: fromBase64(nonce),
+            nonce: utils.fromBase64(nonce),
             to,
         });
     });
@@ -38,7 +38,7 @@ describe("Pack", () => {
         const phash = "ibSvPHswcsI3o3nkQRpHp23ANg3tf9L5ivk5kKwnGTQ";
         const to = "1234";
 
-        const result = unmarshalPackValue(mintParamsType(), {
+        const result = unmarshalPackValue(crossChainParamsType, {
             ghash,
             gpubkey,
             nhash,
@@ -51,16 +51,16 @@ describe("Pack", () => {
             to,
         });
 
-        expect(result).to.equal({
-            ghash: fromBase64(ghash),
-            gpubkey: fromBase64(gpubkey),
-            nhash: fromBase64(nhash),
-            nonce: fromBase64(nonce),
-            txid: fromBase64(txid),
+        expect(result).to.deep.equal({
+            ghash: utils.fromBase64(ghash),
+            gpubkey: utils.fromBase64(gpubkey),
+            nhash: utils.fromBase64(nhash),
+            nonce: utils.fromBase64(nonce),
+            txid: utils.fromBase64(txid),
             txindex: new BigNumber(txindex),
             amount: new BigNumber(amount),
-            payload: fromBase64(payload),
-            phash: fromBase64(phash),
+            payload: utils.fromBase64(payload),
+            phash: utils.fromBase64(phash),
             to: to,
         });
     });

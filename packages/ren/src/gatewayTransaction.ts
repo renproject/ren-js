@@ -26,11 +26,18 @@ import {
     utils,
 } from "@renproject/utils";
 
-import { defaultRenJSConfig, RenJSConfig } from "./config";
+import { defaultRenJSConfig, RenJSConfig } from "./utils/config";
 import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 import { TransactionParams } from "./params";
 
+/**
+ * A GatewayTransaction handles a specific bridging transaction through RenVM.
+ * It includes an input chain transaction that should have already been
+ * submitted, a RenVM transaction, and an output chain transaction.
+ * Additionally, there may be some setup transactions required to be submitted
+ * before the output transaction.
+ */
 export class GatewayTransaction<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToPayload extends { chain: string; txConfig?: any } = {
@@ -58,7 +65,6 @@ export class GatewayTransaction<
     }
     public selector: string;
 
-    /** See [[RenJS.renVM]]. */
     public provider: RenVMProvider;
     public fromChain: Chain;
     public toChain: Chain;

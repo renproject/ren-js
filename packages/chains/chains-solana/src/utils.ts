@@ -276,10 +276,11 @@ export const getBurnFromNonce = async (
     // Convert borsh `Number` to built-in number
     const recipientLength = parseInt(burnData.recipient_len.toString());
 
-    const txidFormatted = transactions[0].signature;
-    const txid = utils.toURLBase64(
-        new Uint8Array(base58.decode(txidFormatted)),
-    );
+    const txidFormatted =
+        transactions.length > 0 ? transactions[0].signature : "";
+    const txid = txidFormatted
+        ? utils.toURLBase64(new Uint8Array(base58.decode(txidFormatted)))
+        : "";
     return {
         // Tx Details
         chain: chain,

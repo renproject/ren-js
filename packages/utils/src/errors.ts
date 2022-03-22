@@ -1,4 +1,4 @@
-import { utils } from "./internal";
+import { extractError } from "./internal/extractError";
 
 /**
  * RenJS error codes - errors thrown from RenJS are in the process of being
@@ -60,11 +60,11 @@ export class ErrorWithCode extends Error {
         if (error instanceof Error) {
             (error as unknown as ErrorWithCode).code = code;
             if (errorPrefix) {
-                error.message = `${errorPrefix}: ${utils.extractError(error)}`;
+                error.message = `${errorPrefix}: ${extractError(error)}`;
             }
             return error as ErrorWithCode;
         } else {
-            const message = utils.extractError(error);
+            const message = extractError(error);
             return new ErrorWithCode(
                 errorPrefix && message
                     ? `${errorPrefix}: ${message}}`
@@ -82,8 +82,8 @@ export class ErrorWithCode extends Error {
     public constructor(message: unknown, code: string, prefix?: string) {
         super(
             prefix
-                ? `${prefix}: ${utils.extractError(message)}`
-                : utils.extractError(message),
+                ? `${prefix}: ${extractError(message)}`
+                : extractError(message),
         );
         this.code = code;
     }

@@ -80,9 +80,12 @@ export class BitcoinCash extends BitcoinBaseChain {
     public assets = BitcoinCash.assets;
 
     public validateAddress(address: string): boolean {
-        return isValidAddress(address) && this.network.isTestnet
-            ? isTestnetAddress(address)
-            : isMainnetAddress(address);
+        return (
+            isValidAddress(address) &&
+            (this.network.isTestnet
+                ? isTestnetAddress(address)
+                : isMainnetAddress(address))
+        );
     }
 
     public encodeAddress(bytes: Uint8Array): string {

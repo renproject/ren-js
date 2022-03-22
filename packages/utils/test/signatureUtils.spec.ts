@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { concat } from "ethers/lib/utils";
+import { utils } from "../src";
 
 import { normalizeSignature } from "../src/common";
 import { fromHex } from "../src/internal/common";
@@ -12,44 +13,62 @@ describe("signatureUtils", () => {
     context("normalizeSignature", () => {
         it("should return fixed signatures", () => {
             expect(
-                normalizeSignature(
+                utils.toHex(
+                    normalizeSignature(
+                        concat([
+                            fromHex("00".repeat(32)),
+                            fromHex("00".repeat(32)),
+                            new Uint8Array([0]),
+                        ]),
+                    ),
+                ),
+            ).to.deep.equal(
+                utils.toHex(
                     concat([
                         fromHex("00".repeat(32)),
                         fromHex("00".repeat(32)),
-                        new Uint8Array(0),
+                        new Uint8Array([27]),
                     ]),
                 ),
-            ).to.deep.equal({
-                r: fromHex("00".repeat(32)),
-                s: fromHex("00".repeat(32)),
-                v: 27,
-            });
+            );
             expect(
-                normalizeSignature(
+                utils.toHex(
+                    normalizeSignature(
+                        concat([
+                            fromHex("00".repeat(32)),
+                            secp256k1nBuffer,
+                            new Uint8Array([0]),
+                        ]),
+                    ),
+                ),
+            ).to.deep.equal(
+                utils.toHex(
                     concat([
                         fromHex("00".repeat(32)),
-                        secp256k1nBuffer,
-                        new Uint8Array(0),
+                        fromHex("00".repeat(32)),
+                        new Uint8Array([28]),
                     ]),
                 ),
-            ).to.deep.equal({
-                r: fromHex("00".repeat(32)),
-                s: fromHex("00".repeat(32)),
-                v: 28,
-            });
+            );
             expect(
-                normalizeSignature(
+                utils.toHex(
+                    normalizeSignature(
+                        concat([
+                            fromHex("00".repeat(32)),
+                            secp256k1nBuffer,
+                            new Uint8Array([1]),
+                        ]),
+                    ),
+                ),
+            ).to.deep.equal(
+                utils.toHex(
                     concat([
                         fromHex("00".repeat(32)),
-                        secp256k1nBuffer,
-                        new Uint8Array(1),
+                        fromHex("00".repeat(32)),
+                        new Uint8Array([27]),
                     ]),
                 ),
-            ).to.deep.equal({
-                r: fromHex("00".repeat(32)),
-                s: fromHex("00".repeat(32)),
-                v: 27,
-            });
+            );
         });
     });
 });

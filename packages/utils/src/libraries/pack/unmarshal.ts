@@ -7,7 +7,7 @@
 
 import BigNumber from "bignumber.js";
 
-import { extractError, fromBase64 } from "../../internal/common";
+import { utils } from "../../internal";
 import { isPackListType, isPackStructType } from "./common";
 import {
     PackListType,
@@ -42,7 +42,7 @@ export const unmarshalPackPrimitive = <T extends PackPrimitive = PackPrimitive>(
         case PackPrimitive.Bytes:
         case PackPrimitive.Bytes32:
         case PackPrimitive.Bytes65:
-            return fromBase64(value) as Unmarshalled<T>;
+            return utils.fromBase64(value) as Unmarshalled<T>;
     }
     throw new Error(`Unknown pack type '${type}'.`);
 };
@@ -131,7 +131,9 @@ export function unmarshalTypedPackValue({ t, v }: TypedPackValue): any {
             throw error;
         }
         throw new Error(
-            `Error unmarshalling typed pack value: ${extractError(error)}`,
+            `Error unmarshalling typed pack value: ${utils.extractError(
+                error,
+            )}`,
         );
     }
 }

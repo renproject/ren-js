@@ -2,14 +2,13 @@
 
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
-
-import { Filfox } from "../src/api/explorers/filfox";
+import { Filfox } from "../src/utils/filfox";
 
 chai.should();
 
 loadDotEnv();
 
-describe("Filecoin explorers", () => {
+describe.skip("Filecoin explorers", () => {
     it("mint to contract", async function () {
         this.timeout(100000000000);
 
@@ -19,7 +18,6 @@ describe("Filecoin explorers", () => {
             "filfox",
             await filfox.fetchDeposits(
                 "f15wjyn36z6x5ypq7f73yaolqbxyiiwkg5mmuyo2q",
-                null,
                 0,
                 1,
             ),

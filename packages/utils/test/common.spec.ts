@@ -2,22 +2,7 @@ import BigNumber from "bignumber.js";
 import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 
-import {
-    fromBase64,
-    fromHex,
-    isDefined,
-    Ox,
-    sleep,
-    strip0x,
-    toBase64,
-    toURLBase64,
-    tryNTimes,
-    extractError,
-    toHex,
-    toNBytes,
-    toUTF8String,
-    fromUTF8String,
-} from "../src/internal/common";
+import { utils } from "../src/internal";
 
 chai.use(chaiAsPromised);
 
@@ -25,7 +10,7 @@ describe("common utils", () => {
     context("sleep", () => {
         it("correct amount of time passes", async () => {
             const timeBefore = Date.now();
-            await sleep(0.1 * sleep.SECONDS);
+            await utils.sleep(0.1 * utils.sleep.SECONDS);
             const timeAfter = Date.now();
 
             const difference = (timeAfter - timeBefore) / 1000;
@@ -37,56 +22,58 @@ describe("common utils", () => {
 
     context("strip0x", () => {
         it("removes '0x' prefix", () => {
-            expect(strip0x("0x1234")).to.equal("1234");
-            expect(strip0x("0x")).to.equal("");
-            expect(strip0x("0x12345")).to.equal("12345");
-            expect(strip0x("1234")).to.equal("1234");
-            expect(strip0x("")).to.equal("");
+            expect(utils.strip0x("0x1234")).to.equal("1234");
+            expect(utils.strip0x("0x")).to.equal("");
+            expect(utils.strip0x("0x12345")).to.equal("12345");
+            expect(utils.strip0x("1234")).to.equal("1234");
+            expect(utils.strip0x("")).to.equal("");
         });
     });
 
     context("Ox", () => {
         it("appends Ox prefix", () => {
-            expect(Ox("1234")).to.equal("0x1234");
-            expect(Ox("")).to.equal("0x");
-            expect(Ox("0x1234")).to.equal("0x1234");
-            expect(Ox(fromHex("1234"))).to.equal("0x1234");
+            expect(utils.Ox("1234")).to.equal("0x1234");
+            expect(utils.Ox("")).to.equal("0x");
+            expect(utils.Ox("0x1234")).to.equal("0x1234");
+            expect(utils.Ox(utils.fromHex("1234"))).to.equal("0x1234");
         });
     });
 
     context("fromHex", () => {
         it("converts hex string to Buffer", () => {
-            expect(fromHex("1234")).to.deep.equal(new Uint8Array([0x12, 0x34]));
-            expect(fromHex("0x1234")).to.deep.equal(
+            expect(utils.fromHex("1234")).to.deep.equal(
                 new Uint8Array([0x12, 0x34]),
             );
-            expect(fromHex(toHex(new Uint8Array([0x12, 0x34])))).to.deep.equal(
+            expect(utils.fromHex("0x1234")).to.deep.equal(
                 new Uint8Array([0x12, 0x34]),
             );
+            expect(
+                utils.fromHex(utils.toHex(new Uint8Array([0x12, 0x34]))),
+            ).to.deep.equal(new Uint8Array([0x12, 0x34]));
         });
     });
 
     context("fromBase64", () => {
         it("converts base64 string to Buffer", () => {
-            expect(fromBase64("EjQ=")).to.deep.equal(
+            expect(utils.fromBase64("EjQ=")).to.deep.equal(
                 new Uint8Array([0x12, 0x34]),
             );
             expect(
-                fromBase64(toBase64(new Uint8Array([0x12, 0x34]))),
+                utils.fromBase64(utils.toBase64(new Uint8Array([0x12, 0x34]))),
             ).to.deep.equal(new Uint8Array([0x12, 0x34]));
         });
 
         it("converts url-base64 string to Buffer", () => {
-            expect(fromBase64("+/8=")).to.deep.equal(
+            expect(utils.fromBase64("+/8=")).to.deep.equal(
                 new Uint8Array([0xfb, 0xff]),
             );
-            expect(fromBase64("+/8")).to.deep.equal(
+            expect(utils.fromBase64("+/8")).to.deep.equal(
                 new Uint8Array([0xfb, 0xff]),
             );
-            expect(fromBase64("-_8")).to.deep.equal(
+            expect(utils.fromBase64("-_8")).to.deep.equal(
                 new Uint8Array([0xfb, 0xff]),
             );
-            expect(fromBase64("-_8=")).to.deep.equal(
+            expect(utils.fromBase64("-_8=")).to.deep.equal(
                 new Uint8Array([0xfb, 0xff]),
             );
         });
@@ -94,13 +81,17 @@ describe("common utils", () => {
 
     context("toBase64", () => {
         it("converts buffers to base64 strings", () => {
-            expect(toBase64(new Uint8Array([0xfb, 0xff]))).to.equal("+/8=");
+            expect(utils.toBase64(new Uint8Array([0xfb, 0xff]))).to.equal(
+                "+/8=",
+            );
         });
     });
 
     context("toURLBase64", () => {
         it("converts buffers to url-base64 strings", () => {
-            expect(toURLBase64(new Uint8Array([0xfb, 0xff]))).to.equal("-_8");
+            expect(utils.toURLBase64(new Uint8Array([0xfb, 0xff]))).to.equal(
+                "-_8",
+            );
             // expect(toURLBase64("0xfbff")).to.equal("-_8");
         });
     });
@@ -132,20 +123,20 @@ describe("common utils", () => {
             ];
 
             for (const testcase of testcases) {
-                expect(extractError(testcase)).to.equal("test");
+                expect(utils.extractError(testcase)).to.equal("test");
             }
         });
 
         it("converts objects to JSON", () => {
-            expect(extractError({})).to.equal("{}");
-            expect(extractError(new BigNumber(1))).to.equal(`"1"`);
+            expect(utils.extractError({})).to.equal("{}");
+            expect(utils.extractError(new BigNumber(1))).to.equal(`"1"`);
         });
 
         it("doesn't throw an error if it can't convert to JSON", () => {
             const a: { a?: unknown } = {};
             a.a = a;
 
-            expect(extractError(a)).to.equal("[object Object]");
+            expect(utils.extractError(a)).to.equal("[object Object]");
         });
     });
 
@@ -172,10 +163,16 @@ describe("common utils", () => {
         };
 
         it("retries the correct number of times", async () => {
-            expect(await tryNTimes(mustBeCalledNTimes(2), 2, 0)).to.equal(2);
-            expect(await tryNTimes(mustBeCalledNTimes(1), 1, 0)).to.equal(1);
+            expect(await utils.tryNTimes(mustBeCalledNTimes(2), 2, 0)).to.equal(
+                2,
+            );
+            expect(await utils.tryNTimes(mustBeCalledNTimes(1), 1, 0)).to.equal(
+                1,
+            );
 
-            expect(await tryNTimes(mustBeCalledNTimes(2), -1, 0)).to.equal(2);
+            expect(
+                await utils.tryNTimes(mustBeCalledNTimes(2), -1, 0),
+            ).to.equal(2);
 
             let logged = false;
             const logger = {
@@ -185,25 +182,25 @@ describe("common utils", () => {
                 },
             };
             expect(
-                await tryNTimes(mustBeCalledNTimes(2), 2, 0, logger),
+                await utils.tryNTimes(mustBeCalledNTimes(2), 2, 0, logger),
             ).to.equal(2);
             expect(logged).to.equal(true);
 
             await expect(
-                tryNTimes(mustBeCalledNTimes(2), 1, 0),
+                utils.tryNTimes(mustBeCalledNTimes(2), 1, 0),
             ).to.be.rejectedWith("Only called 1/2 times");
 
             await expect(
-                tryNTimes(mustBeCalledNTimes(2, true), 1, 0),
+                utils.tryNTimes(mustBeCalledNTimes(2, true), 1, 0),
             ).to.be.rejectedWith("Only called 1/2 times");
         });
 
         it("should use provided timeout", async () => {
             const timeout = 0.1 * 1000;
             const t1 = Date.now();
-            expect(await tryNTimes(mustBeCalledNTimes(2), 2, timeout)).to.equal(
-                2,
-            );
+            expect(
+                await utils.tryNTimes(mustBeCalledNTimes(2), 2, timeout),
+            ).to.equal(2);
             const t2 = Date.now();
             expect(t2 - t1).to.be.greaterThanOrEqual(timeout);
         });
@@ -212,44 +209,48 @@ describe("common utils", () => {
     context("isDefined", () => {
         it("should correctly check if input is not null or undefined", () => {
             // Should only return false for these values.
-            expect(isDefined(null)).to.equal(false);
-            expect(isDefined(undefined)).to.equal(false);
+            expect(utils.isDefined(null)).to.equal(false);
+            expect(utils.isDefined(undefined)).to.equal(false);
 
             // Should return true for every other value.
-            expect(isDefined(true)).to.equal(true);
-            expect(isDefined(false)).to.equal(true);
-            expect(isDefined(0)).to.equal(true);
-            expect(isDefined({})).to.equal(true);
-            expect(isDefined("")).to.equal(true);
-            expect(isDefined(-1)).to.equal(true);
+            expect(utils.isDefined(true)).to.equal(true);
+            expect(utils.isDefined(false)).to.equal(true);
+            expect(utils.isDefined(0)).to.equal(true);
+            expect(utils.isDefined({})).to.equal(true);
+            expect(utils.isDefined("")).to.equal(true);
+            expect(utils.isDefined(-1)).to.equal(true);
         });
     });
 
     context("toNBytes", () => {
         it("should correctly convert to bytes", () => {
-            expect(toHex(toNBytes(new BigNumber(1000), 2, "be"))).to.equal(
-                "03e8",
-            );
-            expect(toHex(toNBytes(new BigNumber(1000), 2, "le"))).to.equal(
-                "e803",
-            );
-            expect(toHex(toNBytes(new BigNumber(1), 2, "be"))).to.equal("0001");
-            expect(toHex(toNBytes(new BigNumber(1), 2, "le"))).to.equal("0100");
+            expect(
+                utils.toHex(utils.toNBytes(new BigNumber(1000), 2, "be")),
+            ).to.equal("03e8");
+            expect(
+                utils.toHex(utils.toNBytes(new BigNumber(1000), 2, "le")),
+            ).to.equal("e803");
+            expect(
+                utils.toHex(utils.toNBytes(new BigNumber(1), 2, "be")),
+            ).to.equal("0001");
+            expect(
+                utils.toHex(utils.toNBytes(new BigNumber(1), 2, "le")),
+            ).to.equal("0100");
         });
     });
 
     context("toUTF8String", () => {
         it("should correctly convert to utf8-string", () => {
-            expect(toUTF8String(new Uint8Array([97, 98]))).to.equal("ab");
+            expect(utils.toUTF8String(new Uint8Array([97, 98]))).to.equal("ab");
         });
     });
 
     context("fromUTF8String", () => {
         it("should correctly convert from utf8-string", () => {
-            expect(toHex(fromUTF8String("BTC/toEthereum"))).to.equal(
-                "4254432f746f457468657265756d",
-            );
-            expect(fromUTF8String("!").join(",")).to.equal(
+            expect(
+                utils.toHex(utils.fromUTF8String("BTC/toEthereum")),
+            ).to.equal("4254432f746f457468657265756d");
+            expect(utils.fromUTF8String("!").join(",")).to.equal(
                 new Uint8Array([33]).join(","),
             );
         });

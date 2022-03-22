@@ -35,7 +35,7 @@ export interface GatewayParams<
     to: ToPayload;
 
     /**
-     * A LockAndMint's gateway address can be forced to be unique by providing a
+     * A Gateway's gateway address can be forced to be unique by providing a
      * 32-byte nonce.
      *
      * The nonce should be passed is as a 32-byte Uint8Array or a 32-byte hex
@@ -46,7 +46,7 @@ export interface GatewayParams<
      * WARNING: If the nonce is lost between detecting a deposit and
      * submitting it to RenVM, the deposit's funds can't be recovered.
      * A nonce should only be provided if it's guaranteed to be stored in
-     * persistent storage before a deposit address is shown to the user.
+     * persistent storage before a gateway address is shown to the user.
      *
      * @example
      * ```
@@ -64,7 +64,7 @@ export interface GatewayParams<
      * @example
      * ```
      * // Use a nonce based on the number of days since epoch, in order to
-     * // generate a new deposit address each day.
+     * // generate a new gateway address each day.
      * nonce: utils.toNBytes(new BigNumber(Math.floor(Date.now() / 8.64e7)), 32)
      * ```
      */
@@ -108,12 +108,12 @@ export interface TransactionParams<
     fromTx: InputChainTransaction;
 
     /**
-     * See {{GatewayParams["shard"]}}.
+     * See [[GatewayParams["shard"]]].
      */
     shard?: GatewayParams["shard"];
 
     /**
-     * See {{GatewayParams["nonce"]}}.
+     * See [[GatewayParams["nonce"]]].
      */
     nonce?: GatewayParams["nonce"];
 }

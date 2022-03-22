@@ -1,4 +1,3 @@
-import { EventEmitter } from "events";
 import { OrderedMap } from "immutable";
 
 import { RenVMProvider } from "@renproject/provider";
@@ -7,7 +6,6 @@ import {
     ChainTransactionProgress,
     DefaultTxWaiter,
     ErrorWithCode,
-    EventEmitterTyped,
     generateGHash,
     generatePHash,
     generateSHash,
@@ -22,86 +20,28 @@ import {
     utils,
 } from "@renproject/utils";
 
-import { defaultRenJSConfig, RenJSConfig } from "./config";
-import { estimateTransactionFee, GatewayFees } from "./fees";
+import { defaultRenJSConfig, RenJSConfig } from "./utils/config";
+import { estimateTransactionFee, GatewayFees } from "./utils/fees";
 import { GatewayTransaction } from "./gatewayTransaction";
 import { GatewayParams, TransactionParams } from "./params";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
-
-class TransactionEmitter<
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ToPayload extends { chain: string; txConfig?: any } = any,
-    >
-    extends EventEmitter
-    implements
-        EventEmitterTyped<{ transaction: [GatewayTransaction<ToPayload>] }>
-{
-    private getTransactions: () => Array<GatewayTransaction<ToPayload>>;
-
-    public constructor(
-        getTransactions: () => Array<GatewayTransaction<ToPayload>>,
-    ) {
-        super();
-
-        this.getTransactions = getTransactions;
-    }
-
-    public addListener = <Event extends "transaction">(
-        event: Event,
-        callback: Event extends "transaction"
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (deposit: GatewayTransaction<ToPayload>) => void
-            : never,
-    ): this => {
-        // Emit previous deposit events.
-        if (event === "transaction") {
-            this.getTransactions().map(callback);
-        }
-
-        super.on(event, callback);
-        return this;
-    };
-
-    /**
-     * `on` creates a new listener to `"transaction"` events, returning
-     * [[GatewayTransaction]] instances.
-     *
-     * `on` extends `EventEmitter.on`, modifying it to immediately return all
-     * previous `"transaction"` events, in addition to new events, when a new
-     * listener is created.
-     *
-     * @category Main
-     */
-    // @ts-expect-error EventEmitter and EventEmitterTyped typing issue
-    public on = <Event extends "transaction">(
-        event: Event,
-        callback: Event extends "transaction"
-            ? (deposit: GatewayTransaction<ToPayload>) => void
-            : never,
-    ): this => this.addListener(event, callback);
-}
+import { TransactionEmitter } from "./utils/transactionEmitter";
 
 /**
+ * A Gateway allows moving funds through RenVM. Its defined by the asset being
+ * moved, an origin chain and a target chain. For each of these chains, a
+ * payload can be specified, allowing for more complex bridings involving
+ * contract interactions.
  *
+ * A Gateway will be of one of two types - a deposit gateway, requiring users
+ * to send funds to a gateway address, or a contract gateway, requring users to
+ * submit a specific transaction. For example, when moving BTC from Bitcoin
+ * to Ethereum, the user will have to send BTC to a Bitcoin address (the gateway
+ * address). When moving DAI from Ethereum to Polygon, the user will have to
+ * submit a transaction locking the DAI on Ethereum.
  *
- * `LockAndMint` extends the EventEmitter class, and emits a `"transaction"` event
- * for each new deposit that is observed. Deposits will only be watched for if
- * there is an active listener for the `"transaction"` event.
- *
- * A LockAndMint object watches transactions to the [[gatewayAddress]] on the
- * lock-chain.
- *
- * Deposits to the gateway address can be listened to with the `"transaction"`
- * event using [[on]], which will return [[GatewayTransaction]] instances.
- *
- * ```ts
- * console.log(`Deposit to ${JSON.stringify(lockAndMint.gatewayAddress)}`);
- *
- * lockAndMint.on("transaction", async (deposit) => {
- *    console.log(`Received deposit`, deposit);
- *    await RenJS.defaultDepositHandler(deposit);
- * });
- * ```
+ * When these deposits or transactions are initiated, a GatewayTransaction
+ * instance is created.
  */
 export class Gateway<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,13 +49,23 @@ export class Gateway<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ToPayload extends { chain: string; txConfig?: any } = any,
 > {
-    // Public
-
-    /** The parameters passed in when creating the LockAndMint. */
+    /**
+     * The parameters passed in when creating the gateway. This can be
+     * serialized and used to re-create the gateway. If the parameters passed in
+     * to `renJS.gateway` didn't include a `shard` value, it will be set here.
+     */
     public readonly params: GatewayParams<FromPayload, ToPayload>;
+
+    /** The chain handler for the origin chain.  */
     public readonly fromChain: Chain;
+
+    /** The chain handler for the target chain. */
     public readonly toChain: Chain;
+
+    /** The RenVM provider handles communicating with the RenVM network. */
     public readonly provider: RenVMProvider;
+
+    /** RenJS config - can be used to set a logger to be used by the gateway. */
     public readonly config: typeof defaultRenJSConfig & RenJSConfig;
 
     /**
@@ -123,7 +73,13 @@ export class Gateway<
      */
     public gatewayAddress: string | undefined;
 
+    /**
+     * A map of transactions that are required to be submitted before
+     * `gateway.in` can be called.
+     */
     public inSetup: { [key: string]: TxSubmitter | TxWaiter } = {};
+
+    /** The input chain transaction - not defined for deposit gateways. */
     public in:
         | TxSubmitter<ChainTransactionProgress, FromPayload["txConfig"]>
         | TxWaiter
@@ -140,6 +96,7 @@ export class Gateway<
         GatewayTransaction<ToPayload> | Promise<GatewayTransaction<ToPayload>>
     >();
 
+    /** The event emitter that handles "transaction" events. */
     public eventEmitter: TransactionEmitter<ToPayload> =
         new TransactionEmitter<ToPayload>(() =>
             this.transactions
@@ -157,36 +114,43 @@ export class Gateway<
     // be called immediately after the constructor.
 
     private _selector: string | undefined;
+    /** The RenVM contract selecetor. */
     public get selector(): string {
         return this._defaultGetter("_selector") || this._selector;
     }
 
     private _gHash: Uint8Array | undefined;
+    /** The gateway hash, a hash of the payload, selector, to and nonce. */
     public get gHash(): Uint8Array {
         return this._defaultGetter("_gHash") || this._gHash;
     }
 
     private _pHash: Uint8Array | undefined;
+    /** The payload hash, a hash of the payload. */
     public get pHash(): Uint8Array {
         return this._defaultGetter("_pHash") || this._pHash;
     }
 
     private _fees: GatewayFees | undefined;
+    /** The RenVM and blockchain fees of the gateway. */
     public get fees(): GatewayFees {
         return this._defaultGetter("_fees") || this._fees;
     }
 
-    private _outputType: OutputType | undefined;
-    public get outputType(): OutputType {
-        return this._defaultGetter("_outputType") || this._outputType;
-    }
-
     private _inputType: InputType | undefined;
+    /** The input type of the transaction, either a lock or a burn. */
     public get inputType(): InputType {
         return this._defaultGetter("_inputType") || this._inputType;
     }
 
+    private _outputType: OutputType | undefined;
+    /** The output type of the transaction, either a mint or a release. */
+    public get outputType(): OutputType {
+        return this._defaultGetter("_outputType") || this._outputType;
+    }
+
     private _inConfirmationTarget: number | undefined;
+    /** The number of confirmations required for `gateway.in`. */
     public get inConfirmationTarget(): number {
         return (
             this._defaultGetter("_inConfirmationTarget") ||
@@ -228,8 +192,8 @@ export class Gateway<
     }
 
     /**
-     * @hidden - Called automatically when calling [[RenJS.lockAndMint]]. It has
-     * been split from the constructor because it's asynchronous.
+     * @hidden - Called automatically when calling [[RenJS.gateway]]. It has
+     * been split from the constructor because it is asynchronous.
      */
     public async initialize(): Promise<Gateway<FromPayload, ToPayload>> {
         const { to, asset, from } = this.params;
@@ -483,33 +447,26 @@ export class Gateway<
      * `processDeposit` allows you to manually provide the details of a deposit
      * and returns a [[GatewayTransaction]] object.
      *
-     * @param deposit The deposit details in the format defined by the
+     * @param inputTx The deposit details in the format defined by the
      * LockChain. This should be the same format as `deposit.depositDetails` for
      * a deposit returned from `.on("transaction", ...)`.
      *
      * ```ts
-     * lockAndMint
+     * const gatewayTransaction = await gateway
      *   .processDeposit({
-     *       transaction: {
-     *           cid:
-     *               "bafy2bzacedvu74e7ohjcwlh4fbx7ddf6li42fiuosajob6metcj2qwkgkgof2",
-     *           to: "t1v2ftlxhedyoijv7uqgxfygiziaqz23lgkvks77i",
-     *           amount: (0.01 * 1e8).toString(),
-     *           params: "EzGbvVHf8lb0v8CUfjh8y+tLbZzfIFcnNnt/gh6axmw=",
-     *           confirmations: 1,
-     *           nonce: 7,
-     *       },
-     *       amount: (0.01 * 1e8).toString(),
+     *      chain: "Ethereum",
+     *      txidFormatted: "0xef90...",
+     *      txid: "752...",
+     *      txindex: "0",
+     *      amount: "1",
      *   })
-     *   .on(deposit => RenJS.defaultDepositHandler)
-     *   .catch(console.error);
      * ```
      * @category Main
      */
     public async processDeposit(
-        deposit: InputChainTransaction,
+        inputTx: InputChainTransaction,
     ): Promise<GatewayTransaction<ToPayload>> {
-        const depositIdentifier = deposit.txid + "_" + String(deposit.txindex);
+        const depositIdentifier = inputTx.txid + "_" + String(inputTx.txindex);
         const existingTransaction = this.transactions.get(depositIdentifier);
 
         // If the transaction hasn't been seen before.
@@ -528,8 +485,8 @@ export class Gateway<
                 const nonce = utils.toURLBase64(
                     // Check if the deposit has an associated nonce. This will
                     // be true for contract-based inputs.
-                    deposit.nonce
-                        ? utils.fromBase64(deposit.nonce)
+                    inputTx.nonce
+                        ? utils.fromBase64(inputTx.nonce)
                         : // Check if the params have a nonce - this can be
                         // a base64 string or a number. If no nonce is set,
                         // default to `0`.
@@ -540,7 +497,7 @@ export class Gateway<
 
                 const params: TransactionParams<ToPayload> = {
                     asset: this.params.asset,
-                    fromTx: deposit,
+                    fromTx: inputTx,
                     to: this.params.to,
 
                     shard: this.params.shard,
@@ -550,7 +507,7 @@ export class Gateway<
                 let inTx = this.in;
                 if (!inTx) {
                     inTx = new DefaultTxWaiter({
-                        chainTransaction: deposit,
+                        chainTransaction: inputTx,
                         chain: this.fromChain,
                         target: this.inConfirmationTarget,
                     });
@@ -570,7 +527,7 @@ export class Gateway<
                 // Check if deposit has already been submitted.
                 this.eventEmitter.emit("transaction", transaction);
                 // this.deposits.set(deposit);
-                this.config.logger.debug("new deposit:", deposit);
+                this.config.logger.debug("new deposit:", inputTx);
 
                 return transaction;
             };
@@ -590,7 +547,7 @@ export class Gateway<
             } catch (error: unknown) {
                 this.transactions = this.transactions.remove(depositIdentifier);
                 const message = `Error processing deposit ${
-                    deposit.txidFormatted
+                    inputTx.txidFormatted
                 }: ${utils.extractError(error)}`;
                 if (error instanceof Error) {
                     error.message = message;
@@ -604,6 +561,13 @@ export class Gateway<
         return (await existingTransaction)!;
     }
 
+    /**
+     * Listen to "transaction" events, registering a callback that will be
+     * called for all previous trannsactions and for any future transaction.
+     *
+     * To remove the listener, call `gateway.eventEmitter.removeListener` or
+     * `gateway.eventEmitter.removeAllListeners`.
+     */
     public on<Event extends "transaction">(
         event: Event,
         callback: Event extends "transaction"

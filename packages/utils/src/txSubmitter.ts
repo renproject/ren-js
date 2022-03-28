@@ -197,7 +197,6 @@ export class TxWaiterProxy {
  * been submitted.
  */
 export class DefaultTxWaiter implements TxWaiter {
-    private _chainTransaction?: ChainTransaction;
     private _chain: Chain;
 
     public chain: string;
@@ -230,7 +229,6 @@ export class DefaultTxWaiter implements TxWaiter {
         target: number;
         onFirstProgress?: (tx: ChainTransaction) => SyncOrPromise<void>;
     }) {
-        this._chainTransaction = chainTransaction;
         this._chain = chain;
         this._onFirstProgress = onFirstProgress;
 
@@ -239,16 +237,28 @@ export class DefaultTxWaiter implements TxWaiter {
 
         this.progress = {
             chain: chain.chain,
-            status: ChainTransactionStatus.Confirming,
+            status:
+                chainTransaction && chainTransaction.txid === ""
+                    ? ChainTransactionStatus.Done
+                    : ChainTransactionStatus.Confirming,
             target,
             ...(chainTransaction ? { transaction: chainTransaction } : {}),
         };
     }
 
+    /**
+     * The transaction can be set at a later point. This is for situations where
+     * its known that a transaction will already have been submitted, but its
+     * hash isn't available yet. For example, a release transaction submitted
+     * by RenVM.
+     */
     public setTransaction(chainTransaction?: ChainTransaction): void {
-        this._chainTransaction = chainTransaction;
         this.updateProgress({
             transaction: chainTransaction,
+            status:
+                chainTransaction && chainTransaction.txid === ""
+                    ? ChainTransactionStatus.Done
+                    : ChainTransactionStatus.Confirming,
         });
     }
 
@@ -266,7 +276,7 @@ export class DefaultTxWaiter implements TxWaiter {
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
-            const tx = this._chainTransaction;
+            const tx = this.progress.transaction;
             if (!tx) {
                 throw new Error(`Must call ".submit" first.`);
             }

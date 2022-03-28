@@ -53,8 +53,9 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             }
         >,
     ) => {
+        const currentProgress = this.progress;
         this.progress = {
-            ...this.progress,
+            ...currentProgress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
@@ -118,10 +119,17 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         const tx: RenVMTransactionWithStatus<Transaction> =
             await this.provider.queryTx(this.tx.hash, 1);
 
-        return this.updateProgress({
-            response: tx,
-            status: ChainTransactionStatus.Confirming,
-        });
+        if (
+            tx.txStatus === TxStatus.TxStatusDone ||
+            tx.txStatus === TxStatus.TxStatusReverted
+        ) {
+            return this._handleDoneTransaction(tx);
+        } else {
+            return this.updateProgress({
+                response: tx,
+                status: ChainTransactionStatus.Confirming,
+            });
+        }
     }
 
     public submit(): PromiEvent<
@@ -175,9 +183,13 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 }
             }
 
-            return this.updateProgress({
-                status: ChainTransactionStatus.Confirming,
-            });
+            if (this.progress.status === ChainTransactionStatus.Ready) {
+                return this.updateProgress({
+                    status: ChainTransactionStatus.Confirming,
+                });
+            } else {
+                return this.progress;
+            }
 
             // const response = {
             //     version: parseInt(tx.version),
@@ -227,7 +239,10 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             while (true) {
                 try {
                     tx = await this.provider.queryTx(this.tx.hash, 1);
-                    if (tx && tx.txStatus === TxStatus.TxStatusDone) {
+                    if (
+                        tx.txStatus === TxStatus.TxStatusDone ||
+                        tx.txStatus === TxStatus.TxStatusReverted
+                    ) {
                         break;
                     }
                     if (
@@ -238,7 +253,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                             existingStatus = tx.txStatus;
                             this.updateProgress({
                                 response: tx,
-                                status: ChainTransactionStatus.Done,
+                                status: ChainTransactionStatus.Confirming,
                             });
                         } catch (error: unknown) {
                             // Ignore non-critical error.
@@ -260,35 +275,44 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 await utils.sleep(15 * utils.sleep.SECONDS);
             }
 
-            const maybeCrossChainTx =
-                tx as unknown as RenVMCrossChainTransaction;
-            if (
-                maybeCrossChainTx.out &&
-                maybeCrossChainTx.out.revert &&
-                maybeCrossChainTx.out.revert.length > 0
-            ) {
-                const revertMessage = maybeCrossChainTx.out.revert;
-                this.updateProgress({
-                    status: ChainTransactionStatus.Reverted,
-                    revertReason: revertMessage,
-                });
-                throw new Error(`RenVM transaction reverted: ${revertMessage}`);
-            }
-
-            if (this.signatureCallback) {
-                await this.signatureCallback(tx);
-            }
-
-            return this.updateProgress({
-                response: tx,
-                status: ChainTransactionStatus.Done,
-            });
+            return await this._handleDoneTransaction(tx);
         })()
             .then(promiEvent.resolve)
             .catch(promiEvent.reject);
 
         return promiEvent;
     }
+
+    /**
+     * Process a complete RenVM transaction, handling checking for a revert
+     * reason and calling the signatureCallback.
+     */
+    private _handleDoneTransaction = async (
+        tx: RenVMTransactionWithStatus<Transaction>,
+    ) => {
+        const maybeCrossChainTx = tx as unknown as RenVMCrossChainTransaction;
+        if (
+            maybeCrossChainTx.out &&
+            maybeCrossChainTx.out.revert &&
+            maybeCrossChainTx.out.revert.length > 0
+        ) {
+            const revertMessage = maybeCrossChainTx.out.revert;
+            this.updateProgress({
+                status: ChainTransactionStatus.Reverted,
+                revertReason: revertMessage,
+            });
+            throw new Error(`RenVM transaction reverted: ${revertMessage}`);
+        }
+
+        if (this.signatureCallback) {
+            await this.signatureCallback(tx);
+        }
+
+        return this.updateProgress({
+            response: tx,
+            status: ChainTransactionStatus.Done,
+        });
+    };
 }
 
 export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<RenVMCrossChainTransaction> {

@@ -35,6 +35,7 @@ import {
     PackTypeDefinition,
     TxStatus,
     TypedPackValue,
+    UrlBase64String,
     utils,
 } from "@renproject/utils";
 
@@ -70,7 +71,9 @@ export const responseQueryParamsType: PackStructType = {
 };
 
 export class MockProvider implements Provider<RPCParams, RPCResponses> {
-    public privateKey: Uint8Array;
+    public privateKey: Uint8Array | undefined;
+    public gPubKey: Uint8Array;
+
     private transactions: Map<string, ResponseQueryTx>;
 
     // Map from chain name to chain class
@@ -78,12 +81,37 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     // Map from asset name to chain name
     private supportedAssets = OrderedMap<string, string>();
 
-    public constructor(privateKey?: Uint8Array) {
-        this.privateKey = privateKey || randomBytes(32);
+    public constructor({
+        privateKey,
+        gPubKey,
+    }: {
+        privateKey?: Uint8Array;
+        gPubKey?: UrlBase64String | Uint8Array;
+    } = {}) {
+        if (gPubKey) {
+            this.gPubKey =
+                gPubKey instanceof Uint8Array
+                    ? gPubKey
+                    : utils.fromBase64(gPubKey);
+            this.privateKey = privateKey;
+        } else {
+            this.privateKey = privateKey || randomBytes(32);
+            const ec = new elliptic.ec("secp256k1");
+            const k = ec.keyFromPrivate(this.privateKey);
+            this.gPubKey = utils.concat([
+                new Uint8Array([3]),
+                utils.toNBytes(k.getPublic().getX().toString(), 32, "be"),
+            ]);
+        }
         this.transactions = new Map();
     }
 
     public mintAuthority(): string {
+        if (!this.privateKey) {
+            throw new Error(
+                `Can't calculate mintAuthority when a gPubKey is provided.`,
+            );
+        }
         return utils.Ox(privateToAddress(Buffer.from(this.privateKey)));
     }
 
@@ -267,6 +295,12 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         } else {
             // MINT //
 
+            if (!this.privateKey) {
+                throw new Error(
+                    `Can't generate signature when a gPubKey is provided.`,
+                );
+            }
+
             const amountIn = inputs.amount;
             const sHash = generateSHash(`${asset}/to${toChain.chain}`);
 
@@ -349,13 +383,6 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
     private handle_queryBlockState = ({
         contract,
     }: ParamsQueryBlockState): ResponseQueryBlockState => {
-        const ec = new elliptic.ec("secp256k1");
-        const k = ec.keyFromPrivate(this.privateKey);
-        const key = utils.concat([
-            new Uint8Array([3]),
-            utils.toNBytes(k.getPublic().getX().toString(), 32, "be"),
-        ]);
-
         const assetPackType: PackTypeDefinition = {
             struct: [
                 {
@@ -544,7 +571,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                 minted: [],
                 shards: [
                     {
-                        pubKey: utils.toURLBase64(key),
+                        pubKey: utils.toURLBase64(this.gPubKey),
                         queue: [],
                         shard: "",
                         state: {

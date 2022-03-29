@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-terra",
-    "version": "3.0.0-alpha.22",
+    "version": "3.0.0-alpha.23",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"

@@ -669,8 +669,14 @@ export class Solana
             }
 
             const {
-                params: { amount },
+                params: { amount: amount_, convertUnit },
             } = contractCall;
+
+            const amount = convertUnit
+                ? new BigNumber(amount_).shiftedBy(
+                      await this.assetDecimals(asset),
+                  )
+                : new BigNumber(amount_);
 
             const recipient = utils.fromUTF8String(getParams().toPayload.to);
 
@@ -687,12 +693,7 @@ export class Solana
                 source,
                 tokenMintId,
                 this.signer.publicKey,
-                BigInt(
-                    (BigNumber.isBigNumber(amount)
-                        ? amount.toFixed()
-                        : amount.toString()
-                    ).toString(),
-                ),
+                BigInt(amount.toFixed()),
                 await this.assetDecimals(asset),
             );
 
@@ -783,7 +784,7 @@ export class Solana
                     txindex: "0",
                     asset,
                     txidFormatted: signature,
-                    amount: new BigNumber(amount).toFixed(),
+                    amount: amount.toFixed(),
                     nonce: utils.toURLBase64(utils.toNBytes(nonceBN, 32)),
                     toRecipient: recipient.toString(),
                 });
@@ -977,47 +978,44 @@ export class Solana
 
     public Account({
         amount,
-        address,
+        convertUnit,
     }: {
-        amount?: string | BigNumber;
-        address?: string;
+        amount?: BigNumber | string | number;
+        convertUnit?: boolean;
     } = {}): SolanaOutputPayload | SolanaInputPayload {
         if (amount) {
-            const payload: SolanaInputPayload = {
+            return {
                 chain: this.chain,
                 type: "burnToAddress",
                 params: {
                     amount: BigNumber.isBigNumber(amount)
                         ? amount.toFixed()
                         : amount,
+                    convertUnit,
                 },
             };
-            return payload;
         }
 
-        if (address) {
-            const payload: SolanaOutputPayload = {
-                chain: this.chain,
-                type: "mintToAddress",
-                params: {
-                    to: address,
-                },
-            };
-            return payload;
+        if (!this.signer || !this.signer.publicKey) {
+            throw new Error(`Must connected signer or use .Address instead.`);
         }
+        return this.Address({
+            address: this.signer.publicKey.toString(),
+        });
+    }
 
-        if (this.signer && this.signer.publicKey) {
-            const payload: SolanaOutputPayload = {
-                chain: this.chain,
-                type: "mintToAddress",
-                params: {
-                    to: this.signer.publicKey.toString(),
-                },
-            };
-            return payload;
-        }
-
-        throw new Error(`Must provide amount or address.`);
+    public Address({
+        address,
+    }: {
+        address: string;
+    }): SolanaOutputPayload | SolanaInputPayload {
+        return {
+            chain: this.chain,
+            type: "mintToAddress",
+            params: {
+                to: address,
+            },
+        };
     }
 
     /**

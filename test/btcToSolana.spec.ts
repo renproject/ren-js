@@ -11,6 +11,7 @@ import RenJS from "../packages/ren/src";
 import { RenNetwork, utils } from "../packages/utils/src";
 import { printChain, sendFunds } from "./testUtils";
 import { txHashToChainTransaction } from "@renproject/chains-ethereum/src/utils/generic";
+import { ChainTransactionStatus } from "packages/utils/build/main";
 
 chai.should();
 
@@ -130,6 +131,12 @@ describe("BTC/toSolana", () => {
                             break;
                         } catch (error: unknown) {
                             console.error(error);
+                            if (
+                                tx.renVM.progress.status ===
+                                ChainTransactionStatus.Reverted
+                            ) {
+                                return;
+                            }
                             await utils.sleep(10 * utils.sleep.SECONDS);
                         }
                     }

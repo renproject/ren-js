@@ -39,7 +39,7 @@ describe("DAI/toBinanceSmartChain", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 1, convertToWei: true }),
+            from: ethereum.Account({ amount: 1, convertUnit: true }),
             // from: ethereum.Transaction({
             //     chain: "Ethereum",
             //     txidFormatted:

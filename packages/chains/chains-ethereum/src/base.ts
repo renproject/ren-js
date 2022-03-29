@@ -1068,10 +1068,16 @@ export class EthereumBaseChain
     public Account({
         amount,
         convertToWei,
+        convertUnit,
     }: {
         amount?: BigNumber | string | number;
+        /**
+         * @deprecated - renamed to `convertUnit`
+         */
         convertToWei?: boolean;
+        convertUnit?: boolean;
     } = {}): EVMPayload {
+        convertToWei = convertToWei || convertUnit;
         return this.Address({
             address: EVMParam.EVM_ACCOUNT,
             amount,
@@ -1083,10 +1089,15 @@ export class EthereumBaseChain
         address,
         amount,
         convertToWei,
+        convertUnit,
     }: {
         address: string;
         amount?: BigNumber | string | number;
+        /**
+         * @deprecated - renamed to `convertUnit`
+         */
         convertToWei?: boolean;
+        convertUnit?: boolean;
     }): EVMPayload {
         assertType<string>("string", {
             address,
@@ -1098,7 +1109,9 @@ export class EthereumBaseChain
         );
         assertType<boolean | undefined>("boolean | undefined", {
             convertToWei,
+            convertUnit,
         });
+        convertToWei = convertToWei || convertUnit;
 
         let fixedAmount;
         if (utils.isDefined(amount)) {
@@ -1127,7 +1140,7 @@ export class EthereumBaseChain
             params: {
                 address,
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
-                convertToWei,
+                convertUnit,
             },
         };
     }

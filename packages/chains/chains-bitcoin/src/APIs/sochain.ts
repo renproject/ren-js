@@ -25,7 +25,7 @@ export class SoChain implements BitcoinAPI {
 
     public async fetchHeight(): Promise<string> {
         return (
-            await utils.POST<{ data: { blocks: number } }>(
+            await utils.GET<{ data: { blocks: number } }>(
                 `https://sochain.com/api/v2/get_info/${this.network}`,
             )
         ).data.blocks.toString();
@@ -33,7 +33,7 @@ export class SoChain implements BitcoinAPI {
 
     public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
         const url = `https://sochain.com/api/v2/get_tx/${this.network}/${txid}`;
-        const response = await utils.POST<{
+        const response = await utils.GET<{
             readonly data: SoChainTX;
         }>(url);
 
@@ -59,7 +59,7 @@ export class SoChain implements BitcoinAPI {
         const url = `https://sochain.com/api/v2/get_tx_unspent/${
             this.network
         }/${address}/${0}`;
-        const response = await utils.POST<{
+        const response = await utils.GET<{
             data: { txs: SoChainUTXO[] };
         }>(url);
 
@@ -83,7 +83,7 @@ export class SoChain implements BitcoinAPI {
         const url = `https://sochain.com/api/v2/get_tx_received/${
             this.network
         }/${address}/${0}`;
-        const response = await utils.POST<{
+        const response = await utils.GET<{
             readonly data: { readonly txs: readonly SoChainUTXO[] };
         }>(url);
 

@@ -340,7 +340,7 @@ const getContractFromAccount = async (
     const amount = utils.isDefined(payload.params.amount)
         ? new BigNumber(payload.params.amount)
               .shiftedBy(
-                  payload.params.convertToWei
+                  payload.params.convertUnit || payload.params.convertToWei
                       ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
                       : 0,
               )
@@ -643,7 +643,11 @@ export type EVMAddressPayload = EVMPayloadInterface<
     {
         address: string;
         amount?: string;
+        /**
+         * @deprecated renamed to `convertUnit`.
+         */
         convertToWei?: boolean;
+        convertUnit?: boolean;
     }
 >;
 
@@ -781,7 +785,11 @@ export type EVMApprovalPayload = EVMPayloadInterface<
         token: string;
         spender: string;
         amount: string;
+        /**
+         * @deprecated renamed to `convertUnit`.
+         */
         convertToWei?: boolean;
+        convertUnit?: boolean;
         txConfig?: PayableOverrides;
     }
 >;
@@ -809,7 +817,7 @@ const getContractFromApproval = async (
     const amount = utils.isDefined(payload.params.amount)
         ? new BigNumber(payload.params.amount)
               .shiftedBy(
-                  payload.params.convertToWei
+                  payload.params.convertUnit || payload.params.convertToWei
                       ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
                       : 0,
               )

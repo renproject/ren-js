@@ -24,7 +24,7 @@ const main = async () => {
     // Create gateway. Gateway parameters are serializable.
     const gateway = await renJS.gateway({
         asset: ethereum.assets.DAI,
-        from: ethereum.Account({ amount: 2, convertToWei: true }),
+        from: ethereum.Account({ amount: 2, convertUnit: true }),
         to: bsc.Account(),
     });
 

@@ -35,7 +35,7 @@ describe("ETH/toGoerli", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 0.011, convertToWei: true }),
+            from: ethereum.Account({ amount: 0.011, convertUnit: true }),
             to: bscAlt.Address({
                 address: "0x0000000000000000000000000000000000000000",
             }),

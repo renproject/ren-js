@@ -236,6 +236,8 @@ export class Terra
                     amount: tx.amount,
                 }),
             );
+
+            await utils.sleep(15 * utils.sleep.SECONDS);
         }
     }
 

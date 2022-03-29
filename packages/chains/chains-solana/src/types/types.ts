@@ -27,14 +27,15 @@ export type MintToAddress = SolanaPayloadInterface<
 export type BurnFromAddress = SolanaPayloadInterface<
     "burnToAddress",
     {
-        amount: BigNumber | number | string;
+        amount: number | string;
+        convertUnit?: boolean;
     }
 >;
 
 export type BurnNonce = SolanaPayloadInterface<
     "burnNonce",
     {
-        burnNonce: Uint8Array | string | number;
+        burnNonce: string | number;
     }
 >;
 

@@ -33,7 +33,7 @@ describe("DAI/fromBSCtoFantom", () => {
             ...getEVMProvider(Fantom, network),
         });
 
-        const from = bsc.Account({ amount: 0.5, convertToWei: true });
+        const from = bsc.Account({ amount: 0.5, convertUnit: true });
         // const from = fromClass.FromAccount();
         const to = fantom.Account();
 

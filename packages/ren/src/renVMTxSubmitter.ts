@@ -9,10 +9,12 @@ import {
 import {
     ChainTransactionProgress,
     ChainTransactionStatus,
+    ErrorWithCode,
     eventEmitter,
     EventEmitterTyped,
     generateTransactionHash,
     PromiEvent,
+    RenJSError,
     TxStatus,
     TxSubmitter,
     TypedPackValue,
@@ -186,6 +188,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             if (this.progress.status === ChainTransactionStatus.Ready) {
                 return this.updateProgress({
                     status: ChainTransactionStatus.Confirming,
+                    confirmations: 0,
                 });
             } else {
                 return this.progress;
@@ -254,6 +257,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                             this.updateProgress({
                                 response: tx,
                                 status: ChainTransactionStatus.Confirming,
+                                confirmations: 0,
                             });
                         } catch (error: unknown) {
                             // Ignore non-critical error.
@@ -290,18 +294,17 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
     private _handleDoneTransaction = async (
         tx: RenVMTransactionWithStatus<Transaction>,
     ) => {
-        const maybeCrossChainTx = tx as unknown as RenVMCrossChainTransaction;
-        if (
-            maybeCrossChainTx.out &&
-            maybeCrossChainTx.out.revert &&
-            maybeCrossChainTx.out.revert.length > 0
-        ) {
-            const revertMessage = maybeCrossChainTx.out.revert;
+        if (tx.tx.out && tx.tx.out.revert && tx.tx.out.revert.length > 0) {
+            const revertMessage: string = tx.tx.out.revert;
             this.updateProgress({
                 status: ChainTransactionStatus.Reverted,
                 revertReason: revertMessage,
+                confirmations: 1,
             });
-            throw new Error(`RenVM transaction reverted: ${revertMessage}`);
+            throw new ErrorWithCode(
+                `RenVM transaction reverted: ${revertMessage}`,
+                RenJSError.RENVM_TRANSACTION_REVERTED,
+            );
         }
 
         if (this.signatureCallback) {
@@ -311,6 +314,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         return this.updateProgress({
             response: tx,
             status: ChainTransactionStatus.Done,
+            confirmations: 1,
         });
     };
 }

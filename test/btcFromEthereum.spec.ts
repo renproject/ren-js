@@ -36,7 +36,7 @@ describe("BTC/fromEthereum", () => {
                 // "0xef9d844602f21bae9cc38db39ce077f1bcff0517ae735f87c274b0d70e1fd6e5",
                 txid: "752ERgLyG66cw42znOB38bz_BReuc1-HwnSw1w4f1uU",
             }),
-            // from: ethereum.Account({ amount: 0.0001, convertToWei: true }),
+            // from: ethereum.Account({ amount: 0.0001, convertUnit: true }),
             to: bitcoin.Address("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6"),
         });
 

@@ -32,7 +32,7 @@ describe("DAI/fromBinanceSmartChain", () => {
             ...getEVMProvider(BinanceSmartChain, network),
         });
 
-        const from = bsc.Account({ amount: 0.5, convertToWei: true });
+        const from = bsc.Account({ amount: 0.5, convertUnit: true });
         // const from = fromClass.FromAccount();
         const to = ethereum.Account();
 

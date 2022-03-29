@@ -20,7 +20,7 @@ const testPK = Buffer.from(
     "hex",
 );
 
-describe.only("Solana", () => {
+describe("Solana", () => {
     describe("Layouts", () => {
         it("should encode a renvm message", () => {
             const obuff = Buffer.from(new Array(RenVmMsgLayout.span));

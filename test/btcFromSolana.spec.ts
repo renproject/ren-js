@@ -51,7 +51,10 @@ describe("BTC/fromSolana", () => {
 
         const gateway = await renJS.gateway({
             asset,
-            from: from.Account({ amount }),
+            from: from.Account({
+                amount: amount.shiftedBy(-decimals),
+                convertUnit: true,
+            }),
             to: to.Address("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6"),
         });
 

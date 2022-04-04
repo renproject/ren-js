@@ -1,22 +1,23 @@
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "./base";
+import { resolveEVMNetworkConfig } from "./utils/generic";
 import {
     EthereumClassConfig,
     EthProvider,
     EthSigner,
-    EvmNetworkConfig,
-    EvmNetworkInput,
+    EVMNetworkConfig,
+    EVMNetworkInput,
+    populateEVMNetwork,
 } from "./utils/types";
-import { resolveEvmNetworkConfig } from "./utils/utils";
 
-const goerliConfig: EvmNetworkConfig = {
+const goerliConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Goerli",
 
     nativeAsset: { name: "Görli Ether", symbol: "gETH", decimals: 18 },
     averageConfirmationTime: 15,
 
-    network: {
+    config: {
         chainId: "0x5",
         chainName: "Ethereum Testnet Görli",
         nativeCurrency: { name: "Görli Ether", symbol: "GOR", decimals: 18 },
@@ -32,7 +33,7 @@ const goerliConfig: EvmNetworkConfig = {
         GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
-};
+});
 
 export class Goerli extends EthereumBaseChain {
     public static chain = "Goerli";
@@ -53,13 +54,13 @@ export class Goerli extends EthereumBaseChain {
         signer,
         config,
     }: {
-        network: EvmNetworkInput;
+        network: EVMNetworkInput;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
         super({
-            network: resolveEvmNetworkConfig(Goerli.configMap, network),
+            network: resolveEVMNetworkConfig(Goerli.configMap, network),
             provider,
             signer,
             config,

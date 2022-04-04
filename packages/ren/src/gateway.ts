@@ -20,10 +20,10 @@ import {
     utils,
 } from "@renproject/utils";
 
-import { defaultRenJSConfig, RenJSConfig } from "./utils/config";
-import { estimateTransactionFee, GatewayFees } from "./utils/fees";
 import { GatewayTransaction } from "./gatewayTransaction";
 import { GatewayParams, TransactionParams } from "./params";
+import { defaultRenJSConfig, RenJSConfig } from "./utils/config";
+import { estimateTransactionFee, GatewayFees } from "./utils/fees";
 import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 import { TransactionEmitter } from "./utils/transactionEmitter";
 
@@ -259,6 +259,13 @@ export class Gateway<
             ),
         ]);
 
+        if (
+            this.outputType === OutputType.Release &&
+            payload.payload.length > 0
+        ) {
+            throw new Error(`Burning with a payload is not currently enabled.`);
+        }
+
         this.params.shard = shard;
         this._inConfirmationTarget = confirmationTarget;
 
@@ -443,6 +450,23 @@ export class Gateway<
         return this;
     }
 
+    private addTransaction = async (
+        identifier: string,
+        tx:
+            | GatewayTransaction<ToPayload>
+            | Promise<GatewayTransaction<ToPayload>>,
+    ) => {
+        // FIXME: Temporary work-around for data race.
+        await utils.sleep(0);
+        this.transactions = this.transactions.set(identifier, tx);
+    };
+
+    private removeTransaction = async (identifier: string) => {
+        // FIXME: Temporary work-around for data race.
+        await utils.sleep(0);
+        this.transactions = this.transactions.remove(identifier);
+    };
+
     /**
      * `processDeposit` allows you to manually provide the details of a deposit
      * and returns a [[GatewayTransaction]] object.
@@ -534,18 +558,12 @@ export class Gateway<
 
             const promise = createGatewayTransaction();
 
-            this.transactions = this.transactions.set(
-                depositIdentifier,
-                promise,
-            );
+            await this.addTransaction(depositIdentifier, promise);
 
             try {
-                this.transactions = this.transactions.set(
-                    depositIdentifier,
-                    await promise,
-                );
+                await this.addTransaction(depositIdentifier, await promise);
             } catch (error: unknown) {
-                this.transactions = this.transactions.remove(depositIdentifier);
+                await this.removeTransaction(depositIdentifier);
                 const message = `Error processing deposit ${
                     inputTx.txidFormatted
                 }: ${utils.extractError(error)}`;

@@ -29,10 +29,10 @@ import {
     EVMPayload,
     PayloadHandler,
 } from "./payloads/evmPayloadHandlers";
-import { EvmNetworkConfig } from "./types";
+import { EVMNetworkConfig } from "./types";
 
 /** Fix numeric values in the transaction config. */
-export const fixEvmTransactionConfig = (
+export const fixEVMTransactionConfig = (
     ...txConfigs: Array<PayableOverrides | undefined>
 ): PayableOverrides => {
     let result: PayableOverrides = {};
@@ -76,7 +76,7 @@ export const callContract = async (
 
     return await contract[abi.name](
         ...params,
-        fixEvmTransactionConfig(txConfig),
+        fixEVMTransactionConfig(txConfig),
     );
 };
 
@@ -97,7 +97,7 @@ export class EVMTxSubmitter
         progress: [ChainTransactionProgress];
     }>;
 
-    private network: EvmNetworkConfig;
+    private network: EVMNetworkConfig;
     private getSigner: () => Signer | undefined;
     private payload: EVMPayload;
     private tx?: TransactionResponse;
@@ -128,7 +128,7 @@ export class EVMTxSubmitter
         onReceipt,
         findExistingTransaction,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         getSigner: () => Signer | undefined;
         chain: string;
         payload: EVMPayload;

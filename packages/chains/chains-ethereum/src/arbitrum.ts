@@ -1,22 +1,23 @@
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "./base";
+import { resolveEVMNetworkConfig } from "./utils/generic";
 import {
     EthereumClassConfig,
     EthProvider,
     EthSigner,
-    EvmNetworkConfig,
-    EvmNetworkInput,
+    EVMNetworkConfig,
+    EVMNetworkInput,
+    populateEVMNetwork,
 } from "./utils/types";
-import { resolveEvmNetworkConfig } from "./utils/utils";
 
-const arbitrumMainnetConfig: EvmNetworkConfig = {
+const arbitrumMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Arbitrum",
 
     nativeAsset: { name: "Arbitrum Ether", symbol: "ArbETH", decimals: 18 },
     averageConfirmationTime: 4,
 
-    network: {
+    config: {
         chainId: "0xa4b1",
         chainName: "Arbitrum One",
         nativeCurrency: { name: "Ether", symbol: "AETH", decimals: 18 },
@@ -37,9 +38,9 @@ const arbitrumMainnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
         BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
-};
+});
 
-const arbitrumTestnetConfig: EvmNetworkConfig = {
+const arbitrumTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Arbitrum",
     isTestnet: true,
 
@@ -50,7 +51,7 @@ const arbitrumTestnetConfig: EvmNetworkConfig = {
     },
     averageConfirmationTime: 4,
 
-    network: {
+    config: {
         chainId: "0x66eeb",
         chainName: "Arbitrum Testnet Rinkeby",
         nativeCurrency: {
@@ -73,7 +74,7 @@ const arbitrumTestnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
-};
+});
 
 /**
  * Arbitrum/arbETH configuration.
@@ -98,13 +99,13 @@ export class Arbitrum extends EthereumBaseChain {
         signer,
         config,
     }: {
-        network: EvmNetworkInput;
+        network: EVMNetworkInput;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
         super({
-            network: resolveEvmNetworkConfig(Arbitrum.configMap, network),
+            network: resolveEVMNetworkConfig(Arbitrum.configMap, network),
             provider,
             signer,
             config,

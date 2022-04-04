@@ -48,7 +48,7 @@ export interface GatewayFees {
      * variable fee.
      * If the input is smaller than the minimum-amount, `0` is returned.
      */
-    estimateOutput: (input: BigNumber) => BigNumber;
+    estimateOutput: (input: BigNumber | string | number) => BigNumber;
 }
 
 export const estimateTransactionFee = async (

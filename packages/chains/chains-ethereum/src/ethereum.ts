@@ -5,18 +5,19 @@ import {
     EthereumClassConfig,
     EthProvider,
     EthSigner,
-    EvmNetworkConfig,
-    EvmNetworkInput,
+    EVMNetworkConfig,
+    EVMNetworkInput,
+    populateEVMNetwork,
 } from "./utils/types";
-import { resolveEvmNetworkConfig } from "./utils/utils";
+import { resolveEVMNetworkConfig } from "./utils/generic";
 
-const ethereumMainnet: EvmNetworkConfig = {
+const ethereumMainnet: EVMNetworkConfig = populateEVMNetwork({
     selector: "Ethereum",
 
     nativeAsset: { name: "Ether", symbol: "ETH", decimals: 18 },
     averageConfirmationTime: 15,
 
-    network: {
+    config: {
         chainId: "0x1",
         chainName: "Ethereum Mainnet",
         nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
@@ -33,16 +34,16 @@ const ethereumMainnet: EvmNetworkConfig = {
         GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
         BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
-};
+});
 
-const ethereumTestnet: EvmNetworkConfig = {
+const ethereumTestnet: EVMNetworkConfig = populateEVMNetwork({
     selector: "Ethereum",
     isTestnet: true,
 
     nativeAsset: { name: "Kovan Ether", symbol: "ETH", decimals: 18 },
     averageConfirmationTime: 15,
 
-    network: {
+    config: {
         chainId: "0x2a",
         chainName: "Ethereum Testnet Kovan",
         nativeCurrency: { name: "Kovan Ether", symbol: "KOV", decimals: 18 },
@@ -60,15 +61,15 @@ const ethereumTestnet: EvmNetworkConfig = {
         GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
-};
+});
 
-const ethereumDevnet: EvmNetworkConfig = {
+const ethereumDevnet: EVMNetworkConfig = populateEVMNetwork({
     ...ethereumTestnet,
     addresses: {
         GatewayRegistry: "0x5045E727D9D9AcDe1F6DCae52B078EC30dC95455",
         BasicBridge: "0xFABDB1F53Ef8B080332621cBc9F820a39e7A1B83",
     },
-};
+});
 
 /**
  * The Ethereum RenJS implementation.
@@ -76,9 +77,7 @@ const ethereumDevnet: EvmNetworkConfig = {
 export class Ethereum extends EthereumBaseChain {
     public static chain = "Ethereum" as const;
 
-    public static configMap: {
-        [network in RenNetwork]?: EvmNetworkConfig;
-    } = {
+    public static configMap = {
         [RenNetwork.Mainnet]: ethereumMainnet,
         [RenNetwork.Testnet]: ethereumTestnet,
         [RenNetwork.Devnet]: ethereumDevnet,
@@ -120,13 +119,13 @@ export class Ethereum extends EthereumBaseChain {
         signer,
         config,
     }: {
-        network: EvmNetworkInput;
+        network: EVMNetworkInput;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
         super({
-            network: resolveEvmNetworkConfig(Ethereum.configMap, network),
+            network: resolveEVMNetworkConfig(Ethereum.configMap, network),
             provider,
             signer,
             config,

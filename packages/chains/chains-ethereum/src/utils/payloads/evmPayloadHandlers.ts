@@ -18,9 +18,9 @@ import {
 
 import { getERC20Instance } from "../../contracts";
 import { EthArg, payloadToABI } from "../abi";
-import { fixEvmTransactionConfig } from "../evmTxSubmitter";
+import { fixEVMTransactionConfig } from "../evmTxSubmitter";
 import { rawEncode } from "../generic";
-import { EvmNetworkConfig } from "../types";
+import { EVMNetworkConfig } from "../types";
 
 export enum EVMParam {
     // Always available
@@ -111,14 +111,14 @@ interface EVMPayloadInterface<Name extends string = string, T = any> {
 
 export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
     required?: (params: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer?: Signer;
         payload: P;
         evmParams: EVMParamValues;
         getPayloadHandler: (payloadType: string) => PayloadHandler;
     }) => SyncOrPromise<boolean>;
     getSetup?: (params: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer?: Signer;
         payload: P;
         evmParams: EVMParamValues;
@@ -127,7 +127,7 @@ export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
         [name: string]: EVMPayload;
     }>;
     getPayload?: (params: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer: Signer | undefined;
         payload: P;
         evmParams: EVMParamValues;
@@ -138,7 +138,7 @@ export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
         payload: Uint8Array;
     }>;
     export: (params: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer?: Signer;
         payload: P;
         evmParams: EVMParamValues;
@@ -164,7 +164,7 @@ const replaceRenParam = async (
 };
 
 // Replace contract address and parameter values with Ren parameters.
-const resolveEvmContractParams = async (
+const resolveEVMContractParams = async (
     payload: EVMContractPayload,
     evmParams: EVMParamValues,
 ): Promise<EVMContractPayload> => {
@@ -202,7 +202,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         payload,
         evmParams,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         payload: EVMContractPayload;
         evmParams: EVMParamValues;
     }): Promise<{
@@ -211,7 +211,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         payload: Uint8Array;
     }> => {
         try {
-            payload = await resolveEvmContractParams(payload, evmParams);
+            payload = await resolveEVMContractParams(payload, evmParams);
         } catch (error: unknown) {
             throw ErrorWithCode.updateError(
                 error,
@@ -259,7 +259,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         evmParams,
         overrides,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer?: Signer;
         payload: EVMContractPayload;
         evmParams: EVMParamValues;
@@ -270,7 +270,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         };
     }): Promise<PopulatedTransaction> => {
         try {
-            payload = await resolveEvmContractParams(payload, evmParams);
+            payload = await resolveEVMContractParams(payload, evmParams);
         } catch (error: unknown) {
             throw ErrorWithCode.updateError(
                 error,
@@ -324,7 +324,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         );
         return await contract.populateTransaction[abi.name](
             ...paramValues,
-            fixEvmTransactionConfig(
+            fixEVMTransactionConfig(
                 payload.params.txConfig,
                 overrides.txConfig,
             ),
@@ -333,7 +333,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 };
 
 const getContractFromAccount = async (
-    network: EvmNetworkConfig,
+    network: EVMNetworkConfig,
     payload: EVMAddressPayload,
     evmParams: EVMParamValues,
 ): Promise<EVMContractPayload | undefined> => {
@@ -477,46 +477,50 @@ const getContractFromAccount = async (
                 };
             }
         case OutputType.Mint:
-            // if (
-            //     payload.params.address.toLowerCase() !==
-            //         (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase() ||
-            //     evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
-            // ) {
-            //     return {
-            //         chain: network.selector,
-            //         type: "contract",
-            //         params: {
-            //             to: EVMParam.EVM_GATEWAY,
-            //             method: "mint",
-            //             params: [
-            //                 {
-            //                     type: "bytes32",
-            //                     name: "pHash",
-            //                     value: EVMParam.EVM_PHASH,
-            //                     notInPayload: true,
-            //                 },
-            //                 {
-            //                     type: "uint256",
-            //                     name: "amount",
-            //                     value: EVMParam.EVM_AMOUNT,
-            //                     notInPayload: true,
-            //                 },
-            //                 {
-            //                     type: "bytes32",
-            //                     name: "nHash",
-            //                     value: EVMParam.EVM_NHASH,
-            //                     notInPayload: true,
-            //                 },
-            //                 {
-            //                     type: "bytes",
-            //                     name: "calldata sig",
-            //                     value: EVMParam.EVM_SIGNATURE,
-            //                     notInPayload: true,
-            //                 },
-            //             ],
-            //         },
-            //     };
-            // }
+            if (
+                payload.params.address !== EVMParam.EVM_ACCOUNT
+                // (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase()
+                // || evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
+            ) {
+                return {
+                    chain: network.selector,
+                    type: "contract",
+                    params: {
+                        to: network.addresses.BasicBridge,
+                        method: "mint",
+                        params: [
+                            {
+                                type: "string",
+                                name: "symbol",
+                                value: EVMParam.EVM_ASSET,
+                            },
+                            {
+                                type: "address",
+                                name: "recipient",
+                                value: payload.params.address,
+                            },
+                            {
+                                type: "uint256",
+                                name: "amount",
+                                value: EVMParam.EVM_AMOUNT,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes32",
+                                name: "nHash",
+                                value: EVMParam.EVM_NHASH,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes",
+                                name: "sig",
+                                value: EVMParam.EVM_SIGNATURE,
+                                notInPayload: true,
+                            },
+                        ],
+                    },
+                };
+            }
             return {
                 chain: network.selector,
                 type: "contract",
@@ -555,50 +559,50 @@ const getContractFromAccount = async (
             if (evmParams[EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]) {
                 return undefined;
             }
-            // if (
-            //     payload.params.address.toLowerCase() !==
-            //         (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase() ||
-            //     evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
-            // ) {
-            //     return {
-            //         chain: network.selector,
-            //         type: "contract",
-            //         params: {
-            //             to: network.addresses.BasicBridge,
-            //             method: "release",
-            //             params: [
-            //                 {
-            //                     type: "string",
-            //                     name: "symbol",
-            //                     value: EVMParam.EVM_ASSET,
-            //                 },
-            //                 {
-            //                     type: "address",
-            //                     name: "recipient",
-            //                     value: payload.params.address,
-            //                 },
-            //                 {
-            //                     type: "uint256",
-            //                     name: "amount",
-            //                     value: EVMParam.EVM_AMOUNT,
-            //                     notInPayload: true,
-            //                 },
-            //                 {
-            //                     type: "bytes32",
-            //                     name: "nHash",
-            //                     value: EVMParam.EVM_NHASH,
-            //                     notInPayload: true,
-            //                 },
-            //                 {
-            //                     type: "bytes",
-            //                     name: "sig",
-            //                     value: EVMParam.EVM_SIGNATURE,
-            //                     notInPayload: true,
-            //                 },
-            //             ],
-            //         },
-            //     };
-            // }
+            if (
+                payload.params.address !== EVMParam.EVM_ACCOUNT
+                // (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase()
+                // || evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
+            ) {
+                return {
+                    chain: network.selector,
+                    type: "contract",
+                    params: {
+                        to: network.addresses.BasicBridge,
+                        method: "release",
+                        params: [
+                            {
+                                type: "string",
+                                name: "symbol",
+                                value: EVMParam.EVM_ASSET,
+                            },
+                            {
+                                type: "address",
+                                name: "recipient",
+                                value: payload.params.address,
+                            },
+                            {
+                                type: "uint256",
+                                name: "amount",
+                                value: EVMParam.EVM_AMOUNT,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes32",
+                                name: "nHash",
+                                value: EVMParam.EVM_NHASH,
+                                notInPayload: true,
+                            },
+                            {
+                                type: "bytes",
+                                name: "sig",
+                                value: EVMParam.EVM_SIGNATURE,
+                                notInPayload: true,
+                            },
+                        ],
+                    },
+                };
+            }
             return {
                 chain: network.selector,
                 type: "contract",
@@ -659,7 +663,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         evmParams,
         getPayloadHandler,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer?: Signer;
         payload: EVMAddressPayload;
         evmParams: EVMParamValues;
@@ -692,7 +696,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         evmParams,
         getPayloadHandler,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer: Signer | undefined;
         payload: EVMAddressPayload;
         evmParams: EVMParamValues;
@@ -747,7 +751,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         overrides,
         getPayloadHandler,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer?: Signer;
         payload: EVMAddressPayload;
         evmParams: EVMParamValues;
@@ -794,7 +798,7 @@ export type EVMApprovalPayload = EVMPayloadInterface<
     }
 >;
 
-const resolveEvmApprovalParams = async (
+const resolveEVMApprovalParams = async (
     payload: EVMApprovalPayload,
     evmParams: EVMParamValues,
 ): Promise<EVMApprovalPayload> => {
@@ -810,7 +814,7 @@ const resolveEvmApprovalParams = async (
 };
 
 const getContractFromApproval = async (
-    network: EvmNetworkConfig,
+    network: EVMNetworkConfig,
     payload: EVMApprovalPayload,
     evmParams: EVMParamValues,
 ): Promise<EVMContractPayload> => {
@@ -859,7 +863,7 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         payload: EVMApprovalPayload;
         evmParams: EVMParamValues;
     }): Promise<boolean> => {
-        payload = await resolveEvmApprovalParams(payload, evmParams);
+        payload = await resolveEVMApprovalParams(payload, evmParams);
         const token = payload.params.token;
         if (!signer) {
             return true;
@@ -882,7 +886,7 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         overrides,
         getPayloadHandler,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         signer?: Signer;
         payload: EVMApprovalPayload;
         evmParams: EVMParamValues;
@@ -893,7 +897,7 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         };
         getPayloadHandler: (payloadType: string) => PayloadHandler;
     }): Promise<PopulatedTransaction> => {
-        payload = await resolveEvmApprovalParams(payload, evmParams);
+        payload = await resolveEVMApprovalParams(payload, evmParams);
 
         return contractPayloadHandler.export({
             network,

@@ -3,17 +3,18 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
-import { Goerli, Ethereum } from "../packages/chains/chains-ethereum/src";
+import { BinanceSmartChain, Ethereum } from "@renproject/chains-ethereum/src";
+import { RenNetwork, utils } from "@renproject/utils/src";
+
 import RenJS from "../packages/ren/src";
-import { RenNetwork, utils } from "../packages/utils/src";
 import { getEVMProvider, printChain } from "./testUtils";
 
 chai.should();
 
 loadDotEnv();
 
-describe("ETH/toGoerli", () => {
-    it("ETH/toGoerli", async function () {
+describe("DAI/toBinanceSmartChain", () => {
+    it("DAI/toBinanceSmartChain", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -23,22 +24,25 @@ describe("ETH/toGoerli", () => {
             network,
             ...getEVMProvider(Ethereum as any, network),
         });
-        const bscAlt = new Goerli({
+        const bsc = new BinanceSmartChain({
             network,
-            ...getEVMProvider(Goerli as any, network, 1),
+            ...getEVMProvider(BinanceSmartChain as any, network, 1),
         });
 
-        console.log("eth address:", await ethereum.signer.getAddress());
-        console.log("bsc address:", await bscAlt.signer.getAddress());
+        console.log(
+            `${ethereum.chain} address:`,
+            await ethereum.signer.getAddress(),
+        );
+        console.log(`${bsc.chain} address:`, await bsc.signer.getAddress());
 
-        const renJS = new RenJS(network).withChains(bscAlt, ethereum);
+        const renJS = new RenJS(network).withChains(bsc, ethereum);
 
         const gateway = await renJS.gateway({
             asset,
-            from: ethereum.Account({ amount: 0.011, convertUnit: true }),
-            to: bscAlt.Address({
-                address: "0x0000000000000000000000000000000000000000",
-            }),
+            from: bsc.Account({ amount: 0.01, convertUnit: true }),
+            to: ethereum.Account(),
+            // from: ethereum.Account({ amount: 0.02, convertUnit: true }),
+            // to: bsc.Address("0x0000000000000000000000000000000000000001"),
         });
 
         const balance = await ethereum.getBalance(gateway.params.asset);
@@ -145,7 +149,7 @@ describe("ETH/toGoerli", () => {
                         `[${printChain(gateway.params.from.chain)}⇢${printChain(
                             gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
-                            ethereum.chain,
+                            gateway.params.to.chain,
                             {
                                 pad: false,
                             },

@@ -3,12 +3,7 @@ import elliptic from "elliptic";
 import { ethers } from "ethers";
 import { computeAddress } from "ethers/lib/utils";
 
-import {
-    ExternalProvider,
-    JsonRpcFetchFunc,
-    Provider,
-    Web3Provider,
-} from "@ethersproject/providers";
+import { Provider, Web3Provider } from "@ethersproject/providers";
 import {
     assertType,
     ChainTransaction,
@@ -20,12 +15,12 @@ import {
     Logger,
     nullLogger,
     OutputType,
+    populateChainTransaction,
     RenJSError,
     RenNetwork,
     TxSubmitter,
     TxWaiter,
     utils,
-    populateChainTransaction,
 } from "@renproject/utils";
 
 import {
@@ -77,9 +72,10 @@ import {
     EthereumClassConfig,
     EthProvider,
     EthSigner,
-    EvmNetworkConfig,
+    EVMExplorer,
+    EVMNetworkConfig,
+    StandardEVMExplorer,
 } from "./utils/types";
-import { EvmExplorer, StandardEvmExplorer } from "./utils/utils";
 
 export class EthereumBaseChain
     implements ContractChain<EVMPayload, EVMPayload>
@@ -90,16 +86,16 @@ export class EthereumBaseChain
     public assets: { [asset: string]: string } = {};
 
     public static configMap: {
-        [network in RenNetwork]?: EvmNetworkConfig;
+        [network in RenNetwork]?: EVMNetworkConfig;
     } = {};
     public configMap: {
-        [network in RenNetwork]?: EvmNetworkConfig;
+        [network in RenNetwork]?: EVMNetworkConfig;
     } = {};
 
     public provider: Provider;
     public signer?: EthSigner;
-    public network: EvmNetworkConfig;
-    public explorer: EvmExplorer;
+    public network: EVMNetworkConfig;
+    public explorer: EVMExplorer;
 
     private _logger: Logger;
 
@@ -109,15 +105,15 @@ export class EthereumBaseChain
         signer,
         config,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
         this.network = network;
         this.chain = this.network.selector;
-        this.explorer = StandardEvmExplorer(
-            this.network.network.blockExplorerUrls[0],
+        this.explorer = StandardEVMExplorer(
+            this.network.config.blockExplorerUrls[0],
         );
         this._logger = (config && config.logger) || nullLogger;
 
@@ -190,11 +186,11 @@ export class EthereumBaseChain
     }
 
     public withProvider(web3Provider: EthProvider): this {
-        this.provider = (web3Provider as Provider)._isProvider
-            ? (web3Provider as Provider)
-            : new ethers.providers.Web3Provider(
-                  web3Provider as ExternalProvider | JsonRpcFetchFunc,
-              );
+        this.provider = Provider.isProvider(web3Provider)
+            ? web3Provider
+            : typeof web3Provider === "string"
+            ? new ethers.providers.JsonRpcProvider(web3Provider)
+            : new ethers.providers.Web3Provider(web3Provider);
         if (!this.signer) {
             try {
                 this.signer = (this.provider as Web3Provider).getSigner();
@@ -228,7 +224,7 @@ export class EthereumBaseChain
     public async checkProviderNetwork(): Promise<void> {
         const actualChainID = (await this.provider.getNetwork()).chainId;
         const expectedChainID = new BigNumber(
-            this.network.network.chainId,
+            this.network.config.chainId,
         ).toNumber();
         const wrongNetwork = actualChainID !== expectedChainID;
         if (wrongNetwork) {
@@ -1077,32 +1073,6 @@ export class EthereumBaseChain
         convertToWei?: boolean;
         convertUnit?: boolean;
     } = {}): EVMPayload {
-        convertToWei = convertToWei || convertUnit;
-        return this.Address({
-            address: EVMParam.EVM_ACCOUNT,
-            amount,
-            convertToWei,
-        });
-    }
-
-    public Address({
-        address,
-        amount,
-        convertToWei,
-        convertUnit,
-    }: {
-        address: string;
-        amount?: BigNumber | string | number;
-        /**
-         * @deprecated - renamed to `convertUnit`
-         */
-        convertToWei?: boolean;
-        convertUnit?: boolean;
-    }): EVMPayload {
-        assertType<string>("string", {
-            address,
-        });
-
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
             { amount },
@@ -1111,7 +1081,7 @@ export class EthereumBaseChain
             convertToWei,
             convertUnit,
         });
-        convertToWei = convertToWei || convertUnit;
+        convertUnit = convertToWei || convertUnit;
 
         let fixedAmount;
         if (utils.isDefined(amount)) {
@@ -1125,10 +1095,10 @@ export class EthereumBaseChain
                     ),
                     RenJSError.PARAMETER_ERROR,
                 );
-            } else if (!convertToWei && fixedAmount.decimalPlaces() !== 0) {
+            } else if (!convertUnit && fixedAmount.decimalPlaces() !== 0) {
                 throw ErrorWithCode.updateError(
                     new Error(
-                        `Amount must be provided in Wei as an integer, or 'convertToWei' must be set to 'true'. (amount: ${amount.toString()})`,
+                        `Amount must be provided in Wei as an integer, or 'convertUnit' must be set to 'true'. (amount: ${amount.toString()})`,
                     ),
                     RenJSError.PARAMETER_ERROR,
                 );
@@ -1138,9 +1108,34 @@ export class EthereumBaseChain
             chain: this.chain,
             type: "address",
             params: {
-                address,
+                address: EVMParam.EVM_ACCOUNT,
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
                 convertUnit,
+            },
+        };
+    }
+
+    public Address(address: string): EVMPayload {
+        assertType<string>("string", {
+            address,
+        });
+
+        if (address.slice(0, 5) !== "__EVM") {
+            if (!this.validateAddress(address)) {
+                throw ErrorWithCode.updateError(
+                    new Error(
+                        `Invalid ${this.chain} address: ${String(address)}`,
+                    ),
+                    RenJSError.PARAMETER_ERROR,
+                );
+            }
+        }
+
+        return {
+            chain: this.chain,
+            type: "address",
+            params: {
+                address,
             },
         };
     }

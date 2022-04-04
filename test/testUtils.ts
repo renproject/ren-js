@@ -10,7 +10,7 @@ import { RenNetwork, utils } from "@renproject/utils";
 
 import {
     EthProvider,
-    EvmNetworkConfig,
+    EVMNetworkConfig,
 } from "../packages/chains/chains-ethereum/src";
 import { EthereumClassConfig, EthSigner } from "../packages/chains/chains/src";
 
@@ -22,7 +22,7 @@ const MNEMONIC = process.env.MNEMONIC;
 
 interface EVMConstructor<EVM> {
     configMap: {
-        [network in RenNetwork]?: EvmNetworkConfig;
+        [network in RenNetwork]?: EVMNetworkConfig;
     };
 
     new ({
@@ -31,7 +31,7 @@ interface EVMConstructor<EVM> {
         signer,
         config,
     }: {
-        network: EvmNetworkConfig;
+        network: EVMNetworkConfig;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;

@@ -108,14 +108,6 @@ export interface ChainCommon {
     /** Check if the transaction's format is valid. */
     validateTransaction(transaction: ChainTransaction): boolean;
 
-    /**
-     * `formatAddress` should format an address for displaying to users.
-     *
-     * A RenVM transaction's `to` field is not always in the same format that
-     * is displayed to users.
-     */
-    formatAddress?: (address: string) => string;
-
     /** Return a URL to the address's page on an explorer. */
     addressExplorerLink: (address: string) => string | undefined;
 

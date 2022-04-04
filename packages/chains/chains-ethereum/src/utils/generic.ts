@@ -6,6 +6,7 @@ import { Provider } from "@ethersproject/providers";
 import {
     ChainTransaction,
     InputChainTransaction,
+    RenNetwork,
     utils,
 } from "@renproject/utils";
 
@@ -26,7 +27,7 @@ import {
 import { LogTransferredEvent } from "../contracts/typechain/TransferWithLog";
 import { AbiItem } from "./abi";
 import { getLockGateway, getMintGateway } from "./gatewayRegistry";
-import { EvmNetworkConfig } from "./types";
+import { EVMNetworkConfig, EVMNetworkInput } from "./types";
 
 /**
  * Convert an Ethereum transaction hash from its standard format to the format
@@ -164,7 +165,7 @@ export const mapTransferLogToInputChainTransaction = (
 // };
 
 // export const findBurnByNonce = async (
-//     network: EvmNetworkConfig,
+//     network: EVMNetworkConfig,
 //     provider: Provider,
 //     asset: string,
 //     nonce: Uint8Array,
@@ -194,7 +195,7 @@ export const mapTransferLogToInputChainTransaction = (
  */
 
 export const findMintBySigHash = async (
-    network: EvmNetworkConfig,
+    network: EVMNetworkConfig,
     provider: Provider,
     asset: string,
     nHash: Uint8Array,
@@ -236,7 +237,7 @@ export const findMintBySigHash = async (
 };
 
 export const findReleaseBySigHash = async (
-    network: EvmNetworkConfig,
+    network: EVMNetworkConfig,
     provider: Provider,
     asset: string,
     nHash: Uint8Array,
@@ -419,3 +420,49 @@ export const validateTransaction = (transaction: ChainTransaction): boolean =>
 
 export const rawEncode = (types: string[], parameters: unknown[]): Uint8Array =>
     utils.fromHex(defaultAbiCoder.encode(types, parameters));
+
+export const isEVMNetworkConfig = (
+    renNetwork: EVMNetworkInput,
+): renNetwork is EVMNetworkConfig =>
+    !!(renNetwork as EVMNetworkConfig).addresses;
+
+export const resolveEVMNetworkConfig = (
+    configMap: {
+        [network in RenNetwork]?: EVMNetworkConfig;
+    },
+    renNetwork: EVMNetworkInput,
+): EVMNetworkConfig => {
+    if (!renNetwork) {
+        const defaultNetwork =
+            configMap[RenNetwork.Mainnet] ||
+            configMap[RenNetwork.Testnet] ||
+            configMap[RenNetwork.Devnet];
+        if (!defaultNetwork) {
+            throw new Error(`Must provide network.`);
+        }
+        return defaultNetwork;
+    }
+
+    let networkConfig: EVMNetworkConfig | undefined;
+    if (renNetwork && isEVMNetworkConfig(renNetwork)) {
+        networkConfig = renNetwork;
+    } else {
+        networkConfig = configMap[renNetwork];
+    }
+
+    if (!networkConfig) {
+        throw new Error(
+            `Unsupported network '${String(
+                renNetwork
+                    ? typeof renNetwork === "string"
+                        ? renNetwork
+                        : renNetwork.selector
+                    : renNetwork,
+            )}'. Valid options are 'mainnet', 'testnet' or an EVMNetworkConfig object.`,
+        );
+    }
+
+    return networkConfig;
+};
+/** @deprecated Renamed to resolveEVMNetworkConfig. */
+export const resolveEvmNetworkConfig = resolveEVMNetworkConfig;

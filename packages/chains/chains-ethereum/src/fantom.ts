@@ -1,22 +1,23 @@
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "./base";
+import { resolveEVMNetworkConfig } from "./utils/generic";
 import {
     EthereumClassConfig,
     EthProvider,
     EthSigner,
-    EvmNetworkConfig,
-    EvmNetworkInput,
+    EVMNetworkConfig,
+    EVMNetworkInput,
+    populateEVMNetwork,
 } from "./utils/types";
-import { resolveEvmNetworkConfig } from "./utils/utils";
 
-const fantomMainnetConfig: EvmNetworkConfig = {
+const fantomMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Fantom",
 
     nativeAsset: { name: "Fantom", symbol: "FTM", decimals: 18 },
     averageConfirmationTime: 1,
 
-    network: {
+    config: {
         chainId: "0xfa",
         chainName: "Fantom Opera",
         nativeCurrency: { name: "Fantom", symbol: "FTM", decimals: 18 },
@@ -28,15 +29,15 @@ const fantomMainnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
         BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
-};
+});
 
-const fantomTestnetConfig: EvmNetworkConfig = {
+const fantomTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Fantom",
 
     nativeAsset: { name: "Testnet Fantom", symbol: "FTM", decimals: 18 },
     averageConfirmationTime: 1,
 
-    network: {
+    config: {
         chainId: "0xfa2",
         chainName: "Fantom Testnet",
         nativeCurrency: { name: "Fantom", symbol: "FTM", decimals: 18 },
@@ -48,15 +49,15 @@ const fantomTestnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
-};
+});
 
-const fantomDevnetConfig: EvmNetworkConfig = {
+const fantomDevnetConfig: EVMNetworkConfig = populateEVMNetwork({
     ...fantomTestnetConfig,
     addresses: {
         GatewayRegistry: "0xD881213F5ABF783d93220e6bD3Cc21706A8dc1fC",
         BasicBridge: "0xD087b0540e172553c12DEEeCDEf3dFD21Ec02066",
     },
-};
+});
 
 export class Fantom extends EthereumBaseChain {
     public static chain = "Fantom";
@@ -79,13 +80,13 @@ export class Fantom extends EthereumBaseChain {
         signer,
         config,
     }: {
-        network: EvmNetworkInput;
+        network: EVMNetworkInput;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
         super({
-            network: resolveEvmNetworkConfig(Fantom.configMap, network),
+            network: resolveEVMNetworkConfig(Fantom.configMap, network),
             provider,
             signer,
             config,

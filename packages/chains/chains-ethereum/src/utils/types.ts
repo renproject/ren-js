@@ -7,7 +7,64 @@ import {
 } from "@ethersproject/providers/lib/web3-provider";
 import { Logger, RenNetwork, RenNetworkString } from "@renproject/utils";
 
-export interface EvmNetworkConfig {
+export interface EVMExplorer {
+    url: string;
+    address: (address: string) => string;
+    transaction: (txid: string) => string;
+}
+/** @deprecated Renamed to EvmExplorer. */
+export type EvmExplorer = EVMExplorer;
+
+/**
+ * Returns an EVMExplorer with the format `${url}/address/${address}` and
+ * `${url}/tx/${txHash}` for addresses and transactions respectively.
+ */
+export const StandardEVMExplorer = (baseUrl: string): EVMExplorer => ({
+    url: baseUrl,
+
+    address: (address: string) =>
+        `${baseUrl.replace(/\/$/, "")}/address/${address}`,
+
+    transaction: (txHash: string) =>
+        `${baseUrl.replace(/\/$/, "")}/tx/${txHash || ""}`,
+});
+/** @deprecated Renamed to StandardEVMExplorer. */
+export const StandardEvmExplorer = StandardEVMExplorer;
+
+// See https://eips.ethereum.org/EIPS/eip-3085
+export interface EIP3085Config {
+    /** The integer ID of the chain as a hexadecimal string. */
+    chainId: string;
+
+    /** One or more URLs pointing to block explorer web sites for the chain. */
+    blockExplorerUrls: string[];
+
+    /** A human-readable name for the chain. */
+    chainName: string;
+
+    /**
+     * One or more URLs pointing to reasonably sized images that can be used to
+     * visually identify the chain.
+     */
+    iconUrls?: string[];
+
+    /** The native currency of the chain. */
+    nativeCurrency: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
+
+    /**
+     * One or more URLs pointing to RPC endpoints that can be used to
+     * communicate with the chain. Each chain may define variables that will be
+     * replaced using the notation `${VARIABLE_NAME}`, such as
+     * `${INFURA_API_KEY}`.
+     */
+    rpcUrls: string[];
+}
+
+export interface EVMNetworkConfig {
     selector: string;
     isTestnet?: boolean;
     logRequestLimit?: number;
@@ -17,7 +74,7 @@ export interface EvmNetworkConfig {
         BasicBridge: string;
     };
 
-    // See EvmNetworkConfig.network.nativeCurrency
+    // See EVMNetworkConfig.network.nativeCurrency
     nativeAsset: {
         name: string;
         symbol: string;
@@ -25,37 +82,22 @@ export interface EvmNetworkConfig {
     };
     averageConfirmationTime: number;
 
-    // See https://eips.ethereum.org/EIPS/eip-3085
-    network: {
-        // The integer ID of the chain as a hexadecimal string.
-        chainId: string;
-
-        // One or more URLs pointing to block explorer web sites for the chain.
-        blockExplorerUrls: string[];
-
-        // A human-readable name for the chain.
-        chainName: string;
-
-        // One or more URLs pointing to reasonably sized images that can be used
-        // to visually identify the chain.
-        iconUrls?: string[];
-
-        // The native currency of the chain.
-        nativeCurrency: {
-            name: string;
-            symbol: string;
-            decimals: number;
-        };
-
-        // One or more URLs pointing to RPC endpoints that can be used to
-        // communicate with the chain.
-        // Each chain may define variables that will be replaced using the
-        // notation `${VARIABLE_NAME}`, such as `${INFURA_API_KEY}`.
-        rpcUrls: string[];
-    };
+    config: EIP3085Config;
+    /** @deprecated renamed to 'config' */
+    network?: EIP3085Config;
 }
+/** @deprecated Renamed to EVMNetworkConfig. */
+export type EvmNetworkConfig = EVMNetworkConfig;
 
-export type EvmNetworkInput = RenNetwork | RenNetworkString | EvmNetworkConfig;
+export const populateEVMNetwork = (
+    config: Omit<EVMNetworkConfig, "network">,
+): EVMNetworkConfig => ({
+    ...config,
+    network: config.config,
+});
+
+export type EVMNetworkInput = RenNetwork | RenNetworkString | EVMNetworkConfig;
+export type EvmNetworkInput = EVMNetworkInput;
 
 export type EthProvider =
     | string

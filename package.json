@@ -15,7 +15,7 @@
         "test:long": "ts-mocha --color --sort --bail --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts",
         "link:all": "lerna run link --scope @renproject/*",
         "unlink:all": "lerna run unlink --scope @renproject/*",
-        "doc:build": "yarn typedoc --entryPointStrategy packages .",
+        "doc:build": "yarn typedoc --entryPointStrategy packages . --readme ./README.md",
         "doc:publish": "yarn doc:build && gh-pages --repo git@github.com:renproject/ren-js-v3-docs.git -m \"[ci skip] Updates\" -d docs"
     },
     "devDependencies": {

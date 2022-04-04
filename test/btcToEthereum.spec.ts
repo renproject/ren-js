@@ -32,7 +32,6 @@ describe("BTC/toEthereum", () => {
             to: to.Account(),
             nonce: 8,
         };
-        const fees = await renJS.getFees(gatewayParams);
 
         const gateway = await renJS.gateway(gatewayParams);
 

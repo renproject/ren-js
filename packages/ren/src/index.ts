@@ -135,7 +135,7 @@ export class RenJS {
     /**
      * Return the chain handler previously added using [[withChains]].
      */
-    public getChain = (name: string): Chain => {
+    public getChain = <T extends Chain>(name: string): T => {
         if (!this.chains[name]) {
             throw ErrorWithCode.updateError(
                 new Error(
@@ -144,7 +144,7 @@ export class RenJS {
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        return this.chains[name];
+        return this.chains[name] as T;
     };
 
     /**

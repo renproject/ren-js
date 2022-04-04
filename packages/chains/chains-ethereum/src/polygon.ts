@@ -1,22 +1,23 @@
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "./base";
+import { resolveEVMNetworkConfig } from "./utils/generic";
 import {
     EthereumClassConfig,
     EthProvider,
     EthSigner,
-    EvmNetworkConfig,
-    EvmNetworkInput,
+    EVMNetworkConfig,
+    EVMNetworkInput,
+    populateEVMNetwork,
 } from "./utils/types";
-import { resolveEvmNetworkConfig } from "./utils/utils";
 
-const polygonMainnetConfig: EvmNetworkConfig = {
+const polygonMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Polygon",
 
     nativeAsset: { name: "Matic", symbol: "MATIC", decimals: 18 },
     averageConfirmationTime: 4,
 
-    network: {
+    config: {
         chainId: "0x89",
         chainName: "Matic(Polygon) Mainnet",
         nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 },
@@ -36,16 +37,16 @@ const polygonMainnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
         BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
-};
+});
 
-const polygonTestnetConfig: EvmNetworkConfig = {
+const polygonTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Polygon",
     isTestnet: true,
 
     nativeAsset: { name: "Testnet Matic", symbol: "MATIC", decimals: 18 },
     averageConfirmationTime: 4,
 
-    network: {
+    config: {
         chainId: "0x13881",
         chainName: "Matic(Polygon) Testnet Mumbai",
         nativeCurrency: { name: "Matic", symbol: "tMATIC", decimals: 18 },
@@ -62,7 +63,7 @@ const polygonTestnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
-};
+});
 
 export class Polygon extends EthereumBaseChain {
     public static chain = "Polygon";
@@ -83,13 +84,13 @@ export class Polygon extends EthereumBaseChain {
         signer,
         config,
     }: {
-        network: EvmNetworkInput;
+        network: EVMNetworkInput;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
         super({
-            network: resolveEvmNetworkConfig(Polygon.configMap, network),
+            network: resolveEVMNetworkConfig(Polygon.configMap, network),
             provider,
             signer,
             config,

@@ -2,8 +2,8 @@ import { Provider } from "@ethersproject/providers";
 import { ErrorWithCode, utils } from "@renproject/utils";
 
 import { getGatewayRegistryInstance } from "../contracts";
-import { ETHEREUM_ERROR } from "./errors";
-import { EvmNetworkConfig } from "./types";
+import { EVM_ERROR } from "./errors";
+import { EVMNetworkConfig } from "./types";
 
 /**
  * Utilities for fetching gateway contract addresses and token addresses.
@@ -29,7 +29,7 @@ const gatewayRegistryMethods = {
 const createGatewayRegistryFetcher =
     (lookup: GatewayRegistryLookup) =>
     async (
-        network: EvmNetworkConfig,
+        network: EVMNetworkConfig,
         provider: Provider,
         asset: string,
     ): Promise<string> => {
@@ -44,14 +44,14 @@ const createGatewayRegistryFetcher =
             if (!registryAddress || registryAddress === EMPTY_ADDRESS) {
                 throw new ErrorWithCode(
                     `${asset} not supported on ${network.selector} - unable to get ${asset} ${lookup}`,
-                    ETHEREUM_ERROR.ASSET_NOT_SUPPORTED,
+                    EVM_ERROR.ASSET_NOT_SUPPORTED,
                 );
             }
             return registryAddress;
         } catch (error: unknown) {
             throw ErrorWithCode.updateError(
                 error,
-                ETHEREUM_ERROR.NETWORK_ERROR,
+                EVM_ERROR.NETWORK_ERROR,
                 `Error looking up ${asset} ${lookup}`,
             );
         }

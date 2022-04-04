@@ -1,4 +1,6 @@
 export * from "./utils/types";
+export { EVMParam } from "./utils/payloads/evmPayloadHandlers";
+export { EVM_ERROR } from "./utils/errors";
 
 // Chains
 export * from "./arbitrum";

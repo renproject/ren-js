@@ -1,16 +1,17 @@
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "./base";
+import { resolveEVMNetworkConfig } from "./utils/generic";
 import {
     EthereumClassConfig,
     EthProvider,
     EthSigner,
-    EvmNetworkConfig,
-    EvmNetworkInput,
+    EVMNetworkConfig,
+    EVMNetworkInput,
+    populateEVMNetwork,
 } from "./utils/types";
-import { resolveEvmNetworkConfig } from "./utils/utils";
 
-const bscMainnetConfig: EvmNetworkConfig = {
+const bscMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "BinanceSmartChain",
 
     nativeAsset: {
@@ -20,7 +21,7 @@ const bscMainnetConfig: EvmNetworkConfig = {
     },
     averageConfirmationTime: 3,
 
-    network: {
+    config: {
         chainId: "0x38",
         chainName: "Binance Smart Chain Mainnet",
         nativeCurrency: {
@@ -51,9 +52,9 @@ const bscMainnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
         BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
     },
-};
+});
 
-const bscTestnetConfig: EvmNetworkConfig = {
+const bscTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "BinanceSmartChain",
     isTestnet: true,
 
@@ -64,7 +65,7 @@ const bscTestnetConfig: EvmNetworkConfig = {
     },
     averageConfirmationTime: 3,
 
-    network: {
+    config: {
         chainId: "0x61",
         chainName: "Binance Smart Chain Testnet",
         nativeCurrency: {
@@ -88,15 +89,15 @@ const bscTestnetConfig: EvmNetworkConfig = {
         GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
     },
-};
+});
 
-const bscDevnetConfig: EvmNetworkConfig = {
+const bscDevnetConfig: EVMNetworkConfig = populateEVMNetwork({
     ...bscTestnetConfig,
     addresses: {
         GatewayRegistry: "0x87e83f957a2F3A2E5Fe16d5C6B22e38FD28bdc06",
         BasicBridge: "0x105435a9b0f375B179e5e43A16228C04F01Fb2ee",
     },
-};
+});
 
 export class BinanceSmartChain extends EthereumBaseChain {
     public static chain = "BinanceSmartChain";
@@ -119,13 +120,13 @@ export class BinanceSmartChain extends EthereumBaseChain {
         signer,
         config,
     }: {
-        network: EvmNetworkInput;
+        network: EVMNetworkInput;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
         super({
-            network: resolveEvmNetworkConfig(
+            network: resolveEVMNetworkConfig(
                 BinanceSmartChain.configMap,
                 network,
             ),

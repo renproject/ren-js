@@ -1,6 +1,6 @@
 import chai, { expect } from "chai";
-import { utils } from "../src";
 
+import { utils } from "../src";
 import { keccak256 } from "../src/internal/hashes";
 
 chai.should();
@@ -55,7 +55,7 @@ let hash = (msg) => {
     for (const hash of Object.keys(hashers)) {
         obj[hash] = hashers[hash](msg).toString("hex");
     }
-    console.log(JSON.stringify(obj, null, "    "))
+    console.debug(JSON.stringify(obj, null, "    "))
 }
  * ```
  */

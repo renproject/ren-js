@@ -29,7 +29,7 @@ describe("Common", () => {
                 );
 
                 if (false as boolean) {
-                    console.log(`${chain.chain} ${network}: ${address}`);
+                    console.debug(`${chain.chain} ${network}: ${address}`);
                 }
             });
         }

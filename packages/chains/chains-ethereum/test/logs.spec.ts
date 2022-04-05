@@ -38,7 +38,7 @@ describe("Logs", () => {
             receipt.logs,
             logLockABI,
         ).map((e) => mapLockLogToInputChainTransaction("Ethereun", "BTC", e));
-        console.log(lockDetails);
+        console.debug(lockDetails);
     });
 
     it("Get mint gateway", async () => {
@@ -49,6 +49,6 @@ describe("Logs", () => {
 
         const provider = new providers.JsonRpcProvider(infuraURL);
 
-        console.log(await getMintGateway(ethNetwork, provider, "DAI"));
+        console.debug(await getMintGateway(ethNetwork, provider, "DAI"));
     });
 });

@@ -1,18 +1,35 @@
 import BigNumber from "bignumber.js";
+import { Buffer } from "buffer";
 import chai from "chai";
 import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
 import { providers, Wallet } from "ethers";
+import { Solana } from "packages/chains/chains-solana/src";
+import { renTestnet } from "packages/chains/chains-solana/src/networks";
+import { makeTestSigner } from "packages/chains/chains-solana/src/utils";
+import { ChainCommon, RenNetwork, utils } from "packages/utils/src";
 import SendCrypto from "send-crypto";
-import { Buffer } from "buffer";
 
-import { RenNetwork, utils } from "@renproject/utils";
+import { EthProvider, EVMNetworkConfig } from "@renproject/chains-ethereum/src";
+import { Connection } from "@solana/web3.js";
 
 import {
-    EthProvider,
-    EVMNetworkConfig,
-} from "../packages/chains/chains-ethereum/src";
-import { EthereumClassConfig, EthSigner } from "../packages/chains/chains/src";
+    Arbitrum,
+    Avalanche,
+    BinanceSmartChain,
+    Bitcoin,
+    DigiByte,
+    Dogecoin,
+    Ethereum,
+    EthereumClassConfig,
+    EthSigner,
+    Fantom,
+    Filecoin,
+    Goerli,
+    Polygon,
+    Terra,
+    Zcash,
+} from "../../packages/chains/chains/src";
 
 chai.should();
 
@@ -73,20 +90,59 @@ export const getEVMProvider = <EVM>(
     };
 };
 
-// import CryptoAccount from "send-crypto";
-// import { renTestnet } from "@renproject/chains-solana/build/main/networks";
-// import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
-// const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
+export const initializeChain = <T extends ChainCommon>(
+    Chain: {
+        chain: string;
+        new (...params): T;
+    },
+    network = RenNetwork.Testnet,
+): T => {
+    switch (Chain.chain) {
+        // Bitcoin chains
+        case Bitcoin.chain:
+        case Zcash.chain:
+        case DigiByte.chain:
+        case Dogecoin.chain:
+            return new (Chain as unknown as typeof Bitcoin)({
+                network,
+            }) as ChainCommon as T;
 
-export const getSolanaChain = (_network: RenNetwork) => {
-    // console.log(toChain.provider.wallet.publicKey.toString());
+        // Filecoin
+        case Filecoin.chain:
+            return new (Chain as unknown as typeof Filecoin)({
+                network,
+            }) as ChainCommon as T;
 
-    // if ((toChain as any).createAssociatedTokenAccount) {
-    //     console.log("Calling createAssociatedTokenAccount...");
-    //     await (toChain as any).createAssociatedTokenAccount(asset);
-    // }
+        // Terra
+        case Terra.chain:
+            return new (Chain as unknown as typeof Terra)({
+                network,
+            }) as ChainCommon as T;
 
-    throw new Error("Not implemented.");
+        // EVM chains
+        case Ethereum.chain:
+        case BinanceSmartChain.chain:
+        case Fantom.chain:
+        case Polygon.chain:
+        case Arbitrum.chain:
+        case Avalanche.chain:
+        case Goerli.chain:
+            return new (Chain as unknown as typeof Ethereum)({
+                network,
+                ...getEVMProvider(Chain as unknown as typeof Ethereum, network),
+            }) as ChainCommon as T;
+
+        // Solana
+        case Solana.chain:
+            return new (Chain as unknown as typeof Solana)({
+                network,
+                provider: new Connection(renTestnet.endpoint),
+                signer: makeTestSigner(
+                    Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex"),
+                ),
+            }) as ChainCommon as T;
+    }
+    throw new Error(`No test initializer for ${Chain.chain}.`);
 };
 
 /**
@@ -147,7 +203,7 @@ export const sendFunds = async (
     const faucetAddress = await account.address(asset);
     const faucetBalance = await account.getBalance(asset);
 
-    console.log(
+    console.debug(
         `${chalk.blue("[faucet]")} Sending ${chalk.blue(
             amount.toFixed(),
         )} ${chalk.blue(asset)} to ${chalk.blue(
@@ -155,5 +211,5 @@ export const sendFunds = async (
         )} (from ${faucetAddress}, balance: ${faucetBalance} ${asset})`,
     );
     const sent = await account.send(recipient, amount, asset);
-    console.log(`${chalk.blue("[faucet]")} Sent: ${chalk.blue(sent)}`);
+    console.debug(`${chalk.blue("[faucet]")} Sent: ${chalk.blue(sent)}`);
 };

@@ -1,8 +1,9 @@
-import { Ethereum } from "../packages/chains/chains-ethereum/src";
-import { BinanceSmartChain } from "../packages/chains/chains/src";
-import RenJS from "../packages/ren/src";
-import { RenNetwork } from "../packages/utils/build/main";
-import { getEVMProvider } from "./testUtils";
+import { Ethereum } from "packages/chains/chains-ethereum/src";
+import { BinanceSmartChain } from "packages/chains/chains/src";
+import RenJS from "packages/ren/src";
+import { RenNetwork } from "packages/utils/build/main";
+
+import { getEVMProvider } from "./utils/testUtils";
 
 const network = RenNetwork.Testnet;
 
@@ -29,7 +30,7 @@ const main = async () => {
     });
 
     // `gateway.fees` exposes values and helpers for calculating fees.
-    console.log("Fees", gateway.fees);
+    console.debug("Fees", gateway.fees);
 
     // `gateway.inSetup` may contain multiple transactions.
     await gateway.inSetup.approval.submit({
@@ -42,7 +43,7 @@ const main = async () => {
     await gateway.inSetup.approval.wait();
 
     // Transactions emit a `status`
-    await gateway.in.submit().on("progress", console.log);
+    await gateway.in.submit().on("progress", console.debug);
     await gateway.in.wait(1);
 
     await new Promise<void>((resolve, reject) => {
@@ -50,13 +51,13 @@ const main = async () => {
             (async () => {
                 // GatewayTransaction parameters are serializable. To re-create
                 // the transaction, call `renJS.gatewayTransaction`.
-                console.log(tx.params);
+                console.debug(tx.params);
 
                 // Wait for remaining confirmations for input transaction.
                 await tx.in.wait();
 
                 // RenVM transaction also follows the submit/wait pattern.
-                await tx.renVM.submit().on("progress", console.log);
+                await tx.renVM.submit().on("progress", console.debug);
                 await tx.renVM.wait();
 
                 // `submit` accepts a `txConfig` parameter for overriding
@@ -72,7 +73,7 @@ const main = async () => {
                 // progress, with a `txid` field (base64) and a `txidFormatted`
                 // field (chain-dependent)
                 const outTx = tx.out.progress.transaction;
-                console.log("Done:", outTx.txidFormatted);
+                console.debug("Done:", outTx.txidFormatted);
 
                 resolve();
             })().catch(reject);

@@ -16,6 +16,7 @@ export interface Logger {
     error(message?: unknown, ...optionalParams: unknown[]): void;
     warn(message?: unknown, ...optionalParams: unknown[]): void;
     info(message?: unknown, ...optionalParams: unknown[]): void;
+    log(message?: unknown, ...optionalParams: unknown[]): void;
     debug(message?: unknown, ...optionalParams: unknown[]): void;
     trace(message?: unknown, ...optionalParams: unknown[]): void;
 
@@ -38,6 +39,7 @@ const doNothing = (): void => {};
 export const nullLogger: Logger = {
     trace: doNothing,
     debug: doNothing,
+    log: doNothing,
     info: doNothing,
     warn: doNothing,
     error: doNothing,

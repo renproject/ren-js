@@ -8,12 +8,12 @@ import {
     InputType,
     OutputType,
 } from "@renproject/utils";
+import { Connection } from "@solana/web3.js";
 
 import { Solana } from "../src/index";
 import { RenVmMsgLayout } from "../src/layouts";
 import { renDevnet, renTestnet } from "../src/networks";
 import { makeTestSigner } from "../src/utils";
-import { Connection } from "@solana/web3.js";
 
 const testPK = Buffer.from(
     "a84252a5fcbb2bfb85a422a4833a79c23ec7906826a0298dd2a0744a4c984631d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",

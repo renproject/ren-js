@@ -70,8 +70,8 @@ export type EVMParamValues = {
     [EVMParam.EVM_TOKEN_ADDRESS]: () => Promise<string>;
     [EVMParam.EVM_TOKEN_DECIMALS]: () => Promise<number>;
     [EVMParam.EVM_TRANSFER_WITH_LOG_CONTRACT]: () => Promise<string>;
-    [EVMParam.EVM_ACCOUNT]: () => Promise<string>;
-    [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: () => Promise<boolean>;
+    [EVMParam.EVM_ACCOUNT]: () => Promise<string | undefined>;
+    [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: () => Promise<boolean | undefined>;
     [EVMParam.EVM_GATEWAY]: () => Promise<string>;
     [EVMParam.EVM_ASSET]: string;
 
@@ -224,11 +224,23 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
 
         for (const arg of args) {
             if (arg.value === undefined) {
+                if (arg.renParam) {
+                    throw new ErrorWithCode(
+                        `Payload parameter '${arg.name}' is undefined. (Did you accidentally set 'withRenParams' for a burn?)`,
+                        RenJSError.PARAMETER_ERROR,
+                    );
+                }
                 throw new ErrorWithCode(
                     `Payload parameter '${arg.name}' is undefined.`,
                     RenJSError.PARAMETER_ERROR,
                 );
             }
+        }
+        if (payload.params.to === undefined) {
+            throw new ErrorWithCode(
+                `Payload 'to' is undefined.`,
+                RenJSError.PARAMETER_ERROR,
+            );
         }
 
         const types = args.map((param) => param.type);
@@ -423,7 +435,12 @@ const getContractFromAccount = async (
                 );
             }
 
-            if (evmParams[EVMParam.EVM_OUTPUT_TYPE] === "mint") {
+            const toPayload =
+                evmParams[EVMParam.EVM_TO_PAYLOAD] || new Uint8Array();
+            if (
+                evmParams[EVMParam.EVM_OUTPUT_TYPE] === "mint" ||
+                toPayload.length > 0
+            ) {
                 return {
                     chain: network.selector,
                     type: "contract",
@@ -444,7 +461,7 @@ const getContractFromAccount = async (
                             {
                                 name: "recipientPayload",
                                 type: "bytes" as const,
-                                value: new Uint8Array(),
+                                value: toPayload,
                             },
                             {
                                 name: "amount",
@@ -477,11 +494,7 @@ const getContractFromAccount = async (
                 };
             }
         case OutputType.Mint:
-            if (
-                payload.params.address !== EVMParam.EVM_ACCOUNT
-                // (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase()
-                // || evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
-            ) {
+            if (payload.params.anyoneCanMint) {
                 return {
                     chain: network.selector,
                     type: "contract",
@@ -504,18 +517,21 @@ const getContractFromAccount = async (
                                 name: "amount",
                                 value: EVMParam.EVM_AMOUNT,
                                 notInPayload: true,
+                                renParam: true,
                             },
                             {
                                 type: "bytes32",
                                 name: "nHash",
                                 value: EVMParam.EVM_NHASH,
                                 notInPayload: true,
+                                renParam: true,
                             },
                             {
                                 type: "bytes",
                                 name: "sig",
                                 value: EVMParam.EVM_SIGNATURE,
                                 notInPayload: true,
+                                renParam: true,
                             },
                         ],
                     },
@@ -533,24 +549,28 @@ const getContractFromAccount = async (
                             name: "pHash",
                             value: EVMParam.EVM_PHASH,
                             notInPayload: true,
+                            renParam: true,
                         },
                         {
                             type: "uint256",
                             name: "amount",
                             value: EVMParam.EVM_AMOUNT,
                             notInPayload: true,
+                            renParam: true,
                         },
                         {
                             type: "bytes32",
                             name: "nHash",
                             value: EVMParam.EVM_NHASH,
                             notInPayload: true,
+                            renParam: true,
                         },
                         {
                             type: "bytes",
                             name: "sig",
                             value: EVMParam.EVM_SIGNATURE,
                             notInPayload: true,
+                            renParam: true,
                         },
                     ],
                 },
@@ -559,11 +579,7 @@ const getContractFromAccount = async (
             if (evmParams[EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]) {
                 return undefined;
             }
-            if (
-                payload.params.address !== EVMParam.EVM_ACCOUNT
-                // (await evmParams[EVMParam.EVM_ACCOUNT]()).toLowerCase()
-                // || evmParams[EVMParam.EVM_ACCOUNT_IS_CONTRACT]
-            ) {
+            if (payload.params.anyoneCanMint) {
                 return {
                     chain: network.selector,
                     type: "contract",
@@ -586,18 +602,21 @@ const getContractFromAccount = async (
                                 name: "amount",
                                 value: EVMParam.EVM_AMOUNT,
                                 notInPayload: true,
+                                renParam: true,
                             },
                             {
                                 type: "bytes32",
                                 name: "nHash",
                                 value: EVMParam.EVM_NHASH,
                                 notInPayload: true,
+                                renParam: true,
                             },
                             {
                                 type: "bytes",
                                 name: "sig",
                                 value: EVMParam.EVM_SIGNATURE,
                                 notInPayload: true,
+                                renParam: true,
                             },
                         ],
                     },
@@ -615,24 +634,28 @@ const getContractFromAccount = async (
                             name: "pHash",
                             value: EVMParam.EVM_PHASH,
                             notInPayload: true,
+                            renParam: true,
                         },
                         {
                             type: "uint256",
                             name: "amount",
                             value: EVMParam.EVM_AMOUNT,
                             notInPayload: true,
+                            renParam: true,
                         },
                         {
                             type: "bytes32",
                             name: "nHash",
                             value: EVMParam.EVM_NHASH,
                             notInPayload: true,
+                            renParam: true,
                         },
                         {
                             type: "bytes",
                             name: "calldata sig",
                             value: EVMParam.EVM_SIGNATURE,
                             notInPayload: true,
+                            renParam: true,
                         },
                     ],
                 },
@@ -647,6 +670,7 @@ export type EVMAddressPayload = EVMPayloadInterface<
     {
         address: string;
         amount?: string;
+        anyoneCanMint?: boolean;
         /**
          * @deprecated renamed to `convertUnit`.
          */
@@ -734,6 +758,14 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
             (await evmParams[EVMParam.EVM_GATEWAY]()).toLowerCase()
         ) {
             const to = await replaceRenParam(payload.params.address, evmParams);
+            if (!to) {
+                throw new ErrorWithCode(
+                    payload.params.address === EVMParam.EVM_ACCOUNT
+                        ? ` Must connect ${network.selector} signer.`
+                        : `Empty ${network.selector} recipient.`,
+                    RenJSError.PARAMETER_ERROR,
+                );
+            }
             p = {
                 ...p,
                 to,

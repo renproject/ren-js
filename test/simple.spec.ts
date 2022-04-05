@@ -1,11 +1,12 @@
 /* eslint-disable no-console */
 import chalk from "chalk";
+import { BinanceSmartChain } from "packages/chains/chains/src";
+import RenJS from "packages/ren/src";
 
-import { Ethereum } from "../packages/chains/chains-ethereum/src";
-import { BinanceSmartChain } from "../packages/chains/chains/src";
-import RenJS from "../packages/ren/src";
-import { RenNetwork } from "../packages/utils/build/main";
-import { getEVMProvider } from "./testUtils";
+import { Ethereum } from "@renproject/chains-ethereum/src";
+import { RenNetwork } from "@renproject/utils";
+
+import { getEVMProvider } from "./utils/testUtils";
 
 const network = RenNetwork.Testnet;
 
@@ -37,9 +38,9 @@ describe("DAI/toBinanceSmartChain - simpler", () => {
             to: bsc.Account(),
         });
 
-        console.log(chalk.cyan("gateway parameters"), gateway.params);
+        console.debug(chalk.cyan("gateway parameters"), gateway.params);
 
-        console.log(chalk.cyan("calling setup.approval.submit()"));
+        console.debug(chalk.cyan("calling setup.approval.submit()"));
         await gateway.inSetup.approval.submit({
             txConfig: {
                 gasLimit: 1000000,
@@ -47,32 +48,32 @@ describe("DAI/toBinanceSmartChain - simpler", () => {
         });
         await gateway.inSetup.approval.wait();
 
-        console.log(chalk.cyan("calling in.submit()"));
-        await gateway.in.submit().on("progress", console.log);
+        console.debug(chalk.cyan("calling in.submit()"));
+        await gateway.in.submit().on("progress", console.debug);
         await gateway.in.wait(1);
 
         await new Promise<void>((resolve, reject) => {
             gateway.on("transaction", (tx) => {
                 (async () => {
-                    console.log(chalk.cyan("tx parameters"), tx.params);
+                    console.debug(chalk.cyan("tx parameters"), tx.params);
 
                     await tx.in.wait();
 
-                    console.log(chalk.cyan("calling renVM.submit()"));
-                    await tx.renVM.submit().on("progress", console.log);
+                    console.debug(chalk.cyan("calling renVM.submit()"));
+                    await tx.renVM.submit().on("progress", console.debug);
                     await tx.renVM.wait();
 
-                    console.log(chalk.cyan("calling out.submit()"));
+                    console.debug(chalk.cyan("calling out.submit()"));
                     await tx.out
                         .submit({
                             txConfig: {
                                 gasLimit: 1000000,
                             },
                         })
-                        .on("progress", console.log);
+                        .on("progress", console.debug);
                     await tx.out.wait();
 
-                    console.log(
+                    console.debug(
                         chalk.cyan("Done"),
                         tx.out.progress.transaction,
                     );

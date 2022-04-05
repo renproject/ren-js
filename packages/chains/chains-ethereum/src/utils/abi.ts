@@ -175,6 +175,8 @@ export interface EthArg<
      * others can't change it for them.
      */
     onlyInPayload?: boolean;
+
+    renParam?: boolean;
 }
 
 export type EthArgs = EthArg[];

@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import elliptic from "elliptic";
-import { ethers } from "ethers";
+import { errors, ethers } from "ethers";
 import { computeAddress } from "ethers/lib/utils";
 
 import { Provider, Web3Provider } from "@ethersproject/providers";
@@ -996,7 +996,17 @@ export class EthereumBaseChain
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
-                return this.signer.getAddress();
+                try {
+                    return await this.signer.getAddress();
+                } catch (error) {
+                    if (
+                        ErrorWithCode.isErrorWithCode(error) &&
+                        error.code === errors.UNSUPPORTED_OPERATION
+                    ) {
+                        return undefined;
+                    }
+                    throw error;
+                }
             },
             [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: async () => {
                 if (!this.signer) {
@@ -1005,9 +1015,19 @@ export class EthereumBaseChain
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
-                const account = await this.signer.getAddress();
-                const codeString = await this.provider.getCode(account);
-                return utils.fromHex(codeString).length > 0;
+                try {
+                    const account = await this.signer.getAddress();
+                    const codeString = await this.provider.getCode(account);
+                    return utils.fromHex(codeString).length > 0;
+                } catch (error) {
+                    if (
+                        ErrorWithCode.isErrorWithCode(error) &&
+                        error.code === errors.UNSUPPORTED_OPERATION
+                    ) {
+                        return undefined;
+                    }
+                    throw error;
+                }
             },
             [EVMParam.EVM_GATEWAY]: async () => {
                 if (
@@ -1062,16 +1082,20 @@ export class EthereumBaseChain
     /* ====================================================================== */
 
     public Account({
+        account,
         amount,
         convertToWei,
         convertUnit,
+        anyoneCanMint,
     }: {
+        account?: string;
         amount?: BigNumber | string | number;
         /**
          * @deprecated - renamed to `convertUnit`
          */
         convertToWei?: boolean;
         convertUnit?: boolean;
+        anyoneCanMint?: boolean;
     } = {}): EVMPayload {
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
@@ -1108,9 +1132,10 @@ export class EthereumBaseChain
             chain: this.chain,
             type: "address",
             params: {
-                address: EVMParam.EVM_ACCOUNT,
+                address: account || EVMParam.EVM_ACCOUNT,
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
                 convertUnit,
+                anyoneCanMint,
             },
         };
     }
@@ -1136,6 +1161,7 @@ export class EthereumBaseChain
             type: "address",
             params: {
                 address,
+                anyoneCanMint: true,
             },
         };
     }
@@ -1162,18 +1188,21 @@ export class EthereumBaseChain
                                   type: "uint256",
                                   value: EVMParam.EVM_AMOUNT,
                                   notInPayload: true,
+                                  renParam: true,
                               },
                               {
                                   name: "nHash",
                                   type: "bytes32",
                                   value: EVMParam.EVM_NHASH,
                                   notInPayload: true,
+                                  renParam: true,
                               },
                               {
                                   name: "signature",
                                   type: "bytes",
                                   value: EVMParam.EVM_SIGNATURE,
                                   notInPayload: true,
+                                  renParam: true,
                               },
                           ]
                         : []),

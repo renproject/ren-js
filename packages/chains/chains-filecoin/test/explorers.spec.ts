@@ -2,6 +2,7 @@
 
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
+
 import { Filfox } from "../src/utils/filfox";
 
 chai.should();
@@ -14,7 +15,7 @@ describe.skip("Filecoin explorers", () => {
 
         const filfox = new Filfox("mainnet");
 
-        console.log(
+        console.debug(
             "filfox",
             await filfox.fetchDeposits(
                 "f15wjyn36z6x5ypq7f73yaolqbxyiiwkg5mmuyo2q",

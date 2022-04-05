@@ -2,9 +2,10 @@
 
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
-import { Filecoin } from "../src";
 
 import FilecoinClient from "@glif/filecoin-rpc-client";
+
+import { Filecoin } from "../src";
 import { fetchDeposits, getHeight } from "../src/utils/lotus";
 
 chai.should();
@@ -22,7 +23,7 @@ describe("Filecoin", () => {
             "hex",
         );
 
-        console.log(
+        console.debug(
             new Filecoin({ network: "testnet" }).createGatewayAddress(
                 "FIL",
                 {
@@ -46,7 +47,7 @@ describe.skip("Filecoin", () => {
 
         const height = await getHeight(client);
 
-        console.log(
+        console.debug(
             await fetchDeposits(
                 client,
                 "t1gvyvits5chiahib7cz6uyh6kijgqgycnaiuj47i",

@@ -611,6 +611,13 @@ export class Solana
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
     ): Promise<TxSubmitter | TxWaiter> {
+        const { toPayload } = getParams();
+        if (toPayload && toPayload.payload.length > 0) {
+            throw new Error(
+                `Solana burns do not currently allow burning with a payload. For releasing to EVM chains, use \`evmChain.Account({ anyoneCanMint: false })\`.`,
+            );
+        }
+
         let onReceiptCallback: (signature: string) => void;
 
         const onReceipt = (signature: string) => {

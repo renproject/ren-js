@@ -220,7 +220,7 @@ export class SolanaTxWaiter
                 );
 
                 const currentSlot = await this._provider.getSlot();
-                const confidence = currentSlot - (tx && tx.slot ? tx.slot : 0);
+                const confidence = tx && tx.slot ? currentSlot - tx.slot : 0;
 
                 const confidenceRatio = target === 0 ? 1 : confidence / target;
 

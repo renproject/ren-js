@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { providers } from "ethers";
 import { describe, it } from "mocha";
 
 /* eslint-disable no-console */
@@ -12,7 +13,6 @@ import {
     Ethereum,
     Zcash,
 } from "../src";
-import { providers } from "ethers";
 
 const addresses = {
     [Bitcoin.chain]: {
@@ -53,7 +53,7 @@ describe("Chain utils", () => {
             it(ChainClass.chain, () => {
                 const chain = new ChainClass({ network });
 
-                console.log(chain.chain, network);
+                console.debug(chain.chain, network);
 
                 expect(ChainClass.chain).not.to.equal(undefined);
                 expect(ChainClass.chain).to.equal(chain.chain);

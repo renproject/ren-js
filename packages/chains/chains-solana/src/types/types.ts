@@ -1,8 +1,8 @@
 import BigNumber from "bignumber.js";
 
 import Wallet from "@project-serum/sol-wallet-adapter";
-import { Connection } from "@solana/web3.js";
 import { ChainTransaction } from "@renproject/utils";
+import { Connection } from "@solana/web3.js";
 
 export type SolanaProvider = Connection;
 export type SolanaSigner = Wallet;

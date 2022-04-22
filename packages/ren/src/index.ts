@@ -9,12 +9,12 @@ import {
     RenVMShard,
 } from "@renproject/utils";
 
-import { RenJSConfig } from "./utils/config";
-import { defaultTransactionHandler } from "./utils/defaultTransactionHandler";
-import { estimateTransactionFee, GatewayFees } from "./utils/fees";
 import { Gateway } from "./gateway";
 import { GatewayTransaction } from "./gatewayTransaction";
 import { GatewayParams, TransactionParams } from "./params";
+import { RenJSConfig } from "./utils/config";
+import { defaultTransactionHandler } from "./utils/defaultTransactionHandler";
+import { estimateTransactionFee, GatewayFees } from "./utils/fees";
 
 export { Gateway } from "./gateway";
 export { GatewayTransaction } from "./gatewayTransaction";
@@ -207,8 +207,8 @@ export class RenJS {
         return await estimateTransactionFee(
             this.provider,
             asset,
-            toChain,
             fromChain,
+            toChain,
         );
     };
 

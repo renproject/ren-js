@@ -1,47 +1,71 @@
-// /* eslint-disable no-console */
+/* eslint-disable no-console */
 
-// import { BinanceSmartChain } from "../src/bsc";
+import chai, { expect } from "chai";
 
-// import chai from "chai";
-// chai.should();
+import { Ethereum } from "../src/ethereum";
+
+chai.should();
 
 // const address = "0x" + "00".repeat(20);
 // const txHash = "0x" + "00".repeat(32);
 
-// describe("BSC Utils", () => {
-//     describe("Explorer links", () => {
-//         it("Mainnet", () => {
-//             const bsc = new BinanceSmartChain(null, "mainnet");
+describe("Utils", () => {
+    it("validateTransaction", () => {
+        const ethereum = new Ethereum({
+            network: "testnet",
+            provider: { _isProvider: true } as any,
+        });
 
-//             for (const obj of [BinanceSmartChain, bsc]) {
-//                 obj.utils
-//                     .addressExplorerLink(address)
-//                     .should.equal("https://bscscan.com/address/" + address);
+        expect(
+            ethereum.validateTransaction({
+                txidFormatted:
+                    "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
+            }),
+        ).to.be.true;
 
-//                 obj.utils
-//                     .transactionExplorerLink(txHash)
-//                     .should.equal("https://bscscan.com/tx/" + txHash);
-//             }
-//         });
+        expect(
+            ethereum.validateTransaction({
+                txidFormatted:
+                    "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
+                txid: "99v5i869e4A5F-AOfjKShDpLe_ZgFmOIEc6kcFoy1z4",
+                txindex: "0",
+            }),
+        ).to.be.true;
+    });
+});
 
-//         it("Testnet", () => {
-//             const bsc = new BinanceSmartChain(null, "testnet");
+// describe("Explorer links", () => {
+//     it("Mainnet", () => {
+//         const bsc = new BinanceSmartChain(null, "mainnet");
 
-//             bsc.utils
+//         for (const obj of [BinanceSmartChain, bsc]) {
+//             obj.utils
 //                 .addressExplorerLink(address)
-//                 .should.equal("https://testnet.bscscan.com/address/" + address);
+//                 .should.equal("https://bscscan.com/address/" + address);
 
-//             bsc.utils
+//             obj.utils
 //                 .transactionExplorerLink(txHash)
-//                 .should.equal("https://testnet.bscscan.com/tx/" + txHash);
+//                 .should.equal("https://bscscan.com/tx/" + txHash);
+//         }
+//     });
 
-//             BinanceSmartChain.utils
-//                 .addressExplorerLink(address, "testnet")
-//                 .should.equal("https://testnet.bscscan.com/address/" + address);
+//     it("Testnet", () => {
+//         const bsc = new BinanceSmartChain(null, "testnet");
 
-//             BinanceSmartChain.utils
-//                 .transactionExplorerLink(txHash, "testnet")
-//                 .should.equal("https://testnet.bscscan.com/tx/" + txHash);
-//         });
+//         bsc.utils
+//             .addressExplorerLink(address)
+//             .should.equal("https://testnet.bscscan.com/address/" + address);
+
+//         bsc.utils
+//             .transactionExplorerLink(txHash)
+//             .should.equal("https://testnet.bscscan.com/tx/" + txHash);
+
+//         BinanceSmartChain.utils
+//             .addressExplorerLink(address, "testnet")
+//             .should.equal("https://testnet.bscscan.com/address/" + address);
+
+//         BinanceSmartChain.utils
+//             .transactionExplorerLink(txHash, "testnet")
+//             .should.equal("https://testnet.bscscan.com/tx/" + txHash);
 //     });
 // });

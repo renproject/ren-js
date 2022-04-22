@@ -494,7 +494,7 @@ const getContractFromAccount = async (
                 };
             }
         case OutputType.Mint:
-            if (payload.params.anyoneCanMint) {
+            if (payload.params.anyoneCanSubmit) {
                 return {
                     chain: network.selector,
                     type: "contract",
@@ -579,7 +579,7 @@ const getContractFromAccount = async (
             if (evmParams[EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]) {
                 return undefined;
             }
-            if (payload.params.anyoneCanMint) {
+            if (payload.params.anyoneCanSubmit) {
                 return {
                     chain: network.selector,
                     type: "contract",
@@ -670,7 +670,7 @@ export type EVMAddressPayload = EVMPayloadInterface<
     {
         address: string;
         amount?: string;
-        anyoneCanMint?: boolean;
+        anyoneCanSubmit?: boolean;
         /**
          * @deprecated renamed to `convertUnit`.
          */

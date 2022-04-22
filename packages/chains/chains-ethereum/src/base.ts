@@ -175,14 +175,28 @@ export class EthereumBaseChain
         return this.explorer.address(address);
     }
 
-    public formattedTransactionHash({ txid }: { txid: string }): string {
-        return txidToTxidFormatted(txid);
+    public txidFormattedToTxid(formattedTxid: string): string {
+        return txidFormattedToTxid(formattedTxid);
     }
 
-    public transactionExplorerLink(transaction: ChainTransaction): string {
-        return this.explorer.transaction(
-            this.formattedTransactionHash(transaction),
-        );
+    public txidToTxidFormatted({ txid }: { txid: string }): string {
+        return txidToTxidFormatted(txid);
+    }
+    public formattedTransactionHash = this.txidToTxidFormatted;
+
+    public transactionExplorerLink({
+        txid,
+        txidFormatted,
+    }: Partial<ChainTransaction> &
+        ({ txid: string } | { txidFormatted: string })): string | undefined {
+        if (txidFormatted) {
+            return this.explorer.transaction(txidFormatted);
+        } else if (txid) {
+            return this.explorer.transaction(
+                this.txidToTxidFormatted({ txid }),
+            );
+        }
+        return undefined;
     }
 
     public withProvider(web3Provider: EthProvider): this {
@@ -413,7 +427,7 @@ export class EthereumBaseChain
             (await this.provider.getBlockNumber()).toString(),
         );
         const receipt = await this.provider.getTransactionReceipt(
-            this.formattedTransactionHash(transaction),
+            this.txidToTxidFormatted(transaction),
         );
         if (receipt === null) {
             throw ErrorWithCode.updateError(
@@ -651,7 +665,7 @@ export class EthereumBaseChain
 
         // const receipt = await waitForReceipt(
         //     this.provider,
-        //     this.formattedTransactionHash(transaction),
+        //     this.txidToTxidFormatted(transaction),
         //     this.logger,
         //     config.networkDelay,
         // );
@@ -1086,7 +1100,7 @@ export class EthereumBaseChain
         amount,
         convertToWei,
         convertUnit,
-        anyoneCanMint,
+        anyoneCanSubmit,
     }: {
         account?: string;
         amount?: BigNumber | string | number;
@@ -1095,7 +1109,7 @@ export class EthereumBaseChain
          */
         convertToWei?: boolean;
         convertUnit?: boolean;
-        anyoneCanMint?: boolean;
+        anyoneCanSubmit?: boolean;
     } = {}): EVMPayload {
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
@@ -1135,7 +1149,7 @@ export class EthereumBaseChain
                 address: account || EVMParam.EVM_ACCOUNT,
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
                 convertUnit,
-                anyoneCanMint,
+                anyoneCanSubmit,
             },
         };
     }
@@ -1161,7 +1175,7 @@ export class EthereumBaseChain
             type: "address",
             params: {
                 address,
-                anyoneCanMint: true,
+                anyoneCanSubmit: true,
             },
         };
     }
@@ -1220,7 +1234,10 @@ export class EthereumBaseChain
      *   txidFormatted: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
      * })
      */
-    public Transaction(partialTx: Partial<ChainTransaction>): EVMPayload {
+    public Transaction(
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
+    ): EVMPayload {
         return {
             chain: this.chain,
             type: "transaction",

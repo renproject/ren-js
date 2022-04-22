@@ -1,6 +1,7 @@
-import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import qs from "qs";
+
+import { utils } from "@renproject/utils";
 
 import { BitcoinAPI, sortUTXOs, UTXO } from "./API";
 

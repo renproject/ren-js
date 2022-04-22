@@ -20,10 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { utils } from "@renproject/utils";
 import { InvalidAddressError } from "bchaddrjs";
 import bs58check from "bs58check";
 import cashaddr, { ValidationError } from "cashaddrjs";
+
+import { utils } from "@renproject/utils";
 
 enum Format {
     Legacy = "legacy",

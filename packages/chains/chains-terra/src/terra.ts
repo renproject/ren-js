@@ -29,7 +29,7 @@ export const TerraMainnet: TerraNetworkConfig = {
     nativeAsset: {
         name: "Luna",
         symbol: "LUNA",
-        decimals: 18,
+        decimals: 6,
     },
     averageConfirmationTime: 6,
 
@@ -44,7 +44,7 @@ export const TerraTestnet: TerraNetworkConfig = {
     nativeAsset: {
         name: "Luna",
         symbol: "LUNA",
-        decimals: 18,
+        decimals: 6,
     },
     averageConfirmationTime: 6,
 
@@ -112,14 +112,31 @@ export class Terra
         return AccAddress.validate(address);
     }
 
-    public validateTransaction(transaction: ChainTransaction): boolean {
+    public validateTransaction(
+        transaction: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
+    ): boolean {
         return (
-            utils.isHex(
-                typeof transaction === "string"
-                    ? transaction
-                    : transaction.txidFormatted,
-                { length: 32 },
-            ) && utils.fromBase64(transaction.txid).length === 32
+            (utils.isDefined(transaction.txid) ||
+                utils.isDefined(transaction.txidFormatted)) &&
+            (transaction.txidFormatted
+                ? utils.isHex(transaction.txidFormatted, {
+                      length: 32,
+                      uppercase: true,
+                  })
+                : true) &&
+            (transaction.txid
+                ? utils.isURLBase64(transaction.txid, {
+                      length: 32,
+                  })
+                : true) &&
+            (transaction.txindex
+                ? !new BigNumber(transaction.txindex).isNaN()
+                : true) &&
+            (transaction.txidFormatted && transaction.txid
+                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+                  transaction.txid
+                : true)
         );
     }
 
@@ -128,16 +145,27 @@ export class Terra
             .href;
     }
 
-    public transactionExplorerLink(transaction: ChainTransaction): string {
-        return new URL(
-            `/tx/${String(transaction.txidFormatted)}`,
-            /* base */ this.network.explorer,
-        ).href;
+    public transactionExplorerLink({
+        txid,
+        txidFormatted,
+    }: Partial<ChainTransaction> &
+        ({ txid: string } | { txidFormatted: string })): string | undefined {
+        const hash =
+            txidFormatted || (txid && this.txidToTxidFormatted({ txid }));
+        return hash
+            ? new URL(`/tx/${String(hash)}`, /* base */ this.network.explorer)
+                  .href
+            : undefined;
     }
 
-    public formattedTransactionHash({ txid }: { txid: string }): string {
+    public txidFormattedToTxid(formattedTxid: string): string {
+        return txidFormattedToTxid(formattedTxid);
+    }
+
+    public txidToTxidFormatted({ txid }: { txid: string }): string {
         return txidToTxidFormatted(txid);
     }
+    public formattedTransactionHash = this.txidToTxidFormatted;
 
     public constructor({
         network,
@@ -313,6 +341,7 @@ export class Terra
         if (!address) {
             throw new Error(`No ${this.chain} address specified.`);
         }
+        console.log("becb32", bech32);
         return {
             to: address,
             toBytes: new Uint8Array(
@@ -370,7 +399,8 @@ export class Terra
      * })
      */
     public Transaction(
-        partialTx: Partial<ChainTransaction>,
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
     ): TerraInputPayload {
         return {
             chain: this.chain,

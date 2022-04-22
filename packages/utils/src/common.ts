@@ -94,7 +94,8 @@ export function populateChainTransaction({
     txidFormattedToTxid,
     defaultTxindex,
 }: {
-    partialTx: Partial<ChainTransaction>;
+    partialTx: Partial<ChainTransaction> &
+        ({ txid: string } | { txidFormatted: string });
     chain: string;
     txidToTxidFormatted: (txid: string) => string;
     txidFormattedToTxid: (txidFormatted: string) => string;

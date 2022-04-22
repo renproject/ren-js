@@ -23,7 +23,7 @@ const goerliConfig: EVMNetworkConfig = populateEVMNetwork({
         nativeCurrency: { name: "Görli Ether", symbol: "GOR", decimals: 18 },
         rpcUrls: [
             "https://rpc.goerli.mudit.blog/",
-            "https://rpc.slock.it/goerli ",
+            "https://rpc.slock.it/goerli",
             "https://goerli.prylabs.net/",
         ],
         blockExplorerUrls: ["https://goerli.infura.io"],

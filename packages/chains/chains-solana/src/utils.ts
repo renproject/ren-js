@@ -1,7 +1,8 @@
-import base58 from "bs58";
-import * as Layout from "@solana/buffer-layout";
-import tweetnacl from "tweetnacl";
 import { Buffer } from "buffer";
+
+import BigNumber from "bignumber.js";
+import base58 from "bs58";
+import tweetnacl from "tweetnacl";
 
 import Wallet from "@project-serum/sol-wallet-adapter";
 import {
@@ -12,6 +13,7 @@ import {
     nullLogger,
     utils,
 } from "@renproject/utils";
+import * as Layout from "@solana/buffer-layout";
 import {
     Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
@@ -29,7 +31,6 @@ import {
     GatewayRegistryStateKey,
     RenVmMsgLayout,
 } from "./layouts";
-import BigNumber from "bignumber.js";
 
 const ETHEREUM_ADDRESS_BYTES = 20;
 const SIGNATURE_OFFSETS_SERIALIZED_SIZE = 11;
@@ -318,3 +319,19 @@ export function txidFormattedToTxid(txidFormatted: string): string {
 export function txidToTxidFormatted(txid: string): string {
     return base58.encode(utils.fromBase64(txid));
 }
+
+export const isBase58 = utils.doesntError(
+    (
+        input: string,
+        options: {
+            length?: number;
+        } = {},
+    ) => {
+        const array = base58.decode(input);
+        assert(
+            options.length === undefined || array.length === options.length,
+            `Expected ${String(options.length)} bytes.`,
+        );
+        assert(base58.encode(array) === input);
+    },
+);

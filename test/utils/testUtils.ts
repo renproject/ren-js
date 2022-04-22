@@ -1,9 +1,17 @@
-import BigNumber from "bignumber.js";
 import { Buffer } from "buffer";
+
+import BigNumber from "bignumber.js";
 import chai from "chai";
 import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
-import { providers, Wallet } from "ethers";
+import { ethers, providers, Wallet } from "ethers";
+import {
+    GatewayRegistryABI,
+    getERC20Instance,
+    getGatewayRegistryInstance,
+    getMintGatewayInstance,
+} from "packages/chains/chains-ethereum/src/contracts";
+import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
 import { renTestnet } from "packages/chains/chains-solana/src/networks";
 import { makeTestSigner } from "packages/chains/chains-solana/src/utils";
@@ -63,7 +71,7 @@ export const getEVMProvider = <EVM>(
     provider: EthProvider;
     signer: EthSigner;
 } => {
-    const urls = ChainClass.configMap[network].network.rpcUrls;
+    const urls = ChainClass.configMap[network].config.rpcUrls;
     let rpcUrl = urls[0];
     if (process.env.INFURA_KEY) {
         const infuraRegEx = /^https:\/\/.*\$\{INFURA_API_KEY\}/;
@@ -78,7 +86,56 @@ export const getEVMProvider = <EVM>(
         }
     }
 
-    const provider = new providers.JsonRpcProvider(rpcUrl);
+    const registry = getGatewayRegistryInstance(
+        undefined as any, // no provider
+        Polygon.configMap["testnet"].addresses.GatewayRegistry,
+    );
+    const mockGateway = getMintGatewayInstance(
+        undefined,
+        "0x1111111111111111111111111111111111111111",
+    );
+    const mockRenAsset = "2222222222222222222222222222222222222222";
+
+    let provider;
+    if (ChainClass.name === "Polygon") {
+        provider = new ethers.providers.Web3Provider({
+            request: async ({ method, params }) => {
+                switch (method) {
+                    case "eth_chainId":
+                        return 80001;
+                    case "eth_blockNumber":
+                        return 1;
+                    case "eth_getLogs":
+                        return [];
+                    case "eth_call":
+                        const { to, data } = params[0];
+                        switch (to.toLowerCase()) {
+                            case registry.address.toLowerCase(): {
+                                const fn = registry.interface.getFunction(
+                                    data.slice(0, 10),
+                                );
+                                switch (fn.name) {
+                                    case "getRenAssetBySymbol":
+                                        return "0x0000000000000000000000002222222222222222222222222222222222222222";
+                                    case "getMintGatewayBySymbol":
+                                        return;
+                                }
+                                throw new Error(
+                                    `Method not implemented on GatewayRegistry: ${fn.name}`,
+                                );
+                            }
+                            case mockGateway.address: {
+                                return "0x0000000000000000000000000000000000000000000000000000000000000000";
+                            }
+                        }
+                        throw new Error(`Contract not implemented: ${to}`);
+                }
+                throw new Error(`Not implemented: ${method}`);
+            },
+        });
+    } else {
+        provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+    }
     const signer = Wallet.fromMnemonic(
         MNEMONIC,
         `m/44'/60'/0'/0/${index}`,
@@ -127,6 +184,7 @@ export const initializeChain = <T extends ChainCommon>(
         case Arbitrum.chain:
         case Avalanche.chain:
         case Goerli.chain:
+        case Kava.chain:
             return new (Chain as unknown as typeof Ethereum)({
                 network,
                 ...getEVMProvider(Chain as unknown as typeof Ethereum, network),

@@ -245,8 +245,13 @@ describe("common utils", () => {
         });
     });
 
-    context("fromUTF8String", () => {
+    context.only("fromUTF8String", () => {
         it("should correctly convert from utf8-string", () => {
+            console.log(
+                utils.fromUTF8String(
+                    "terra18wgytl2ktjulm00l2km4g3e3z8aqnmy7829tf6",
+                ),
+            );
             expect(
                 utils.toHex(utils.fromUTF8String("BTC/toEthereum")),
             ).to.equal("4254432f746f457468657265756d");

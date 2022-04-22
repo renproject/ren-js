@@ -262,12 +262,14 @@ export class DefaultTxWaiter implements TxWaiter {
         });
     }
 
-    public wait(target?: number): PromiEvent<
+    public wait = (
+        target?: number,
+    ): PromiEvent<
         ChainTransactionProgress,
         {
             progress: [ChainTransactionProgress];
         }
-    > {
+    > => {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress,
             {
@@ -342,5 +344,5 @@ export class DefaultTxWaiter implements TxWaiter {
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 }

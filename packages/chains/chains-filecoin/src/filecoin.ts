@@ -1,8 +1,9 @@
+import { InputType } from "zlib";
+
 import BigNumber from "bignumber.js";
 import { blake2b } from "blakejs";
-import { CID } from "multiformats";
 import elliptic from "elliptic";
-import { InputType } from "zlib";
+import { CID } from "multiformats";
 
 import {
     Address,
@@ -183,23 +184,52 @@ export class Filecoin
         return validateAddressString(address);
     }
 
-    public validateTransaction = utils.doesntError(
-        (tx: ChainTransaction) =>
-            CID.decode(utils.fromBase64(tx.txid)).bytes.length === 38 &&
-            tx.txindex === "0",
-    );
+    public validateTransaction(
+        transaction: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
+    ): boolean {
+        return (
+            (utils.isDefined(transaction.txid) ||
+                utils.isDefined(transaction.txidFormatted)) &&
+            (transaction.txidFormatted
+                ? utils.fromBase64(
+                      this.txidFormattedToTxid(transaction.txidFormatted),
+                  ).length === 38
+                : true) &&
+            (transaction.txid
+                ? utils.isURLBase64(transaction.txid, {
+                      length: 38,
+                  })
+                : true) &&
+            (transaction.txindex
+                ? !new BigNumber(transaction.txindex).isNaN()
+                : true) &&
+            (transaction.txidFormatted && transaction.txid
+                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+                  transaction.txid
+                : true) &&
+            (transaction.txindex === undefined || transaction.txindex === "0")
+        );
+    }
 
     public addressExplorerLink(address: string): string {
         // TODO: Check network.
         return `https://filfox.info/en/address/${address}`;
     }
 
-    public transactionExplorerLink = (
-        transaction: ChainTransaction,
-    ): string => {
-        // TODO: Check network.
-        return `https://filfox.info/en/message/${transaction.txidFormatted}`;
-    };
+    public transactionExplorerLink({
+        txid,
+        txidFormatted,
+    }: Partial<ChainTransaction> &
+        ({ txid: string } | { txidFormatted: string })): string | undefined {
+        const url = `https://filfox.info/en/message/`;
+        if (txidFormatted) {
+            return url + txidFormatted;
+        } else if (txid) {
+            return url + this.txidToTxidFormatted({ txid });
+        }
+        return undefined;
+    }
 
     /**
      * See [[LockChain.isLockAsset]].
@@ -495,12 +525,14 @@ export class Filecoin
         );
     }
 
-    public formattedTransactionHash(tx: {
-        txid: string;
-        txindex: string;
-    }): string {
-        return txidToTxidFormatted(tx.txid);
+    public txidFormattedToTxid(formattedTxid: string): string {
+        return txidFormattedToTxid(formattedTxid);
     }
+
+    public txidToTxidFormatted({ txid }: { txid: string }): string {
+        return txidToTxidFormatted(txid);
+    }
+    public formattedTransactionHash = this.txidToTxidFormatted;
 
     public getOutputPayload(
         asset: string,
@@ -573,7 +605,8 @@ export class Filecoin
      * })
      */
     public Transaction(
-        partialTx: Partial<ChainTransaction>,
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
     ): FilecoinInputPayload {
         return {
             chain: this.chain,

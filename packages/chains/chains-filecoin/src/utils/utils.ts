@@ -1,5 +1,6 @@
-import { utils } from "@renproject/utils";
 import { CID } from "multiformats";
+
+import { utils } from "@renproject/utils";
 
 /**
  * Convert a Filecoin transaction hash from its standard format to the format

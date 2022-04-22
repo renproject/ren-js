@@ -1,6 +1,7 @@
 import { RenNetwork } from "@renproject/utils";
 
 import { EthereumBaseChain } from "./base";
+import { resolveEVMNetworkConfig } from "./utils/generic";
 import {
     EthereumClassConfig,
     EthProvider,
@@ -9,7 +10,6 @@ import {
     EVMNetworkInput,
     populateEVMNetwork,
 } from "./utils/types";
-import { resolveEVMNetworkConfig } from "./utils/generic";
 
 const ethereumMainnet: EVMNetworkConfig = populateEVMNetwork({
     selector: "Ethereum",

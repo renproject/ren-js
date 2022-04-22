@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { concat } from "ethers/lib/utils";
-import { utils } from "../src";
 
+import { utils } from "../src";
 import { normalizeSignature } from "../src/common";
 import { fromHex } from "../src/internal/common";
 

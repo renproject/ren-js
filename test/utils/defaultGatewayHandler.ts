@@ -16,16 +16,19 @@ export const defaultGatewayHandler = async (
     const from = gateway.fromChain;
     const to = gateway.toChain;
 
-    const decimalsOnFromChain = await (from as ChainCommon).assetDecimals(
-        asset,
-    );
-    const decimalsOnToChain = await (to as ChainCommon).assetDecimals(asset);
-    // No other way of getting proper decimals for burn-and-mints.
-    const nativeDecimals = Math.max(decimalsOnFromChain, decimalsOnToChain);
+    // const decimalsOnFromChain = await (from as ChainCommon).assetDecimals(
+    //     asset,
+    // );
+    // const decimalsOnToChain = await (to as ChainCommon).assetDecimals(asset);
+    // // No other way of getting proper decimals for burn-and-mints.
+    // const nativeDecimals = Math.max(decimalsOnFromChain, decimalsOnToChain);
+    const decimalsOnFromChain = 18;
+    const decimalsOnToChain = 18;
+    const nativeDecimals = 18;
 
     logger.log(
         `[${printChain(from.chain)}⇢${printChain(to.chain)}]: Fees: ${
-            gateway.fees.variableFee
+            gateway.fees.variableFee / 100
         }% + ${gateway.fees.fixedFee
             .shiftedBy(-nativeDecimals)
             .toFixed()} ${asset}`,
@@ -89,9 +92,16 @@ export const defaultGatewayHandler = async (
         logger.log(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
+            )}]: Receiving ${receivedAmount.toFixed()} ${
+                gateway.params.asset
+            }.`,
+        );
+        logger.log(
+            `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                gateway.params.to.chain,
             )}]: Submitting to ${printChain(gateway.params.from.chain, {
                 pad: false,
-            })}`,
+            })}.`,
         );
 
         gateway.in.eventEmitter.on("progress", (progress) =>
@@ -111,7 +121,7 @@ export const defaultGatewayHandler = async (
                 gateway.gatewayAddress
             } (to receive at least ${receivedAmount.toFixed()})`,
         );
-        const SEND_FUNDS = true;
+        const SEND_FUNDS = false;
         if (SEND_FUNDS) {
             try {
                 await sendFunds(
@@ -237,6 +247,8 @@ export const defaultGatewayHandler = async (
                     await setup.submit();
                     await setup.wait();
                 }
+
+                console.log(await tx.out.export());
 
                 if (tx.out.submit) {
                     await tx.out.submit();

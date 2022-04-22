@@ -1,5 +1,6 @@
-import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
+
+import { utils } from "@renproject/utils";
 
 // Numeric fields are represented as strings in case any Bitcoin chain has
 // a txindex, an amount or a height that can't be represented by a 64-bit float.

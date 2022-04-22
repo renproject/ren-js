@@ -174,7 +174,7 @@ export class EVMTxSubmitter
         });
     }
 
-    public submit(
+    public submit = (
         options: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             overrides?: any[];
@@ -185,7 +185,7 @@ export class EVMTxSubmitter
         {
             progress: [ChainTransactionProgress];
         }
-    > {
+    > => {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
@@ -249,14 +249,16 @@ export class EVMTxSubmitter
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 
-    public wait(target?: number): PromiEvent<
+    public wait = (
+        target?: number,
+    ): PromiEvent<
         ChainTransactionProgress,
         {
             progress: [ChainTransactionProgress];
         }
-    > {
+    > => {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
@@ -367,5 +369,5 @@ export class EVMTxSubmitter
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 }

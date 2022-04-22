@@ -106,19 +106,24 @@ export interface ChainCommon {
     validateAddress(address: string): boolean;
 
     /** Check if the transaction's format is valid. */
-    validateTransaction(transaction: ChainTransaction): boolean;
+    validateTransaction(
+        transaction: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
+    ): boolean;
 
     /** Return a URL to the address's page on an explorer. */
     addressExplorerLink: (address: string) => string | undefined;
 
-    formattedTransactionHash(transaction: {
-        txid: string;
-        txindex: string;
-    }): string;
+    txidToTxidFormatted(transaction: { txid: string; txindex: string }): string;
+    /** @deprecated Renamed to txidToTxidFormatted. */
+    formattedTransactionHash: ChainCommon["txidToTxidFormatted"];
+
+    txidFormattedToTxid(formattedTxid: string): string;
 
     /** Return a URL to the transaction's page on an explorer. */
     transactionExplorerLink: (
-        transaction: ChainTransaction,
+        transaction: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
     ) => string | undefined;
 
     // /** Return a TxWaiter instance for the provided chain transaction. */

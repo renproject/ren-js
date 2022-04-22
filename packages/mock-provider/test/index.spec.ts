@@ -1,7 +1,8 @@
-import { RPCMethod } from "@renproject/provider/build/main/methods";
 import { expect } from "chai";
 
-import { MockProvider, MockChain } from "../src";
+import { RPCMethod } from "@renproject/provider/build/main/methods";
+
+import { MockChain, MockProvider } from "../src";
 
 describe("@renproject/mock-provider", () => {
     it("should export MockProvider and MockChain correctly", async () => {

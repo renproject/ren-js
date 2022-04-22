@@ -115,9 +115,7 @@ export const estimateTransactionFee = async (
     const fixedFee = requiresTransfer
         ? gasLimit
               .times(gasCap)
-              .dividedBy(
-                  new BigNumber(1).shiftedBy(assetGasDivisors[asset] || 0),
-              )
+              .shiftedBy(-assetGasDivisors[asset] || 0)
               .plus(dustAmount)
               .plus(1)
         : new BigNumber(0);

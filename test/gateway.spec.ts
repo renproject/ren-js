@@ -171,7 +171,7 @@ describe.only("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     });
 
-    it.only("BTC/toSolana", async function () {
+    it("BTC/toSolana", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;

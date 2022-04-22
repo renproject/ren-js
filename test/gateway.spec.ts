@@ -1,12 +1,15 @@
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
-import { Ethereum, Polygon } from "packages/chains/chains-ethereum/src";
+import { Bitcoin } from "packages/chains/chains-bitcoin/src";
 import {
     BinanceSmartChain,
-    Bitcoin,
+    Ethereum,
     Fantom,
-    Solana,
-} from "packages/chains/chains/src";
+    Polygon,
+} from "packages/chains/chains-ethereum/src";
+import { Kava } from "packages/chains/chains-ethereum/src/kava";
+import { Solana } from "packages/chains/chains-solana/src";
+import { Terra } from "packages/chains/chains-terra/src";
 import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
 import { RenNetwork } from "packages/utils/src";
@@ -18,8 +21,35 @@ chai.should();
 
 loadDotEnv();
 
-describe("Gateway", () => {
-    it("DAI: Ethereum to Polygon", async function () {
+describe.only("Gateway", () => {
+    // it("Get fees", async function () {
+    //     this.timeout(100000000000);
+
+    //     const network = RenNetwork.Testnet;
+    //     const renJS = new RenJS();
+
+    //     const asset = "LUNA";
+    //     const from = initializeChain(Terra);
+    //     const to = initializeChain(Ethereum);
+    //     renJS.withChains(from, to);
+    //     const decimals = await from.assetDecimals(asset);
+
+    //     const fees = await renJS.getFees({
+    //         asset,
+    //         from,
+    //         to,
+    //     });
+
+    //     console.log(
+    //         fees
+    //             .estimateOutput(new BigNumber(100000).shiftedBy(decimals))
+    //             .shiftedBy(-decimals)
+    //             .toFixed(),
+    //         asset,
+    //     );
+    // });
+
+    it("DAI: Ethereum to Kava", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -27,14 +57,23 @@ describe("Gateway", () => {
 
         const asset = "DAI";
         const from = initializeChain(Ethereum);
-        const to = initializeChain(Polygon);
+        const to = initializeChain(Kava);
         renJS.withChains(from, to);
 
         const gatewayParams: GatewayParams = {
             asset,
-            from: from.Account({ amount: "0.1", convertUnit: true }),
+            from: from.Account({ amount: "1.1", convertUnit: true }),
             to: to.Account(),
         };
+
+        console.log(
+            (await renJS.getFees(gatewayParams))
+                .estimateOutput({
+                    amount: "1.1",
+                    convertUnit: true,
+                })
+                .toFixed(),
+        );
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     });
@@ -84,6 +123,54 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     });
 
+    it("LUNA/toSolana", async function () {
+        this.timeout(100000000000);
+
+        const network = RenNetwork.Testnet;
+        const asset = Terra.assets.LUNA;
+        const from = initializeChain<Terra>(Terra);
+        const to = initializeChain(Solana);
+        const renJS = new RenJS(network).withChains(from, to);
+
+        const gatewayParams: GatewayParams = {
+            asset,
+            from: from.GatewayAddress(),
+            to: to.Account(),
+            nonce: 8,
+        };
+
+        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    });
+
+    it("LUNA/fromSolana", async function () {
+        this.timeout(100000000000);
+
+        const network = RenNetwork.Testnet;
+        const renJS = new RenJS(network);
+
+        const asset = Terra.assets.LUNA;
+        const solana = initializeChain(Solana);
+        const terra = initializeChain<Terra>(Terra);
+        renJS.withChains(terra, solana);
+
+        const fees = await renJS.getFees({
+            asset,
+            from: solana,
+            to: terra,
+        });
+
+        const minimumAmount = fees.minimumAmount;
+        const amount = minimumAmount.times(2);
+
+        const gatewayParams: GatewayParams = {
+            asset: asset,
+            from: solana.Account({ amount }),
+            to: terra.Address("terra18wgytl2ktjulm00l2km4g3e3z8aqnmy7829tf6"),
+        };
+
+        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    });
+
     it("BTC/toSolana", async function () {
         this.timeout(100000000000);
 
@@ -99,6 +186,15 @@ describe("Gateway", () => {
             to: to.Account(),
             nonce: 7,
         };
+
+        console.log(
+            (await renJS.getFees(gatewayParams))
+                .estimateOutput({
+                    amount: "1.1",
+                    convertUnit: true,
+                })
+                .toFixed(),
+        );
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     });

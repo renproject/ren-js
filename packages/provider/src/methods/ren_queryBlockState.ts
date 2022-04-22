@@ -78,6 +78,7 @@ export interface BlockState {
         dustAmount: BigNumber;
         fees: {
             chains: Array<{
+                burnAndMintFee: BigNumber;
                 burnFee: BigNumber;
                 chain: string;
                 mintFee: BigNumber;

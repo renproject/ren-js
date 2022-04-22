@@ -21,11 +21,11 @@ loadDotEnv();
 chai.should();
 
 describe("Logs", () => {
-    it("LogLock", async () => {
+    it.skip("LogLock", async () => {
         const network = RenNetwork.Testnet;
         const ethNetwork = Ethereum.configMap[network];
 
-        const infuraURL = ethNetwork.network.rpcUrls[0];
+        const infuraURL = ethNetwork.config.rpcUrls[0];
 
         const provider = new providers.JsonRpcProvider(infuraURL);
 
@@ -45,7 +45,7 @@ describe("Logs", () => {
         const network = RenNetwork.Testnet;
         const ethNetwork = BinanceSmartChain.configMap[network];
 
-        const infuraURL = ethNetwork.network.rpcUrls[0];
+        const infuraURL = ethNetwork.config.rpcUrls[0];
 
         const provider = new providers.JsonRpcProvider(infuraURL);
 

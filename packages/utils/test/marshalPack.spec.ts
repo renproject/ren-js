@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { describe, it } from "mocha";
 
 import { Ox } from "../src/internal/common";
-
 import { PackPrimitive, TypedPackValue } from "../src/libraries/pack";
 
 describe("Pack", () => {

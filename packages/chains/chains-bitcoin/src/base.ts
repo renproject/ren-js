@@ -103,10 +103,19 @@ export abstract class BitcoinBaseChain
         return this.network.explorer.address(address);
     }
 
-    public transactionExplorerLink(tx: ChainTransaction): string | undefined {
-        return this.network.explorer.transaction(
-            this.formattedTransactionHash(tx),
-        );
+    public transactionExplorerLink({
+        txid,
+        txidFormatted,
+    }: Partial<ChainTransaction> &
+        ({ txid: string } | { txidFormatted: string })): string | undefined {
+        if (txidFormatted) {
+            return this.network.explorer.transaction(txidFormatted);
+        } else if (txid) {
+            return this.network.explorer.transaction(
+                this.txidToTxidFormatted({ txid }),
+            );
+        }
+        return undefined;
     }
 
     public getBalance = async (
@@ -138,14 +147,39 @@ export abstract class BitcoinBaseChain
         );
     }
 
-    public formattedTransactionHash(transaction: { txid: string }): string {
-        return utils.toHex(utils.fromBase64(transaction.txid).reverse());
+    public txidFormattedToTxid(formattedTxid: string): string {
+        return txidFormattedToTxid(formattedTxid);
     }
 
-    public validateTransaction(transaction: ChainTransaction): boolean {
+    public txidToTxidFormatted({ txid }: { txid: string }): string {
+        return txidToTxidFormatted(txid);
+    }
+    public formattedTransactionHash = this.txidToTxidFormatted;
+
+    public validateTransaction(
+        transaction: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
+    ): boolean {
         return (
-            utils.fromBase64(transaction.txid).length === 32 &&
-            !new BigNumber(transaction.txindex).isNaN()
+            (utils.isDefined(transaction.txid) ||
+                utils.isDefined(transaction.txidFormatted)) &&
+            (transaction.txidFormatted
+                ? utils.isHex(transaction.txidFormatted, {
+                      length: 32,
+                  })
+                : true) &&
+            (transaction.txid
+                ? utils.isURLBase64(transaction.txid, {
+                      length: 32,
+                  })
+                : true) &&
+            (transaction.txindex
+                ? !new BigNumber(transaction.txindex).isNaN()
+                : true) &&
+            (transaction.txidFormatted && transaction.txid
+                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+                  transaction.txid
+                : true)
         );
     }
 
@@ -277,7 +311,7 @@ export abstract class BitcoinBaseChain
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
         const { height } = await this.api.fetchUTXO(
-            this.formattedTransactionHash(transaction),
+            this.txidToTxidFormatted(transaction),
             transaction.txindex,
         );
         if (!height) {
@@ -364,7 +398,10 @@ export abstract class BitcoinBaseChain
      * })
      */
     public Transaction(
-        partialTx: Partial<ChainTransaction> & { txindex: string },
+        partialTx: Partial<ChainTransaction> & { txindex: string } & (
+                | { txid: string }
+                | { txidFormatted: string }
+            ),
     ): BitcoinInputPayload {
         return {
             chain: this.chain,

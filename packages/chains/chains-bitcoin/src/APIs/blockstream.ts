@@ -1,4 +1,5 @@
 import { utils } from "@renproject/utils";
+
 import { BitcoinAPI, sortUTXOs, UTXO } from "./API";
 
 export class Blockstream implements BitcoinAPI {

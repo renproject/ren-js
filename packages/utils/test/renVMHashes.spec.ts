@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { expect } from "chai";
 
-import { toNBytes, Ox, fromHex } from "../src/internal/common";
+import { fromHex, Ox, toNBytes } from "../src/internal/common";
 import {
     generateGHash,
     generateNHash,

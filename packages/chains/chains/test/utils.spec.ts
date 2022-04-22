@@ -92,7 +92,7 @@ describe("Chain utils", () => {
                     ? new providers.JsonRpcProvider(
                           (
                               ChainClass.configMap["testnet"] as any
-                          ).network.rpcUrls[0],
+                          ).config.rpcUrls[0],
                       )
                     : undefined;
                 const chain = new ChainClass({ network, provider });
@@ -127,7 +127,7 @@ describe("Ethereum utils", () => {
         const ethereum = new Ethereum({
             network: "testnet",
             provider: new providers.JsonRpcProvider(
-                Ethereum.configMap["testnet"].network.rpcUrls[0],
+                Ethereum.configMap["testnet"].config.rpcUrls[0],
             ),
         });
 

@@ -104,12 +104,12 @@ export class SolanaTxWaiter
         return base58.encode((await this._getTransaction()).serializeMessage());
     }
 
-    public submit(): PromiEvent<
+    public submit = (): PromiEvent<
         ChainTransactionProgress,
         {
             progress: [ChainTransactionProgress];
         }
-    > {
+    > => {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
@@ -136,16 +136,16 @@ export class SolanaTxWaiter
             const tx = await this._getTransaction();
 
             // sendAndConfirmRawTransaction already calls simulate.
-            // const simulationResult = await utils.tryNTimes(
-            //     async () => this._provider.simulateTransaction(tx),
-            //     5,
-            // );
-            // if (simulationResult.value.err) {
-            //     throw new Error(
-            //         "transaction simulation failed: " +
-            //             JSON.stringify(simulationResult),
-            //     );
-            // }
+            const simulationResult = await utils.tryNTimes(
+                async () => this._provider.simulateTransaction(tx),
+                5,
+            );
+            if (simulationResult.value.err) {
+                throw new Error(
+                    "transaction simulation failed: " +
+                        JSON.stringify(simulationResult),
+                );
+            }
 
             const signer = this._getSigner();
             if (!signer) {
@@ -184,14 +184,16 @@ export class SolanaTxWaiter
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 
-    public wait(target?: number): PromiEvent<
+    public wait = (
+        target?: number,
+    ): PromiEvent<
         ChainTransactionProgress,
         {
             progress: [ChainTransactionProgress];
         }
-    > {
+    > => {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress,
             {
@@ -252,5 +254,5 @@ export class SolanaTxWaiter
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 }

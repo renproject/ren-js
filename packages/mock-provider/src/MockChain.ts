@@ -2,9 +2,9 @@ import BigNumber from "bignumber.js";
 
 import { BitcoinBaseChain } from "@renproject/chains-bitcoin";
 import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
+import { DepositChain, utils } from "@renproject/utils";
 
 import { randomBytes } from "./utils";
-import { DepositChain, utils } from "@renproject/utils";
 
 export class MockChain extends BitcoinBaseChain implements DepositChain {
     public mempool: Array<UTXO & { to: string }>;

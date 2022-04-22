@@ -1,8 +1,9 @@
+import { Buffer } from "buffer";
+
 import BigNumber from "bignumber.js";
 import elliptic from "elliptic";
 import { ecsign, privateToAddress } from "ethereumjs-util";
 import { OrderedMap } from "immutable";
-import { Buffer } from "buffer";
 
 import {
     CrossChainParams,
@@ -550,8 +551,9 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                     chains: this.supportedChains
                         .map((chain) => ({
                             chain: chain.chain,
-                            burnFee: "15",
-                            mintFee: "15",
+                            burnFee: "10",
+                            mintFee: "20",
+                            burnAndMintFee: "5",
                         }))
                         .valueSeq()
                         .toArray(),

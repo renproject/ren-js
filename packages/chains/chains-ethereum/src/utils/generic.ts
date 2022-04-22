@@ -414,9 +414,34 @@ export const validateAddress = (address: string): boolean => {
     }
 };
 
-export const validateTransaction = (transaction: ChainTransaction): boolean =>
-    transaction !== null &&
-    utils.isHex(transaction.txid, { length: 32, prefix: true });
+export const validateTransaction = (
+    transaction: Partial<ChainTransaction> &
+        ({ txid: string } | { txidFormatted: string }),
+): boolean => {
+    return (
+        (utils.isDefined(transaction.txid) ||
+            utils.isDefined(transaction.txidFormatted)) &&
+        (transaction.txidFormatted
+            ? utils.isHex(transaction.txidFormatted, {
+                  length: 32,
+                  prefix: true,
+              })
+            : true) &&
+        (transaction.txid
+            ? utils.isURLBase64(transaction.txid, {
+                  length: 32,
+              })
+            : true) &&
+        (transaction.txindex
+            ? !new BigNumber(transaction.txindex).isNaN()
+            : true) &&
+        (transaction.txidFormatted && transaction.txid
+            ? txidFormattedToTxid(transaction.txidFormatted) ===
+              transaction.txid
+            : true) &&
+        (transaction.txindex === undefined || transaction.txindex === "0")
+    );
+};
 
 export const rawEncode = (types: string[], parameters: unknown[]): Uint8Array =>
     utils.fromHex(defaultAbiCoder.encode(types, parameters));

@@ -1,14 +1,14 @@
+import * as base64 from "base64-js";
 import BigNumber from "bignumber.js";
 import { OrderedMap, Record } from "immutable";
-import * as base64 from "base64-js";
 
 import { ErrorWithCode, RenJSError } from "../errors";
 import { Web3PromiEvent } from "../libraries/promiEvent";
 import { EventEmitterTyped, PromiEvent } from "../types/eventEmitter";
 import { Logger } from "../types/logger";
 import { assert, assertType } from "./assert";
-import { sleep } from "./sleep";
 import { extractError } from "./extractError";
+import { sleep } from "./sleep";
 
 /**
  * Attempt to call the provided function and retry if it errors. The function
@@ -377,6 +377,7 @@ export const isHex = doesntError(
         options: {
             prefix?: true;
             length?: number;
+            uppercase?: boolean;
         } = {},
     ) => {
         if (options.prefix) {
@@ -388,7 +389,11 @@ export const isHex = doesntError(
             options.length === undefined || bytes.length === options.length,
             `Expected ${String(options.length)} bytes.`,
         );
-        assert(Ox(bytes, { prefix: "" }) === input);
+        let hex = Ox(bytes, { prefix: "" });
+        if (options.uppercase) {
+            hex = hex.toUpperCase();
+        }
+        assert(hex === input);
     },
 );
 

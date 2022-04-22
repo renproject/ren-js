@@ -1,4 +1,5 @@
 import { utils } from "@renproject/utils";
+
 import { hash160 } from "../utils/utils";
 import { Opcode } from "./opcodes";
 

@@ -1,3 +1,4 @@
+import { AbiCoder } from "ethers/lib/utils";
 import { Ethereum } from "packages/chains/chains-ethereum/src";
 import { BinanceSmartChain } from "packages/chains/chains/src";
 import RenJS from "packages/ren/src";
@@ -85,3 +86,5 @@ main().catch((error) => {
     console.error(error);
     process.exit(1);
 });
+
+AbiCoder;

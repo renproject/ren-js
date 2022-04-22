@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
-import { ErrorWithCode, RenJSError } from "../../errors";
 
+import { ErrorWithCode, RenJSError } from "../../errors";
 import { utils } from "../../internal";
 import { isPackListType, isPackStructType } from "./common";
 import {

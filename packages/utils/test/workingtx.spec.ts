@@ -3,7 +3,6 @@ import { describe, it } from "mocha";
 
 import { toURLBase64 } from "../src/internal/common";
 import { PackPrimitive } from "../src/libraries/pack";
-
 import { generateTransactionHash } from "../src/renVMHashes";
 
 export const submit = {

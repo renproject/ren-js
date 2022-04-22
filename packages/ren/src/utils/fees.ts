@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import { BlockState, RenVMProvider } from "@renproject/provider";
+import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
     ErrorWithCode,
@@ -48,8 +48,19 @@ export interface GatewayFees {
      * variable fee.
      * If the input is smaller than the minimum-amount, `0` is returned.
      */
-    estimateOutput: (input: BigNumber | string | number) => BigNumber;
+    estimateOutput: (
+        input:
+            | BigNumber
+            | string
+            | number
+            | { amount: string; convertUnit?: boolean },
+    ) => BigNumber;
 }
+
+// Some assets may have their gas price defined in a different unit.
+const assetGasDivisors = {
+    LUNA: 5,
+};
 
 export const estimateTransactionFee = async (
     renVM: RenVMProvider,
@@ -57,7 +68,22 @@ export const estimateTransactionFee = async (
     fromChain: Chain,
     toChain: Chain,
 ): Promise<GatewayFees> => {
-    const blockState: BlockState = await renVM.queryBlockState(asset, 5);
+    // Determine if the transaction is a lock-and-mint, burn-and-release or
+    // burn-and-mint.
+    const [
+        blockState,
+        isLockAndMint,
+        isBurnAndRelease,
+        decimalsOnFromChain,
+        decimalsOnToChain,
+    ] = await Promise.all([
+        renVM.queryBlockState(asset, 5),
+        fromChain.isLockAsset(asset),
+        toChain.isLockAsset(asset),
+
+        fromChain.assetDecimals(asset),
+        toChain.assetDecimals(asset),
+    ]);
 
     if (!blockState[asset]) {
         throw ErrorWithCode.updateError(
@@ -77,10 +103,8 @@ export const estimateTransactionFee = async (
         (chainFees) => chainFees.chain === toChain.chain,
     )[0];
 
-    // Determine if the transaction is a lock-and-mint, burn-and-release or
-    // burn-and-mint.
-    const isLockAndMint = await fromChain.isLockAsset(asset);
-    const isBurnAndRelease = await toChain.isLockAsset(asset);
+    // No other way of getting proper decimals for burn-and-mints.
+    const nativeDecimals = Math.max(decimalsOnFromChain, decimalsOnToChain);
 
     const requiresTransfer = isLockAndMint
         ? isDepositChain(fromChain) && (await fromChain.isDepositAsset(asset))
@@ -89,7 +113,11 @@ export const estimateTransactionFee = async (
         : false;
 
     const fixedFee = requiresTransfer
-        ? gasLimit.times(gasCap).plus(dustAmount).plus(1)
+        ? gasLimit
+              .times(gasCap)
+              .shiftedBy(-assetGasDivisors[asset] || 0)
+              .plus(dustAmount)
+              .plus(1)
         : new BigNumber(0);
 
     const mintFee =
@@ -100,53 +128,77 @@ export const estimateTransactionFee = async (
         mintAndBurnFees && mintAndBurnFees.burnFee
             ? mintAndBurnFees.burnFee.toNumber()
             : 15;
-    const variableFee = isLockAndMint
+    const burnAndMintFee =
+        mintAndBurnFees && mintAndBurnFees.burnAndMintFee
+            ? mintAndBurnFees.burnAndMintFee.toNumber()
+            : 15;
+    const variableFee: number = isLockAndMint
         ? mintFee
         : isBurnAndRelease
         ? burnFee
-        : Math.floor(mintFee / 2 + burnFee / 2);
+        : burnAndMintFee;
 
     const minimumAmount = minimumBeforeFees
         .plus(fixedFee)
-        .times((isLockAndMint ? mintFee : burnFee) + BIP_DENOMINATOR)
+        .times(variableFee + BIP_DENOMINATOR)
         .dividedBy(BIP_DENOMINATOR)
         .decimalPlaces(0);
 
-    const estimateOutput = (input: BigNumber | string | number): BigNumber => {
-        const inputBN = new BigNumber(input);
+    const estimateOutput = (
+        input:
+            | BigNumber
+            | string
+            | number
+            | { amount: string; convertUnit?: boolean },
+    ): BigNumber => {
+        const amount = BigNumber.isBigNumber(input)
+            ? input
+            : typeof input === "string"
+            ? input
+            : typeof input === "number"
+            ? input
+            : input.amount;
+        const convertUnit =
+            typeof input === "object" && !BigNumber.isBigNumber(input)
+                ? input.convertUnit || false
+                : false;
 
-        if (inputBN.isLessThan(minimumAmount)) {
+        const amountBN = new BigNumber(amount).shiftedBy(
+            convertUnit ? nativeDecimals : 0,
+        );
+
+        if (amountBN.isLessThan(minimumAmount)) {
             return new BigNumber(0);
         }
 
         if (isLockAndMint) {
             return BigNumber.max(
-                inputBN
+                amountBN
                     .minus(fixedFee)
                     .times(BIP_DENOMINATOR - variableFee)
                     .dividedBy(BIP_DENOMINATOR)
                     .decimalPlaces(0),
                 0,
-            );
+            ).shiftedBy(convertUnit ? -nativeDecimals : 0);
         } else if (isBurnAndRelease) {
             return BigNumber.max(
-                inputBN
+                amountBN
                     .times(BIP_DENOMINATOR - variableFee)
                     .dividedBy(BIP_DENOMINATOR)
                     .minus(fixedFee)
                     .decimalPlaces(0),
                 0,
-            );
+            ).shiftedBy(convertUnit ? -nativeDecimals : 0);
         } else {
             // Burn-and-mint transaction. If a fixed-fee is ever added for all
             // transactions, it will need to be added here.
             return BigNumber.max(
-                inputBN
+                amountBN
                     .times(BIP_DENOMINATOR - variableFee)
                     .dividedBy(BIP_DENOMINATOR)
                     .decimalPlaces(0),
                 0,
-            );
+            ).shiftedBy(convertUnit ? -nativeDecimals : 0);
         }
     };
 

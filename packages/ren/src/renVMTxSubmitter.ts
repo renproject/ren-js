@@ -134,7 +134,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         }
     }
 
-    public submit(): PromiEvent<
+    public submit = (): PromiEvent<
         ChainTransactionProgress & {
             response?: RenVMTransactionWithStatus<Transaction>;
         },
@@ -145,7 +145,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 },
             ];
         }
-    > {
+    > => {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
@@ -205,9 +205,9 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 
-    public wait(): PromiEvent<
+    public wait = (): PromiEvent<
         ChainTransactionProgress & {
             response?: RenVMTransactionWithStatus<Transaction>;
         },
@@ -218,7 +218,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 },
             ];
         }
-    > {
+    > => {
         const promiEvent = utils.newPromiEvent<
             ChainTransactionProgress & {
                 response?: RenVMTransactionWithStatus<Transaction>;
@@ -285,7 +285,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 
     /**
      * Process a complete RenVM transaction, handling checking for a revert

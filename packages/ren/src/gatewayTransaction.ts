@@ -26,10 +26,10 @@ import {
     utils,
 } from "@renproject/utils";
 
-import { defaultRenJSConfig, RenJSConfig } from "./utils/config";
-import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
-import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 import { TransactionParams } from "./params";
+import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
+import { defaultRenJSConfig, RenJSConfig } from "./utils/config";
+import { getInputAndOutputTypes } from "./utils/inputAndOutputTypes";
 
 /**
  * A GatewayTransaction handles a specific bridging transaction through RenVM.
@@ -219,7 +219,7 @@ export class GatewayTransaction<
                     chain: this.toChain.chain,
                     txid,
                     txindex,
-                    txidFormatted: this.toChain.formattedTransactionHash({
+                    txidFormatted: this.toChain.txidToTxidFormatted({
                         txid,
                         txindex,
                     }),

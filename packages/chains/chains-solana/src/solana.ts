@@ -1,6 +1,7 @@
+import { Buffer } from "buffer";
+
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
-import { Buffer } from "buffer";
 
 import {
     createAssociatedTokenAccount,
@@ -52,6 +53,7 @@ import {
     createInstructionWithEthAddress2,
     getBurnFromNonce,
     getGatewayRegistryState,
+    isBase58,
     resolveTokenGatewayContract,
     txHashToChainTransaction,
     txidFormattedToTxid,
@@ -116,26 +118,48 @@ export class Solana
     /**
      * A Solana transaction's ID is a base58-encoded 64-byte signature.
      */
-    public validateTransaction(transaction: ChainTransaction): boolean {
-        try {
-            const decoded = new Uint8Array(
-                base58.decode(transaction.txidFormatted),
-            );
-            return (
-                decoded.length === 64 &&
-                utils.toURLBase64(decoded) === transaction.txid
-            );
-        } catch (error: unknown) {
-            return false;
-        }
+    public validateTransaction(
+        transaction: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
+    ): boolean {
+        return (
+            (utils.isDefined(transaction.txid) ||
+                utils.isDefined(transaction.txidFormatted)) &&
+            (transaction.txidFormatted
+                ? isBase58(transaction.txidFormatted, {
+                      length: 64,
+                  })
+                : true) &&
+            (transaction.txid
+                ? utils.isURLBase64(transaction.txid, {
+                      length: 64,
+                  })
+                : true) &&
+            (transaction.txindex
+                ? !new BigNumber(transaction.txindex).isNaN()
+                : true) &&
+            (transaction.txidFormatted && transaction.txid
+                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+                  transaction.txid
+                : true) &&
+            (transaction.txindex === undefined || transaction.txindex === "0")
+        );
     }
 
     public addressExplorerLink(address: string): string {
         return `${this.network.chainExplorer}/address/${address}?cluster=${this.network.chain}`;
     }
 
-    public transactionExplorerLink(transaction: ChainTransaction): string {
-        return `${this.network.chainExplorer}/tx/${transaction.txidFormatted}?cluster=${this.network.chain}`;
+    public transactionExplorerLink({
+        txid,
+        txidFormatted,
+    }: Partial<ChainTransaction> &
+        ({ txid: string } | { txidFormatted: string })): string | undefined {
+        const hash =
+            txidFormatted || (txid && this.txidToTxidFormatted({ txid }));
+        return hash
+            ? `${this.network.chainExplorer}/tx/${hash}?cluster=${this.network.chain}`
+            : undefined;
     }
 
     private _getGatewayRegistryData__memoized?: () => Promise<GatewayRegistryState>;
@@ -204,9 +228,14 @@ export class Solana
         return new BigNumber(currentSlot - (tx && tx.slot ? tx.slot : 0));
     }
 
-    public formattedTransactionHash({ txid }: { txid: string }): string {
+    public txidFormattedToTxid(formattedTxid: string): string {
+        return txidFormattedToTxid(formattedTxid);
+    }
+
+    public txidToTxidFormatted({ txid }: { txid: string }): string {
         return txidToTxidFormatted(txid);
     }
+    public formattedTransactionHash = this.txidToTxidFormatted;
 
     public async getMintGateway<ReturnPublicKey extends true | false = false>(
         asset: string,
@@ -614,7 +643,7 @@ export class Solana
         const { toPayload } = getParams();
         if (toPayload && toPayload.payload.length > 0) {
             throw new Error(
-                `Solana burns do not currently allow burning with a payload. For releasing to EVM chains, use \`evmChain.Account({ anyoneCanMint: false })\`.`,
+                `Solana burns do not currently allow burning with a payload. For releasing to EVM chains, use \`evmChain.Account({ anyoneCanSubmit: false })\`.`,
             );
         }
 
@@ -685,7 +714,16 @@ export class Solana
                   )
                 : new BigNumber(amount_);
 
-            const recipient = utils.fromUTF8String(getParams().toPayload.to);
+            // const recipient = utils.fromUTF8String(getParams().toPayload.to);
+            const recipient = Buffer.from("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6");
+            console.debug("getParams().toPayload.to", getParams().toPayload.to);
+            console.debug("recipient", recipient);
+            console.log(Buffer.from([2, recipient.length, ...recipient]));
+            console.log(
+                Buffer.from([2, recipient.length, ...recipient]).toString(
+                    "hex",
+                ),
+            );
 
             const tokenMintId = await this.getMintAsset(asset, {
                 publicKey: true,
@@ -1006,16 +1044,10 @@ export class Solana
         if (!this.signer || !this.signer.publicKey) {
             throw new Error(`Must connected signer or use .Address instead.`);
         }
-        return this.Address({
-            address: this.signer.publicKey.toString(),
-        });
+        return this.Address(this.signer.publicKey.toString());
     }
 
-    public Address({
-        address,
-    }: {
-        address: string;
-    }): SolanaOutputPayload | SolanaInputPayload {
+    public Address(address: string): SolanaOutputPayload | SolanaInputPayload {
         return {
             chain: this.chain,
             type: "mintToAddress",
@@ -1035,7 +1067,8 @@ export class Solana
      * })
      */
     public Transaction(
-        partialTx: Partial<ChainTransaction>,
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txidFormatted: string }),
     ): SolanaInputPayload {
         return {
             chain: this.chain,

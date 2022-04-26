@@ -1,17 +1,15 @@
 /* eslint-disable no-console */
 
-import { Bitcoin, Ethereum } from "@renproject/chains";
-
-import RenJS from "@renproject/ren";
 import chai, { expect } from "chai";
 import { config as loadDotEnv } from "dotenv";
+import { ethers } from "ethers";
+
+import { Polygon, Terra } from "@renproject/chains";
 import { RenNetwork } from "@renproject/interfaces";
-import HDWalletProvider from "@truffle/hdwallet-provider";
+import RenJS from "@renproject/ren";
 
 chai.should();
 loadDotEnv();
-
-const MNEMONIC = process.env.MNEMONIC;
 
 describe("Fees", () => {
     it("fees can be fetched", async function () {
@@ -19,29 +17,25 @@ describe("Fees", () => {
 
         const network = RenNetwork.Mainnet;
 
-        const ToClass = Ethereum;
-
-        const ethNetwork = ToClass.configMap[network];
+        const ethNetwork = Polygon.configMap[network];
 
         const infuraURL = ethNetwork.publicProvider({
             infura: process.env.INFURA_KEY,
         });
-        const ethereumProvider = new HDWalletProvider({
-            mnemonic: MNEMONIC || "",
-            providerOrUrl: infuraURL,
-            addressIndex: 0,
-            numberOfAddresses: 10,
-        });
+        const polygonProvider = new ethers.providers.JsonRpcProvider(infuraURL);
 
         const renJS = new RenJS("mainnet");
         const fees = await renJS.getFees({
-            asset: "BTC",
-            from: Bitcoin(),
-            to: Ethereum(ethereumProvider, "mainnet"),
+            asset: "LUNA",
+            from: Terra(),
+            to: Polygon(polygonProvider, "mainnet"),
         });
 
-        expect(fees.mint).to.be.greaterThan(10).and.lessThan(30);
-        expect(fees.burn).to.be.greaterThan(10).and.lessThan(30);
+        console.log(fees.lock.toFixed());
+        // console.log(fees.release.toFixed());
+
+        expect(fees.mint).to.be.greaterThan(5).and.lessThan(30);
+        expect(fees.burn).to.be.greaterThan(5).and.lessThan(30);
         expect(fees.lock.isGreaterThan(0)).to.be.true;
         expect(fees.release.isGreaterThan(0)).to.be.true;
     });

@@ -257,7 +257,7 @@ describe("common utils", () => {
         });
     });
 
-    context.only("randomNonce", () => {
+    context("randomNonce", () => {
         it("should return a random 32-byte buffer", () => {
             expect(randomNonce().length).toEqual(32);
             expect(randomNonce()).not.toEqual(randomNonce());

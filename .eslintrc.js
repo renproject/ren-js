@@ -28,8 +28,6 @@ module.exports = {
         "eslint-plugin-import",
         "eslint-plugin-no-null",
         "eslint-plugin-prefer-arrow",
-        "eslint-plugin-jsdoc",
-        "@typescript-eslint",
         "security",
     ],
     rules: {

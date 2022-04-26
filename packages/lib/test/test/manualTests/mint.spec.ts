@@ -33,11 +33,11 @@ const MNEMONIC = process.env.MNEMONIC;
 const PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY;
 const FAUCET_ASSETS = ["BTC", "ZEC", "BCH", "ETH", "FIL", "LUNA"];
 
-const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex");
+const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY || "", "hex");
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it.only("mint to contract", async function () {
+    it("mint to contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;

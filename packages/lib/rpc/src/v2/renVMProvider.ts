@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+
 import {
     BurnAndReleaseTransaction,
     getRenNetworkDetails,
@@ -21,7 +23,6 @@ import {
     sleep,
     toURLBase64,
 } from "@renproject/utils";
-import BigNumber from "bignumber.js";
 
 import { AbstractRenVMProvider } from "../abstract";
 import {
@@ -552,8 +553,15 @@ export class RenVMProvider
             throw new Error(`No fee details found for ${asset}`);
         }
 
+        // Some assets may have their gas price defined in a different unit.
+        const assetGasDivisors = {
+            LUNA: 5,
+        };
+
         const { gasLimit, gasCap } = blockState[asset];
-        const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
+        const fee = new BigNumber(gasLimit)
+            .times(new BigNumber(gasCap))
+            .shiftedBy(-assetGasDivisors[asset] || 0);
 
         const mintAndBurnFees = blockState[asset].fees.chains.filter(
             (chainFees) => chainFees.chain === hostChain.name,

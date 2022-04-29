@@ -2,10 +2,10 @@ import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { Bitcoin } from "packages/chains/chains-bitcoin/src";
 import {
+    Avalanche,
     BinanceSmartChain,
     Ethereum,
     Fantom,
-    Polygon,
 } from "packages/chains/chains-ethereum/src";
 import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
@@ -50,7 +50,7 @@ describe("Gateway", () => {
     //     );
     // });
 
-    it("DAI: Ethereum to Polygon", async function () {
+    it.only("DAI: Ethereum to Avalache", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -58,7 +58,7 @@ describe("Gateway", () => {
 
         const asset = "DAI";
         const from = initializeChain(Ethereum);
-        const to = initializeChain(Polygon);
+        const to = initializeChain(Avalanche);
         renJS.withChains(from, to);
 
         const gatewayParams: GatewayParams = {

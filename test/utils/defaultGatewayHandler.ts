@@ -190,12 +190,15 @@ export const defaultGatewayHandler = async (
                     ),
                 );
 
+                logger.log("RenVM tx: ", tx.renVM.export());
+
                 while (true) {
                     try {
                         await tx.renVM.submit();
                         await tx.renVM.wait();
                         break;
                     } catch (error: unknown) {
+                        logger.log("RenVM tx: ", tx.renVM.export());
                         logger.error(error);
                         if (
                             tx.renVM.progress.status ===

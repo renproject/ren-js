@@ -25,6 +25,7 @@ const avalancheMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
         blockExplorerUrls: ["https://snowtrace.io/"],
     },
 
+    logRequestLimit: 2048,
     addresses: {
         GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
         BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
@@ -46,6 +47,7 @@ const avalancheTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
         blockExplorerUrls: ["https://testnet.snowtrace.io/"],
     },
 
+    logRequestLimit: 2048,
     addresses: {
         GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",

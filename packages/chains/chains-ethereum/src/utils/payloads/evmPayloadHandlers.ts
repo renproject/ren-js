@@ -5,6 +5,7 @@ import {
     PopulatedTransaction,
     Signer,
 } from "ethers";
+import { ParamType } from "ethers/lib/utils";
 
 import {
     ChainTransaction,
@@ -243,7 +244,9 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
             );
         }
 
-        const types = args.map((param) => param.type);
+        const types: ParamType[] = args.map(
+            ({ value, ...params }) => params as ParamType,
+        );
         const values = args.map((param): unknown => param.value);
 
         let p: Uint8Array;
@@ -301,7 +304,9 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
                   }
                 : x,
         );
-        const paramTypes = params.map((x) => x.type);
+        const paramTypes: ParamType[] = params.map(
+            ({ value, ...params }) => params as ParamType,
+        );
         const paramValues = params.map((x) => x.value);
 
         for (const param of params) {

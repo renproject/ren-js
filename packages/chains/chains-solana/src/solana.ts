@@ -94,13 +94,10 @@ export class Solana
         if (!network) {
             throw new Error("Must provide a network.");
         }
-        if (!provider) {
-            throw new Error("Must provide a provider.");
-        }
         this.signer = signer;
         this.network = resolveNetwork(network);
         this.provider =
-            typeof provider === "string"
+            typeof provider === "string" || !provider
                 ? new Connection(provider || this.network.endpoint)
                 : provider;
         this._logger = config && config.logger ? config.logger : nullLogger;

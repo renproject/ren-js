@@ -49,6 +49,10 @@ export interface TxWaiter<
         progress: [Progress];
     }>;
 
+    setTransaction(
+        chainTransaction: ChainTransaction,
+    ): SyncOrPromise<ChainTransactionProgress>;
+
     /**
      * Submit the transaction to the chain.
      */
@@ -206,12 +210,15 @@ export class DefaultTxWaiter implements TxWaiter {
     }>;
     private _onFirstProgress?: (tx: ChainTransaction) => SyncOrPromise<void>;
 
-    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+    private updateProgress(
+        progress: Partial<ChainTransactionProgress>,
+    ): ChainTransactionProgress {
         this.progress = {
             ...this.progress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
+        return this.progress;
     }
 
     /**
@@ -252,8 +259,10 @@ export class DefaultTxWaiter implements TxWaiter {
      * hash isn't available yet. For example, a release transaction submitted
      * by RenVM.
      */
-    public setTransaction(chainTransaction?: ChainTransaction): void {
-        this.updateProgress({
+    public setTransaction(
+        chainTransaction: ChainTransaction,
+    ): ChainTransactionProgress {
+        return this.updateProgress({
             transaction: chainTransaction,
             status:
                 chainTransaction && chainTransaction.txid === ""

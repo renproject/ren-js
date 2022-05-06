@@ -1,5 +1,3 @@
-import BigNumber from "bignumber.js";
-
 import {
     RenVMCrossChainTransaction,
     RenVMProvider,
@@ -25,6 +23,7 @@ import {
     TxWaiterProxy,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { TransactionParams } from "./params";
 import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
@@ -201,21 +200,26 @@ export class GatewayTransaction<
                 );
             }
 
-            if (
-                isDepositChain(this.toChain) &&
-                (await this.toChain.isDepositAsset(this.params.asset))
-            ) {
-                if (!tx.out || !tx.out.txid || !tx.out.txid.length) {
-                    throw new ErrorWithCode(
-                        `Expected release transaction details in RenVM response.`,
-                        RenJSError.INTERNAL_ERROR,
-                    );
-                }
+            console.log(tx.out);
+            console.log(tx.out?.sig);
+            console.log(
+                utils.fromBase64(
+                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+                ),
+            );
 
-                // The transaction has already been submitted by RenVM.
+            if (
+                tx.out &&
+                tx.out.txid &&
+                tx.out.txid.length > 0 &&
+                utils.toURLBase64(tx.out.sig) ===
+                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+            ) {
+                // The transaction has already been submitted.
                 const txid = utils.toURLBase64(tx.out.txid);
                 const txindex = tx.out.txindex.toFixed();
-                (this.out as DefaultTxWaiter).setTransaction({
+
+                await this.out.setTransaction({
                     chain: this.toChain.chain,
                     txid,
                     txindex,
@@ -224,6 +228,14 @@ export class GatewayTransaction<
                         txindex,
                     }),
                 });
+            } else if (
+                isDepositChain(this.toChain) &&
+                (await this.toChain.isDepositAsset(this.params.asset))
+            ) {
+                throw new ErrorWithCode(
+                    `Expected release transaction details in RenVM response.`,
+                    RenJSError.INTERNAL_ERROR,
+                );
             }
         };
 
@@ -243,6 +255,7 @@ export class GatewayTransaction<
                 ghash: this.gHash,
             },
             onSignatureReady,
+            this._config,
         );
         this._hash = this.renVM.tx.hash;
 

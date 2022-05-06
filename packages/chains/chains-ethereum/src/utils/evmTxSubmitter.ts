@@ -1,12 +1,5 @@
 import {
-    Contract,
-    PayableOverrides,
-    PopulatedTransaction,
-    Signer,
-} from "ethers";
-import { Logger } from "ethers/lib/utils";
-
-import {
+    Provider,
     TransactionReceipt,
     TransactionResponse,
 } from "@ethersproject/providers";
@@ -21,6 +14,13 @@ import {
     TxSubmitter,
     utils,
 } from "@renproject/utils";
+import {
+    Contract,
+    PayableOverrides,
+    PopulatedTransaction,
+    Signer,
+} from "ethers";
+import { Logger } from "ethers/lib/utils";
 
 import { AbiItem } from "./abi";
 import { txHashToChainTransaction } from "./generic";
@@ -98,6 +98,7 @@ export class EVMTxSubmitter
     }>;
 
     private network: EVMNetworkConfig;
+    private getProvider: () => Provider;
     private getSigner: () => Signer | undefined;
     private payload: EVMPayload;
     private tx?: TransactionResponse;
@@ -108,7 +109,9 @@ export class EVMTxSubmitter
         ChainTransaction | undefined
     >;
 
-    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+    private updateProgress(
+        progress: Partial<ChainTransactionProgress>,
+    ): ChainTransactionProgress {
         this.progress = {
             ...this.progress,
             ...progress,
@@ -119,6 +122,7 @@ export class EVMTxSubmitter
 
     public constructor({
         network,
+        getProvider,
         getSigner,
         chain,
         payload,
@@ -129,6 +133,7 @@ export class EVMTxSubmitter
         findExistingTransaction,
     }: {
         network: EVMNetworkConfig;
+        getProvider: () => Provider;
         getSigner: () => Signer | undefined;
         chain: string;
         payload: EVMPayload;
@@ -139,6 +144,7 @@ export class EVMTxSubmitter
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
     }) {
         this.network = network;
+        this.getProvider = getProvider;
         this.getSigner = getSigner;
         this.chain = chain;
         this.payload = payload;
@@ -194,11 +200,8 @@ export class EVMTxSubmitter
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
-            const signer = this.getSigner();
-            if (!signer) {
-                throw new Error(`Must connect ${this.chain} signer.`);
-            }
-            if (this.findExistingTransaction && signer.provider) {
+            const provider = this.getProvider();
+            if (this.findExistingTransaction && provider) {
                 const existingTransaction =
                     await this.findExistingTransaction();
 
@@ -210,13 +213,17 @@ export class EVMTxSubmitter
                         });
                         return this.progress;
                     }
-                    this.tx = await signer.provider.getTransaction(
+                    this.tx = await provider.getTransaction(
                         existingTransaction.txidFormatted,
                     );
                 }
             }
 
             if (!this.tx) {
+                const signer = this.getSigner();
+                if (!signer) {
+                    throw new Error(`Must connect ${this.chain} signer.`);
+                }
                 if (!signer.provider) {
                     throw new Error("EVM signer has no connected provider.");
                 }
@@ -238,7 +245,10 @@ export class EVMTxSubmitter
             }
 
             this.updateProgress({
-                status: ChainTransactionStatus.Confirming,
+                status:
+                    this.tx.confirmations < this.progress.target
+                        ? ChainTransactionStatus.Confirming
+                        : ChainTransactionStatus.Done,
                 transaction: txHashToChainTransaction(this.chain, this.tx.hash),
                 confirmations: this.tx.confirmations,
             });
@@ -249,6 +259,21 @@ export class EVMTxSubmitter
             .catch(promiEvent.reject);
 
         return promiEvent;
+    };
+
+    public setTransaction = async (
+        chainTransaction: ChainTransaction,
+    ): Promise<ChainTransactionProgress> => {
+        const provider = this.getProvider();
+        this.tx = await provider.getTransaction(chainTransaction.txidFormatted);
+        return this.updateProgress({
+            status:
+                this.tx.confirmations < this.progress.target
+                    ? ChainTransactionStatus.Confirming
+                    : ChainTransactionStatus.Done,
+            transaction: txHashToChainTransaction(this.chain, this.tx.hash),
+            confirmations: this.tx.confirmations,
+        });
     };
 
     public wait = (

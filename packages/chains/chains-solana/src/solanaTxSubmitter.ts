@@ -1,5 +1,3 @@
-import base58 from "bs58";
-
 import {
     ChainTransaction,
     ChainTransactionProgress,
@@ -15,6 +13,7 @@ import {
     sendAndConfirmRawTransaction,
     Transaction,
 } from "@solana/web3.js";
+import base58 from "bs58";
 
 import { SolanaSigner } from "./types/types";
 import { txidFormattedToTxid } from "./utils";
@@ -36,12 +35,15 @@ export class SolanaTxWaiter
         progress: [ChainTransactionProgress];
     }>;
 
-    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+    private updateProgress(
+        progress: Partial<ChainTransactionProgress>,
+    ): ChainTransactionProgress {
         this.progress = {
             ...this.progress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
+        return this.progress;
     }
 
     /**
@@ -103,6 +105,17 @@ export class SolanaTxWaiter
     public async export(): Promise<string> {
         return base58.encode((await this._getTransaction()).serializeMessage());
     }
+
+    public setTransaction = async (
+        chainTransaction: ChainTransaction,
+    ): Promise<ChainTransactionProgress> => {
+        return this.updateProgress({
+            status: ChainTransactionStatus.Done,
+            confirmations: this.progress.target,
+            target: this.progress.target,
+            transaction: chainTransaction,
+        });
+    };
 
     public submit = (): PromiEvent<
         ChainTransactionProgress,

@@ -53,7 +53,7 @@ describe("Gateway", () => {
     it("DAI: Ethereum to Avalache", async function () {
         this.timeout(100000000000);
 
-        const network = "http://localhost:4000/v1";
+        const network = RenNetwork.Testnet;
         const renJS = new RenJS(network);
 
         const asset = "DAI";
@@ -137,7 +137,7 @@ describe("Gateway", () => {
             asset,
             from: from.GatewayAddress(),
             to: to.Account(),
-            nonce: 8,
+            nonce: 9,
         };
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));

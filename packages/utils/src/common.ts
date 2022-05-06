@@ -58,6 +58,13 @@ export const decodeRenVMSelector = (
 export const normalizeSignature = (signature: Uint8Array): Uint8Array => {
     utils.assertType<Uint8Array>("Uint8Array", { signature });
 
+    if (
+        utils.toURLBase64(signature) ===
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    ) {
+        return signature;
+    }
+
     const r: Uint8Array = signature.slice(0, 32);
     const s: Uint8Array = signature.slice(32, 64);
     let v: number = signature.slice(64, 65)[0];

@@ -21,6 +21,8 @@ import {
     utils,
 } from "@renproject/utils";
 
+import { RenJSConfig } from "./utils/config";
+
 export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
     implements
         TxSubmitter<
@@ -32,6 +34,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
     public chain = "RenVM";
     private provider: RenVMProvider;
     public tx: TransactionInput<TypedPackValue>;
+    private config: RenJSConfig;
 
     private signatureCallback?: (
         response: RenVMTransactionWithStatus<Transaction>,
@@ -75,10 +78,12 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         signatureCallback?: (
             response: RenVMTransactionWithStatus<Transaction>,
         ) => Promise<void>,
+        config: RenJSConfig = {},
     ) {
         this.provider = provider;
         this.eventEmitter = eventEmitter();
         this.signatureCallback = signatureCallback;
+        this.config = config;
 
         const version = tx.version || "1";
         const expectedHash = utils.toURLBase64(
@@ -207,6 +212,10 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
         return promiEvent;
     };
 
+    public setTransaction = (): ChainTransactionProgress => {
+        return this.progress;
+    };
+
     public wait = (): PromiEvent<
         ChainTransactionProgress & {
             response?: RenVMTransactionWithStatus<Transaction>;
@@ -276,7 +285,11 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                         // TODO: throw unexpected errors
                     }
                 }
-                await utils.sleep(15 * utils.sleep.SECONDS);
+                await utils.sleep(
+                    this.config && this.config.networkDelay
+                        ? this.config.networkDelay
+                        : 15 * utils.sleep.SECONDS,
+                );
             }
 
             return await this._handleDoneTransaction(tx);
@@ -327,6 +340,7 @@ export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<RenVMCrossChain
         signatureCallback?: (
             response: RenVMTransactionWithStatus<RenVMCrossChainTransaction>,
         ) => Promise<void>,
+        config: RenJSConfig = {},
     ) {
         super(
             provider,
@@ -349,6 +363,7 @@ export class RenVMCrossChainTxSubmitter extends RenVMTxSubmitter<RenVMCrossChain
                 },
             },
             signatureCallback,
+            config,
         );
     }
 }

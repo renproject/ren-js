@@ -50,10 +50,10 @@ describe("Gateway", () => {
     //     );
     // });
 
-    it.only("DAI: Ethereum to Avalache", async function () {
+    it("DAI: Ethereum to Avalache", async function () {
         this.timeout(100000000000);
 
-        const network = RenNetwork.Testnet;
+        const network = "http://localhost:4000/v1";
         const renJS = new RenJS(network);
 
         const asset = "DAI";

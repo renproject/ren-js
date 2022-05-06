@@ -1,5 +1,7 @@
 import { Buffer } from "buffer";
 
+import { EthProvider, EVMNetworkConfig } from "@renproject/chains-ethereum/src";
+import { Connection } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chalk from "chalk";
@@ -14,18 +16,16 @@ import {
 import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
 import { renTestnet } from "packages/chains/chains-solana/src/networks";
-import { makeTestSigner } from "packages/chains/chains-solana/src/utils";
+import { signerFromPrivateKey } from "packages/chains/chains-solana/src/utils";
 import { ChainCommon, RenNetwork, utils } from "packages/utils/src";
 import SendCrypto from "send-crypto";
-
-import { EthProvider, EVMNetworkConfig } from "@renproject/chains-ethereum/src";
-import { Connection } from "@solana/web3.js";
 
 import {
     Arbitrum,
     Avalanche,
     BinanceSmartChain,
     Bitcoin,
+    BitcoinCash,
     DigiByte,
     Dogecoin,
     Ethereum,
@@ -189,6 +189,7 @@ export const initializeChain = <T extends ChainCommon>(
     switch (Chain.chain) {
         // Bitcoin chains
         case Bitcoin.chain:
+        case BitcoinCash.chain:
         case Zcash.chain:
         case DigiByte.chain:
         case Dogecoin.chain:
@@ -227,7 +228,7 @@ export const initializeChain = <T extends ChainCommon>(
             return new (Chain as unknown as typeof Solana)({
                 network,
                 provider: new Connection(renTestnet.endpoint),
-                signer: makeTestSigner(
+                signer: signerFromPrivateKey(
                     Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex"),
                 ),
             }) as ChainCommon as T;

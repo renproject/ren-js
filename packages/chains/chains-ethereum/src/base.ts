@@ -1,8 +1,3 @@
-import BigNumber from "bignumber.js";
-import elliptic from "elliptic";
-import { errors, ethers } from "ethers";
-import { computeAddress } from "ethers/lib/utils";
-
 import { Provider, Web3Provider } from "@ethersproject/providers";
 import {
     assertType,
@@ -22,6 +17,10 @@ import {
     TxWaiter,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
+import elliptic from "elliptic";
+import { errors, ethers } from "ethers";
+import { computeAddress } from "ethers/lib/utils";
 
 import {
     findABIMethod,
@@ -204,7 +203,8 @@ export class EthereumBaseChain
             ? web3Provider
             : typeof web3Provider === "string"
             ? new ethers.providers.JsonRpcProvider(web3Provider)
-            : new ethers.providers.Web3Provider(web3Provider);
+            : // TODO: Set chain ID instead of "any"?
+              new ethers.providers.Web3Provider(web3Provider, "any");
         if (!this.signer) {
             try {
                 this.signer = (this.provider as Web3Provider).getSigner();

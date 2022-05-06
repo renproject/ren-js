@@ -1,10 +1,9 @@
+import { ripemd160 as createRipemd160 } from "@noble/hashes/ripemd160";
+import { assertType, utils } from "@renproject/utils";
 import { bech32 } from "bech32";
 import base58 from "bs58";
 import { validate } from "wallet-address-validator";
 import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
-
-import { ripemd160 as createRipemd160 } from "@noble/hashes/ripemd160";
-import { assertType, utils } from "@renproject/utils";
 
 import {
     BitcoinNetworkConfig,
@@ -16,7 +15,6 @@ import {
 export const addressToBytes = (address: string): Uint8Array => {
     // Attempt to decode address as a bech32 address, and if that fails
     // fall back to base58.
-    console.log("bech32 btc", bech32);
     try {
         const [type, ...words] = bech32.decode(address).words;
         return utils.concat([

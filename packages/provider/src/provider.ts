@@ -13,8 +13,6 @@ import {
 } from "@renproject/utils";
 
 import {
-    ParamsQueryBlock,
-    ParamsQueryBlocks,
     ParamsSubmitTx,
     ResponseQueryTx,
     RPCMethod,
@@ -145,7 +143,7 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
     };
 
     public queryBlock = async (
-        blockHeight: ParamsQueryBlock["blockHeight"],
+        blockHeight?: number,
         retry?: number,
     ): Promise<RenVMBlock> =>
         pack.unmarshal.unmarshalPackStruct(
@@ -153,15 +151,19 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
             (
                 await this.sendMessage<RPCMethod.QueryBlock>(
                     RPCMethod.QueryBlock,
-                    { blockHeight },
+                    {
+                        blockHeight: utils.isDefined(blockHeight)
+                            ? blockHeight.toString()
+                            : undefined,
+                    },
                     retry,
                 )
             ).block,
         );
 
     public queryBlocks = async (
-        blockHeight: ParamsQueryBlocks["blockHeight"],
-        n: ParamsQueryBlocks["n"],
+        blockHeight?: number,
+        n?: number,
         retry?: number,
     ): Promise<RenVMBlock[]> =>
         pack.unmarshal.unmarshalPackList(
@@ -169,7 +171,12 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
             (
                 await this.sendMessage<RPCMethod.QueryBlocks>(
                     RPCMethod.QueryBlocks,
-                    { blockHeight, n },
+                    {
+                        blockHeight: utils.isDefined(blockHeight)
+                            ? blockHeight.toString()
+                            : undefined,
+                        n: utils.isDefined(n) ? n.toString() : undefined,
+                    },
                     retry,
                 )
             ).blocks,

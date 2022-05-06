@@ -30,17 +30,17 @@ export interface MarshalledRenVMBlock {
 export interface ParamsQueryBlock {
     // BlockHeight of the block that will be returned. A nil value can be used
     // to request the latest block.
-    blockHeight: number;
+    blockHeight?: Marshalled<PackPrimitive.U64>;
 }
 
 // ParamsQueryBlocks defines the parameters of the MethodQueryBlocks.
 export interface ParamsQueryBlocks {
     // BlockHeight of the youngest block that will be returned in the list. A
     // nil value can be used to request a list of the latest blocks.
-    blockHeight: number;
+    blockHeight?: Marshalled<PackPrimitive.U64>;
     // N defines the maximum number of ancestor blocks that will be returned. A
     // nil value can be used to request the maximum allowed number of blocks.
-    n: number;
+    n?: Marshalled<PackPrimitive.U64>;
 }
 
 // ResponseQueryBlock defines the response of the MethodQueryBlock.

@@ -1,19 +1,18 @@
 /* eslint-disable no-console */
 
-import { BN } from "bn.js";
-import { expect } from "chai";
-
 import {
     InputChainTransaction,
     InputType,
     OutputType,
 } from "@renproject/utils";
 import { Connection } from "@solana/web3.js";
+import { BN } from "bn.js";
+import { expect } from "chai";
 
 import { Solana } from "../src/index";
 import { RenVmMsgLayout } from "../src/layouts";
 import { renDevnet, renTestnet } from "../src/networks";
-import { makeTestSigner } from "../src/utils";
+import { signerFromPrivateKey } from "../src/utils";
 
 const testPK = Buffer.from(
     "a84252a5fcbb2bfb85a422a4833a79c23ec7906826a0298dd2a0744a4c984631d2e4cf6c0c5f3403c12e952901ab88e33fc98b07500a94136e6635a089e23f94",
@@ -42,7 +41,7 @@ describe("Solana", () => {
             const solana = new Solana({
                 network: renDevnet,
                 provider: new Connection(renDevnet.endpoint),
-                signer: makeTestSigner(testPK),
+                signer: signerFromPrivateKey(testPK),
             });
             expect(solana.network.isTestnet).to.equal(true);
         });
@@ -51,7 +50,7 @@ describe("Solana", () => {
             const solana = new Solana({
                 network: renDevnet,
                 provider: new Connection(renDevnet.endpoint),
-                signer: makeTestSigner(testPK),
+                signer: signerFromPrivateKey(testPK),
             });
             // await solana.initialize("devnet");
             const res = await solana.isMintAsset("BTC");
@@ -62,7 +61,7 @@ describe("Solana", () => {
             const solana = new Solana({
                 network: renDevnet,
                 provider: new Connection(renDevnet.endpoint),
-                signer: makeTestSigner(testPK),
+                signer: signerFromPrivateKey(testPK),
             });
             const res = await solana.getMintGateway("BTC");
             expect(res).to.equal(
@@ -74,7 +73,7 @@ describe("Solana", () => {
             const solana = new Solana({
                 network: renTestnet,
                 provider: new Connection(renTestnet.endpoint),
-                signer: makeTestSigner(testPK),
+                signer: signerFromPrivateKey(testPK),
             });
 
             const burn = await solana.getInputTx(
@@ -100,7 +99,7 @@ describe("Solana", () => {
         //     const solana = new Solana({
         //         network: renTestnet,
         //         provider: new Connection(renTestnet.endpoint),
-        //         signer: makeTestSigner(testPK),
+        //         signer: signerFromPrivateKey(testPK),
         //     });
 
         //     solana.getOutputTx()

@@ -27,8 +27,7 @@ export class TransactionEmitter<
     public addListener = <Event extends "transaction">(
         event: Event,
         callback: Event extends "transaction"
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (deposit: GatewayTransaction<ToPayload>) => void
+            ? (deposit: GatewayTransaction<ToPayload>) => void
             : never,
     ): this => {
         // Emit previous deposit events.
@@ -50,11 +49,29 @@ export class TransactionEmitter<
      *
      * @category Main
      */
-    // @ts-expect-error EventEmitter and EventEmitterTyped typing issue
     public on = <Event extends "transaction">(
         event: Event,
-        callback: Event extends "transaction"
-            ? (deposit: GatewayTransaction<ToPayload>) => void
-            : never,
-    ): this => this.addListener(event, callback);
+        callback: (
+            ...values: { transaction: [GatewayTransaction<ToPayload>] }[Event]
+        ) => void | Promise<void>,
+    ): this =>
+        this.addListener(
+            event,
+            callback as Event extends "transaction"
+                ? (deposit: GatewayTransaction<ToPayload>) => void
+                : never,
+        );
+
+    public once = <Event extends "transaction">(
+        event: Event,
+        callback: (
+            ...values: { transaction: [GatewayTransaction<ToPayload>] }[Event]
+        ) => void | Promise<void>,
+    ): this =>
+        super.once(
+            event,
+            callback as Event extends "transaction"
+                ? (deposit: GatewayTransaction<ToPayload>) => void
+                : never,
+        );
 }

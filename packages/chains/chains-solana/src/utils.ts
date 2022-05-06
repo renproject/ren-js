@@ -1,9 +1,5 @@
 import { Buffer } from "buffer";
 
-import BigNumber from "bignumber.js";
-import base58 from "bs58";
-import tweetnacl from "tweetnacl";
-
 import Wallet from "@project-serum/sol-wallet-adapter";
 import {
     assert,
@@ -17,12 +13,18 @@ import * as Layout from "@solana/buffer-layout";
 import {
     Connection,
     CreateSecp256k1InstructionWithEthAddressParams,
+    Keypair,
     PublicKey,
     Secp256k1Program,
     Transaction,
     TransactionInstruction,
     TransactionSignature,
 } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
+import * as bip39 from "bip39";
+import base58 from "bs58";
+import { derivePath } from "ed25519-hd-key";
+import tweetnacl from "tweetnacl";
 
 import {
     BurnLogLayout,
@@ -169,23 +171,58 @@ export const constructRenVMMsg = (
     }
 };
 
-export const makeTestSigner = (privatekey: Uint8Array): Wallet => {
-    const key = tweetnacl.sign.keyPair.fromSecretKey(privatekey);
+/**
+ * Generate a Solana signer from a mnemonic.
+ * @param mnemonic
+ * @returns
+ */
+export const signerFromMnemonic = (
+    mnemonic: string,
+    derivationPath = "m/44'/501'/0'/0'",
+): Wallet => {
+    const seed: Buffer = bip39.mnemonicToSeedSync(mnemonic);
+    const derivedSeed = derivePath(derivationPath, utils.toHex(seed)).key;
+    if (!derivedSeed) {
+        throw new Error(
+            `Invalid mnemonic (with ${mnemonic.split(" ").length} words).`,
+        );
+    }
+    const keypair: Keypair = Keypair.fromSeed(derivedSeed);
+    return signerFromPrivateKey(keypair);
+};
 
-    const pubk = new PublicKey(key.publicKey);
+const isKeypair = (key: any): key is Keypair => {
+    return key && (key as Keypair).publicKey && (key as Keypair).secretKey;
+};
+
+export const signerFromPrivateKey = (
+    privateKey: Uint8Array | string | Keypair,
+): Wallet => {
+    const keypair: Keypair = isKeypair(privateKey)
+        ? privateKey
+        : Keypair.fromSecretKey(
+              typeof privateKey === "string"
+                  ? utils.isHex(privateKey)
+                      ? utils.fromHex(privateKey)
+                      : base58.decode(privateKey)
+                  : privateKey,
+          );
+
     return {
-        publicKey: pubk,
+        publicKey: keypair.publicKey,
         // eslint-disable-next-line @typescript-eslint/require-await
         signTransaction: async (x: Transaction): Promise<Transaction> => {
             const sig = tweetnacl.sign.detached(
                 x.serializeMessage(),
-                key.secretKey,
+                keypair.secretKey,
             );
-            x.addSignature(pubk, Buffer.from(sig));
+            x.addSignature(keypair.publicKey, Buffer.from(sig));
             return x;
         },
     } as Wallet;
 };
+/** @deprecated Renamed to 'signerFromPrivateKey'. */
+export const makeTestSigner = signerFromPrivateKey;
 
 export const getGatewayRegistryState = async (
     provider: Connection,

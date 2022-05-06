@@ -2,7 +2,7 @@ export const hasOwnProperty = <T>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     object: any,
     property: keyof T,
-): object is T => object.hasOwnProperty(property);
+): object is T => Object.prototype.hasOwnProperty.call(object, property);
 
 export const invalidError = (errorMessage: string): boolean =>
     errorMessage === "" ||

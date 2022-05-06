@@ -251,7 +251,9 @@ export const defaultGatewayHandler = async (
                     await setup.wait();
                 }
 
-                console.log(await tx.out.export());
+                // if (tx.out.export) {
+                //     console.log(await tx.out.export());
+                // }
 
                 if (tx.out.submit) {
                     await tx.out.submit();

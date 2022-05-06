@@ -1,7 +1,3 @@
-import { bech32 } from "bech32";
-import BigNumber from "bignumber.js";
-import elliptic from "elliptic";
-
 import {
     assertType,
     ChainTransaction,
@@ -17,6 +13,9 @@ import {
     utils,
 } from "@renproject/utils";
 import { AccAddress, SimplePublicKey } from "@terra-money/terra.js";
+import { bech32 } from "bech32";
+import BigNumber from "bignumber.js";
+import elliptic from "elliptic";
 
 import { TerraDev } from "./api/terraDev";
 import { isTerraNetworkConfig, TerraNetworkConfig } from "./api/types";
@@ -341,7 +340,6 @@ export class Terra
         if (!address) {
             throw new Error(`No ${this.chain} address specified.`);
         }
-        console.log("becb32", bech32);
         return {
             to: address,
             toBytes: new Uint8Array(

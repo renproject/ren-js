@@ -245,7 +245,7 @@ describe("common utils", () => {
         });
     });
 
-    context.only("fromUTF8String", () => {
+    context("fromUTF8String", () => {
         it("should correctly convert from utf8-string", () => {
             console.log(
                 utils.fromUTF8String(

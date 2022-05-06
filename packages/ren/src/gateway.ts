@@ -1,5 +1,3 @@
-import { OrderedMap } from "immutable";
-
 import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
@@ -19,6 +17,7 @@ import {
     TxWaiter,
     utils,
 } from "@renproject/utils";
+import { OrderedMap } from "immutable";
 
 import { GatewayTransaction } from "./gatewayTransaction";
 import { GatewayParams, TransactionParams } from "./params";

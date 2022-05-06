@@ -1,8 +1,5 @@
 import { Buffer } from "buffer";
 
-import BigNumber from "bignumber.js";
-import base58 from "bs58";
-
 import {
     createAssociatedTokenAccount,
     getAssociatedTokenAddress,
@@ -38,6 +35,8 @@ import {
     Transaction,
     TransactionInstruction,
 } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
+import base58 from "bs58";
 
 import {
     GatewayLayout,
@@ -88,7 +87,7 @@ export class Solana
         config,
     }: {
         network: RenNetwork | RenNetworkString | SolNetworkConfig;
-        provider: Connection;
+        provider?: Connection | string;
         signer?: Wallet;
         config?: SolOptions;
     }) {
@@ -98,9 +97,12 @@ export class Solana
         if (!provider) {
             throw new Error("Must provide a provider.");
         }
-        this.provider = provider;
         this.signer = signer;
         this.network = resolveNetwork(network);
+        this.provider =
+            typeof provider === "string"
+                ? new Connection(provider || this.network.endpoint)
+                : provider;
         this._logger = config && config.logger ? config.logger : nullLogger;
     }
 
@@ -714,16 +716,7 @@ export class Solana
                   )
                 : new BigNumber(amount_);
 
-            // const recipient = utils.fromUTF8String(getParams().toPayload.to);
-            const recipient = Buffer.from("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6");
-            console.debug("getParams().toPayload.to", getParams().toPayload.to);
-            console.debug("recipient", recipient);
-            console.log(Buffer.from([2, recipient.length, ...recipient]));
-            console.log(
-                Buffer.from([2, recipient.length, ...recipient]).toString(
-                    "hex",
-                ),
-            );
+            const recipient = utils.fromUTF8String(getParams().toPayload.to);
 
             const tokenMintId = await this.getMintAsset(asset, {
                 publicKey: true,

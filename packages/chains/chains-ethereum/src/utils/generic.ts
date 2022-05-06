@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
-import { defaultAbiCoder } from "ethers/lib/utils";
+import { defaultAbiCoder, ParamType } from "ethers/lib/utils";
 
 import { Provider } from "@ethersproject/providers";
 import {
@@ -443,8 +443,10 @@ export const validateTransaction = (
     );
 };
 
-export const rawEncode = (types: string[], parameters: unknown[]): Uint8Array =>
-    utils.fromHex(defaultAbiCoder.encode(types, parameters));
+export const rawEncode = (
+    types: Array<string | ParamType>,
+    parameters: unknown[],
+): Uint8Array => utils.fromHex(defaultAbiCoder.encode(types, parameters));
 
 export const isEVMNetworkConfig = (
     renNetwork: EVMNetworkInput,

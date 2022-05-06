@@ -2,16 +2,17 @@ import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { Bitcoin } from "packages/chains/chains-bitcoin/src";
 import {
+    Avalanche,
     BinanceSmartChain,
     Ethereum,
     Fantom,
-    Polygon,
 } from "packages/chains/chains-ethereum/src";
 import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
 import { Terra } from "packages/chains/chains-terra/src";
 import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
+import { getInputAndOutputTypes } from "packages/ren/src/utils/inputAndOutputTypes";
 import { RenNetwork } from "packages/utils/src";
 
 import { defaultGatewayHandler } from "./utils/defaultGatewayHandler";
@@ -21,7 +22,7 @@ chai.should();
 
 loadDotEnv();
 
-describe.only("Gateway", () => {
+describe("Gateway", () => {
     // it("Get fees", async function () {
     //     this.timeout(100000000000);
 
@@ -49,7 +50,7 @@ describe.only("Gateway", () => {
     //     );
     // });
 
-    it("DAI: Ethereum to Kava", async function () {
+    it.only("DAI: Ethereum to Avalache", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
@@ -57,7 +58,7 @@ describe.only("Gateway", () => {
 
         const asset = "DAI";
         const from = initializeChain(Ethereum);
-        const to = initializeChain(Kava);
+        const to = initializeChain(Avalanche);
         renJS.withChains(from, to);
 
         const gatewayParams: GatewayParams = {
@@ -167,6 +168,33 @@ describe.only("Gateway", () => {
             from: solana.Account({ amount }),
             to: terra.Address("terra18wgytl2ktjulm00l2km4g3e3z8aqnmy7829tf6"),
         };
+
+        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    });
+
+    it("DAI/toSolana", async function () {
+        this.timeout(100000000000);
+
+        const network = RenNetwork.Testnet;
+        const asset = Ethereum.assets.DAI;
+        const from = initializeChain(Ethereum);
+        const to = initializeChain(Solana);
+        const renJS = new RenJS(network).withChains(from, to);
+
+        const gatewayParams: GatewayParams = {
+            asset,
+            from: from.Account({ amount: 1, convertUnit: true }),
+            to: to.Account(),
+        };
+
+        console.log(
+            (await renJS.getFees(gatewayParams))
+                .estimateOutput({
+                    amount: "1.1",
+                    convertUnit: true,
+                })
+                .toFixed(),
+        );
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     });

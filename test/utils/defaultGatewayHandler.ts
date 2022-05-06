@@ -45,7 +45,7 @@ export const defaultGatewayHandler = async (
         logger.log(
             `[${printChain(gateway.fromChain.chain)}⇢${printChain(
                 gateway.toChain.chain,
-            )}]: ${asset} balance: ${(
+            )}]: ${gateway.fromChain.chain} ${asset} balance: ${(
                 await from.getBalance(asset, undefined as any)
             )
                 .shiftedBy(-decimalsOnFromChain)
@@ -57,9 +57,9 @@ export const defaultGatewayHandler = async (
 
     try {
         logger.log(
-            `[${printChain(gateway.toChain.chain)}⇢${printChain(
+            `[${printChain(gateway.fromChain.chain)}⇢${printChain(
                 gateway.toChain.chain,
-            )}]: ${asset} balance: ${(
+            )}]: ${gateway.toChain.chain} ${asset} balance: ${(
                 await to.getBalance(asset, undefined as any)
             )
                 .shiftedBy(-decimalsOnToChain)
@@ -190,12 +190,15 @@ export const defaultGatewayHandler = async (
                     ),
                 );
 
+                logger.log("RenVM tx: ", tx.renVM.export());
+
                 while (true) {
                     try {
                         await tx.renVM.submit();
                         await tx.renVM.wait();
                         break;
                     } catch (error: unknown) {
+                        logger.log("RenVM tx: ", tx.renVM.export());
                         logger.error(error);
                         if (
                             tx.renVM.progress.status ===

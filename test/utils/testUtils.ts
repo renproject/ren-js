@@ -94,48 +94,80 @@ export const getEVMProvider = <EVM>(
         undefined,
         "0x1111111111111111111111111111111111111111",
     );
-    const mockRenAsset = "2222222222222222222222222222222222222222";
+    const mockRenAsset = getERC20Instance(
+        undefined,
+        "0x2222222222222222222222222222222222222222",
+    );
 
     let provider;
-    if (ChainClass.name === "Polygon") {
-        provider = new ethers.providers.Web3Provider({
-            request: async ({ method, params }) => {
-                switch (method) {
-                    case "eth_chainId":
-                        return 80001;
-                    case "eth_blockNumber":
-                        return 1;
-                    case "eth_getLogs":
-                        return [];
-                    case "eth_call":
-                        const { to, data } = params[0];
-                        switch (to.toLowerCase()) {
-                            case registry.address.toLowerCase(): {
-                                const fn = registry.interface.getFunction(
-                                    data.slice(0, 10),
-                                );
-                                switch (fn.name) {
-                                    case "getRenAssetBySymbol":
-                                        return "0x0000000000000000000000002222222222222222222222222222222222222222";
-                                    case "getMintGatewayBySymbol":
-                                        return;
-                                }
-                                throw new Error(
-                                    `Method not implemented on GatewayRegistry: ${fn.name}`,
-                                );
-                            }
-                            case mockGateway.address: {
-                                return "0x0000000000000000000000000000000000000000000000000000000000000000";
-                            }
-                        }
-                        throw new Error(`Contract not implemented: ${to}`);
-                }
-                throw new Error(`Not implemented: ${method}`);
-            },
-        });
-    } else {
-        provider = new ethers.providers.JsonRpcProvider(rpcUrl);
-    }
+    // if (ChainClass.name === "Polygon") {
+    //     provider = new ethers.providers.Web3Provider({
+    //         request: async ({ method, params }) => {
+    //             switch (method) {
+    //                 case "eth_chainId":
+    //                     return 80001;
+    //                 case "eth_blockNumber":
+    //                     return 1;
+    //                 case "eth_getLogs":
+    //                     return [];
+    //                 case "eth_call":
+    //                     const { to, data } = params[0];
+    //                     switch (to.toLowerCase()) {
+    //                         case registry.address.toLowerCase(): {
+    //                             const fn = registry.interface.getFunction(
+    //                                 data.slice(0, 10),
+    //                             );
+    //                             switch (fn.name) {
+    //                                 case "getRenAssetBySymbol":
+    //                                     return utils.toNBytes(
+    //                                         utils.fromHex(mockRenAsset.address),
+    //                                         32,
+    //                                     );
+    //                                 case "getMintGatewayBySymbol":
+    //                                     return utils.toNBytes(
+    //                                         utils.fromHex(mockGateway.address),
+    //                                         32,
+    //                                     );
+    //                             }
+    //                             throw new Error(
+    //                                 `Method not implemented on mock GatewayRegistry: ${fn.name}`,
+    //                             );
+    //                         }
+
+    //                         case mockGateway.address: {
+    //                             const fn = mockGateway.interface.getFunction(
+    //                                 data.slice(0, 10),
+    //                             );
+    //                             switch (fn.name) {
+    //                                 case "status":
+    //                                     return utils.toNBytes(0, 32);
+    //                             }
+    //                             throw new Error(
+    //                                 `Method not implemented on mock Gateway: ${fn.name}`,
+    //                             );
+    //                         }
+
+    //                         case mockRenAsset.address: {
+    //                             const fn = mockRenAsset.interface.getFunction(
+    //                                 data.slice(0, 10),
+    //                             );
+    //                             switch (fn.name) {
+    //                                 case "decimals":
+    //                                     return utils.Ox(utils.toNBytes(18, 32));
+    //                             }
+    //                             throw new Error(
+    //                                 `Method not implemented on mock RenAsset: ${fn.name}`,
+    //                             );
+    //                         }
+    //                     }
+    //                     throw new Error(`Contract not implemented: ${to}`);
+    //             }
+    //             throw new Error(`Not implemented: ${method}`);
+    //         },
+    //     });
+    // } else {
+    provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+    // }
     const signer = Wallet.fromMnemonic(
         MNEMONIC,
         `m/44'/60'/0'/0/${index}`,

@@ -8,11 +8,11 @@ import Wallet from "@project-serum/sol-wallet-adapter";
 import {
     ChainTransaction,
     ContractChain,
+    defaultLogger,
     DefaultTxWaiter,
     InputChainTransaction,
     InputType,
     Logger,
-    nullLogger,
     OutputType,
     populateChainTransaction,
     RenNetwork,
@@ -51,6 +51,7 @@ import {
     constructRenVMMsg,
     createInstructionWithEthAddress2,
     getBurnFromNonce,
+    getBurnFromTxid,
     getGatewayRegistryState,
     isBase58,
     resolveTokenGatewayContract,
@@ -100,7 +101,7 @@ export class Solana
             typeof provider === "string" || !provider
                 ? new Connection(provider || this.network.endpoint)
                 : provider;
-        this._logger = config && config.logger ? config.logger : nullLogger;
+        this._logger = config && config.logger ? config.logger : defaultLogger;
     }
 
     /**
@@ -325,12 +326,17 @@ export class Solana
         },
         confirmationTarget: number,
     ): Promise<TxSubmitter | TxWaiter> {
-        const program = await this.getMintGateway(asset, { publicKey: true });
+        const mintGateway = await this.getMintGateway(asset, {
+            publicKey: true,
+        });
 
-        const gatewayAccountId = await PublicKey.findProgramAddress(
-            [utils.fromUTF8String(GatewayStateKey)],
-            program,
-        );
+        const mintGatewayStateAddress = (
+            await PublicKey.findProgramAddress(
+                [utils.fromUTF8String(GatewayStateKey)],
+                mintGateway,
+            )
+        )[0];
+
         const sHash = utils.keccak256(
             utils.fromUTF8String(`${asset}/toSolana`),
         );
@@ -342,7 +348,7 @@ export class Solana
 
         const mintAuthorityId = await PublicKey.findProgramAddress(
             [tokenMintId.toBuffer()],
-            program,
+            mintGateway,
         );
 
         const associatedTokenAccount_ = await this.getAssociatedTokenAccount(
@@ -374,7 +380,7 @@ export class Solana
 
             const mintLogAccountId = await PublicKey.findProgramAddress(
                 [utils.keccak256(renVMMessage)],
-                program,
+                mintGateway,
             );
 
             const mintData = await this.provider.getAccountInfo(
@@ -441,7 +447,9 @@ export class Solana
         //     contractCall.contractParams[0].value;
         // await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
 
-        const getTransaction = async (): Promise<Transaction> => {
+        const getTransaction = async (): Promise<{
+            transaction: Transaction;
+        }> => {
             if (!this.signer) {
                 throw new Error(`Must connect ${this.chain} signer.`);
             }
@@ -472,7 +480,7 @@ export class Solana
 
             const mintLogAccountId = await PublicKey.findProgramAddress(
                 [utils.keccak256(renVMMessage)],
-                program,
+                mintGateway,
             );
             this._logger.debug(
                 "mint log account",
@@ -489,7 +497,7 @@ export class Solana
                         isSigner: true,
                         isWritable,
                     },
-                    { pubkey: gatewayAccountId[0], isSigner, isWritable },
+                    { pubkey: mintGatewayStateAddress, isSigner, isWritable },
                     { pubkey: tokenMintId, isSigner, isWritable: true },
                     {
                         pubkey: associatedTokenAccount,
@@ -527,29 +535,29 @@ export class Solana
                         isWritable,
                     },
                 ],
-                programId: program,
+                programId: mintGateway,
                 data: Buffer.from([1]),
             });
             this._logger.debug("mint instruction", JSON.stringify(instruction));
 
             // To get the current gateway pubkey
-            const gatewayInfo = await this.provider.getAccountInfo(
-                gatewayAccountId[0],
+            const encodedGatewayState = await this.provider.getAccountInfo(
+                mintGatewayStateAddress,
             );
 
-            if (!gatewayInfo)
+            if (!encodedGatewayState)
                 throw new Error("incorrect gateway program address");
 
-            const gatewayState = GatewayLayout.decode(gatewayInfo.data);
+            const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
 
-            const tx = new Transaction();
+            const transaction = new Transaction();
 
             // The instruction to check the signature
             const secpParams: CreateSecp256k1InstructionWithEthAddressParams = {
                 ethAddress: gatewayState.renvm_authority,
                 message: renVMMessageSlice,
                 signature: signature.slice(0, 64),
-                recoveryId: signature[64] - 27,
+                recoveryId: signature[64] % 27,
             };
             this._logger.debug(
                 "authority address",
@@ -561,14 +569,14 @@ export class Solana
                 createInstructionWithEthAddress2(secpParams);
             secPInstruction.data = Buffer.from([...secPInstruction.data]);
 
-            tx.add(instruction, secPInstruction);
+            transaction.add(instruction, secPInstruction);
 
-            tx.recentBlockhash = (
+            transaction.recentBlockhash = (
                 await this.provider.getRecentBlockhash("confirmed")
             ).blockhash;
-            tx.feePayer = this.signer.publicKey;
+            transaction.feePayer = this.signer.publicKey;
 
-            return tx;
+            return { transaction };
         };
 
         return new SolanaTxWaiter({
@@ -646,24 +654,45 @@ export class Solana
             );
         }
 
-        let onReceiptCallback: (signature: string) => void;
-
-        const onReceipt = (signature: string) => {
-            if (onReceiptCallback) {
-                onReceiptCallback(signature);
-            }
-        };
-
-        const program = await this.getMintGateway(asset, {
+        const mintGateway = await this.getMintGateway(asset, {
             publicKey: true,
         });
+
+        const mintGatewayStateAddress = (
+            await PublicKey.findProgramAddress(
+                [utils.fromUTF8String(GatewayStateKey)],
+                mintGateway,
+            )
+        )[0];
+
+        const onReceipt = async (txidFormatted: string, nonce?: number) => {
+            const burnDetails = await utils.tryNTimes(
+                () =>
+                    getBurnFromTxid(
+                        this.provider,
+                        this.chain,
+                        asset,
+                        mintGateway,
+                        txidFormatted,
+                        nonce,
+                    ),
+                5,
+                5 * utils.sleep.SECONDS,
+            );
+            if (!burnDetails) {
+                throw new Error(
+                    `Unable to get burn details from transaction ${txidFormatted}`,
+                );
+            }
+            onInput(burnDetails);
+        };
 
         if (contractCall.type === "burnNonce") {
             const chainTransaction = await getBurnFromNonce(
                 this.provider,
                 this.chain,
                 asset,
-                program,
+                mintGateway,
                 contractCall.params.burnNonce,
             );
             if (!chainTransaction) {
@@ -693,7 +722,10 @@ export class Solana
             });
         }
 
-        const getTransaction = async (): Promise<Transaction> => {
+        const getTransaction = async (): Promise<{
+            transaction: Transaction;
+            nonce: number;
+        }> => {
             if (!this.signer) {
                 throw new Error(`Must connect ${this.chain} signer.`);
             }
@@ -732,27 +764,23 @@ export class Solana
                 await this.assetDecimals(asset),
             );
 
-            const gatewayAccountId = await PublicKey.findProgramAddress(
-                [utils.fromUTF8String(GatewayStateKey)],
-                program,
+            // Fetch gateway state.
+            const encodedGatewayState = await this.provider.getAccountInfo(
+                mintGatewayStateAddress,
             );
-
-            const gatewayInfo = await this.provider.getAccountInfo(
-                gatewayAccountId[0],
-            );
-
-            if (!gatewayInfo)
+            if (!encodedGatewayState) {
                 throw new Error("incorrect gateway program address");
+            }
+            const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
 
-            const gatewayState = GatewayLayout.decode(gatewayInfo.data);
             const nonceBN = new BigNumber(
                 gatewayState.burn_count.toString(),
             ).plus(1);
-            this._logger.debug("burn nonce: ", nonceBN.toString());
+            this._logger.debug("burn nonce: ", nonceBN.toFixed());
 
             const burnLogAccountId = await PublicKey.findProgramAddress(
                 [utils.toNBytes(nonceBN, 8, "le")],
-                program,
+                mintGateway,
             );
 
             const renBurnInst = new TransactionInstruction({
@@ -770,7 +798,7 @@ export class Solana
                     {
                         isSigner: false,
                         isWritable: true,
-                        pubkey: gatewayAccountId[0],
+                        pubkey: mintGatewayStateAddress,
                     },
                     {
                         isSigner: false,
@@ -799,50 +827,19 @@ export class Solana
                     },
                 ],
                 data: Buffer.from([2, recipient.length, ...recipient]),
-                programId: program,
+                programId: mintGateway,
             });
 
             this._logger.debug("burn tx: ", renBurnInst);
 
-            const tx = new Transaction();
-            tx.add(checkedBurnInst, renBurnInst);
-            tx.recentBlockhash = (
+            const transaction = new Transaction();
+            transaction.add(checkedBurnInst, renBurnInst);
+            transaction.recentBlockhash = (
                 await this.provider.getRecentBlockhash()
             ).blockhash;
-            tx.feePayer = this.signer.publicKey;
+            transaction.feePayer = this.signer.publicKey;
 
-            onReceiptCallback = (signature: string) => {
-                const txid = utils.toURLBase64(base58.decode(signature));
-                onInput({
-                    chain: this.chain,
-                    txid: txid,
-                    txindex: "0",
-                    asset,
-                    txidFormatted: signature,
-                    amount: amount.toFixed(),
-                    nonce: utils.toURLBase64(utils.toNBytes(nonceBN, 32)),
-                    toRecipient: recipient.toString(),
-                });
-            };
-
-            return tx;
-            // const signed = await this.signer.signTransaction(tx);
-            // if (!signed.signature) {
-            //     throw new Error("missing signature");
-            // }
-
-            // const confirmOpts: ConfirmOptions = {
-            //     commitment: "confirmed",
-            // };
-
-            // const confirmedSignature = await sendAndConfirmRawTransaction(
-            //     this.provider,
-            //     signed.serialize(),
-            //     confirmOpts,
-            // );
-
-            // // Wait up to 20 seconds for the transaction to be finalized.
-            // await finalizeTransaction(this.provider, confirmedSignature);
+            return { transaction, nonce: nonceBN.toNumber() };
         };
 
         return new SolanaTxWaiter({
@@ -870,7 +867,7 @@ export class Solana
                 setupRequired = true;
             }
         } catch (e) {
-            console.error(e);
+            this._logger.error(e);
             setupRequired = true;
         }
         return !setupRequired;
@@ -945,7 +942,9 @@ export class Solana
         asset: string,
         address?: string,
     ): SolanaTxWaiter {
-        const getTransaction = async (): Promise<Transaction> => {
+        const getTransaction = async (): Promise<{
+            transaction: Transaction;
+        }> => {
             if (!this.signer) {
                 throw new Error(`Must connect ${this.chain} signer.`);
             }
@@ -977,14 +976,14 @@ export class Solana
                 targetAddress,
                 tokenMintId,
             );
-            const createTx = new Transaction();
-            createTx.add(createTxInstruction);
-            createTx.feePayer = this.signer.publicKey;
-            createTx.recentBlockhash = (
+            const transaction = new Transaction();
+            transaction.add(createTxInstruction);
+            transaction.feePayer = this.signer.publicKey;
+            transaction.recentBlockhash = (
                 await this.provider.getRecentBlockhash()
             ).blockhash;
 
-            return createTx;
+            return { transaction };
         };
 
         const findExistingTransaction = async (): Promise<

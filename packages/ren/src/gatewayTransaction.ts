@@ -15,6 +15,7 @@ import {
     InputType,
     isContractChain,
     isDepositChain,
+    isEmptySignature,
     OutputType,
     RenJSError,
     TxStatus,
@@ -200,20 +201,11 @@ export class GatewayTransaction<
                 );
             }
 
-            console.log(tx.out);
-            console.log(tx.out?.sig);
-            console.log(
-                utils.fromBase64(
-                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                ),
-            );
-
             if (
                 tx.out &&
                 tx.out.txid &&
                 tx.out.txid.length > 0 &&
-                utils.toURLBase64(tx.out.sig) ===
-                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                isEmptySignature(tx.out.sig)
             ) {
                 // The transaction has already been submitted.
                 const txid = utils.toURLBase64(tx.out.txid);

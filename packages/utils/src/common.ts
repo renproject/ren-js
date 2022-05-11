@@ -42,6 +42,11 @@ export const decodeRenVMSelector = (
     };
 };
 
+const EMPTY_SIGNATURE =
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+export const isEmptySignature = (sig: Uint8Array): boolean =>
+    utils.toURLBase64(sig) === EMPTY_SIGNATURE;
+
 /**
  * Normalize the `s` and `v` values of a secp256k1 signature.
  *
@@ -58,10 +63,8 @@ export const decodeRenVMSelector = (
 export const normalizeSignature = (signature: Uint8Array): Uint8Array => {
     utils.assertType<Uint8Array>("Uint8Array", { signature });
 
-    if (
-        utils.toURLBase64(signature) ===
-        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-    ) {
+    // The signature is empty, so we should modify it.
+    if (isEmptySignature(signature)) {
         return signature;
     }
 

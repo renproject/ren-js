@@ -1,10 +1,5 @@
 import { InputType } from "zlib";
 
-import BigNumber from "bignumber.js";
-import { blake2b } from "blakejs";
-import elliptic from "elliptic";
-import { CID } from "multiformats";
-
 import {
     Address,
     decode as decodeAddress,
@@ -25,6 +20,9 @@ import {
     RenNetworkString,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
+import { blake2b } from "blakejs";
+import elliptic from "elliptic";
 
 import { FilTransaction } from "./utils/deposit";
 import { Filfox } from "./utils/filfox";
@@ -553,7 +551,7 @@ export class Filecoin
         }
         return {
             to: address,
-            toBytes: new Uint8Array(CID.parse(address).bytes),
+            toBytes: this.addressToBytes(address),
             payload: new Uint8Array(),
         };
     }
@@ -566,7 +564,7 @@ export class Filecoin
      *
      * @category Main
      */
-    public Address(address: string): { chain: string; address: string } {
+    public Address(address: string): FilecoinOutputPayload {
         // Type validation
         assertType<string>("string", { address });
 
@@ -579,7 +577,10 @@ export class Filecoin
 
         return {
             chain: this.chain,
-            address,
+            type: "address",
+            params: {
+                address,
+            },
         };
     }
 

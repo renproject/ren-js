@@ -16,6 +16,25 @@ describe("signatureUtils", () => {
                 utils.toHex(
                     normalizeSignature(
                         concat([
+                            fromHex("11".repeat(32)),
+                            fromHex("00".repeat(32)),
+                            new Uint8Array([0]),
+                        ]),
+                    ),
+                ),
+            ).to.deep.equal(
+                utils.toHex(
+                    concat([
+                        fromHex("11".repeat(32)),
+                        fromHex("00".repeat(32)),
+                        new Uint8Array([27]),
+                    ]),
+                ),
+            );
+            expect(
+                utils.toHex(
+                    normalizeSignature(
+                        concat([
                             fromHex("00".repeat(32)),
                             fromHex("00".repeat(32)),
                             new Uint8Array([0]),
@@ -27,7 +46,7 @@ describe("signatureUtils", () => {
                     concat([
                         fromHex("00".repeat(32)),
                         fromHex("00".repeat(32)),
-                        new Uint8Array([27]),
+                        new Uint8Array([0]),
                     ]),
                 ),
             );

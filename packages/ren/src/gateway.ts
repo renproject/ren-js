@@ -394,13 +394,13 @@ export class Gateway<
             }
 
             // Will fetch deposits as long as there's at least one subscription.
-            this._watchForDeposits().catch(console.error);
+            this._watchForDeposits().catch(this.config.logger.error);
         }
 
         if (isContractChain(this.fromChain)) {
             const processInput = (input: InputChainTransaction) => {
                 // TODO: Add to queue instead so that it can be retried on error.
-                this.processDeposit(input).catch(console.error);
+                this.processDeposit(input).catch(this.config.logger.error);
             };
 
             // TODO
@@ -640,7 +640,9 @@ export class Gateway<
             const onDeposit = (deposit: InputChainTransaction): void => {
                 try {
                     // TODO: Handle error.
-                    this.processDeposit(deposit).catch(console.error);
+                    this.processDeposit(deposit).catch(
+                        this.config.logger.error,
+                    );
                 } catch (error: unknown) {
                     this.config.logger.error(error);
                 }

@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 
+import FilecoinClient from "@glif/filecoin-rpc-client";
+import { utils } from "@renproject/utils";
 import chai, { expect } from "chai";
 import { config as loadDotEnv } from "dotenv";
-
-import FilecoinClient from "@glif/filecoin-rpc-client";
 
 import { Filecoin } from "../src";
 import { fetchDeposits, getHeight } from "../src/utils/lotus";
@@ -54,6 +54,46 @@ describe("Filecoin", () => {
                 txindex: "0",
             }),
         ).to.be.true;
+    });
+
+    it.only("validateAddress", () => {
+        const testnet = new Filecoin({ network: "testnet" });
+
+        expect(
+            testnet.validateAddress(
+                "t14wczuvodunv3xzexobzywpbj6qpr6jwdrbkrmbq",
+            ),
+        ).to.be.true;
+
+        expect(
+            utils.Ox(
+                testnet.addressToBytes(
+                    "t14wczuvodunv3xzexobzywpbj6qpr6jwdrbkrmbq",
+                ),
+            ),
+        ).to.equal("0x01e5859a55c3a36bbbe49770738b3c29f41f1f26c3");
+
+        // expect(
+        //     testnet.validateAddress(""),
+        // ).to.be.true;
+
+        // expect(
+        //     testnet.validateAddress(""),
+        // ).to.be.false;
+
+        // const mainnet = new Filecoin({ network: "mainnet" });
+
+        // expect(
+        //     mainnet.validateAddress(""),
+        // ).to.be.true;
+
+        // expect(
+        //     mainnet.validateAddress(""),
+        // ).to.be.true;
+
+        // expect(
+        //     mainnet.validateAddress(""),
+        // ).to.be.false;
     });
 });
 

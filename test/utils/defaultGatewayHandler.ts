@@ -1,10 +1,5 @@
 import { Gateway } from "packages/ren/src";
-import {
-    ChainCommon,
-    ChainTransactionStatus,
-    Logger,
-    utils,
-} from "packages/utils/src";
+import { ChainTransactionStatus, Logger, utils } from "packages/utils/src";
 
 import { printChain, sendFunds } from "./testUtils";
 
@@ -26,7 +21,7 @@ export const defaultGatewayHandler = async (
     const decimalsOnToChain = 18;
     const nativeDecimals = 18;
 
-    logger.log(
+    logger.info(
         `[${printChain(from.chain)}⇢${printChain(to.chain)}]: Fees: ${
             gateway.fees.variableFee / 100
         }% + ${gateway.fees.fixedFee
@@ -42,7 +37,7 @@ export const defaultGatewayHandler = async (
         .shiftedBy(-decimalsOnFromChain);
 
     try {
-        logger.log(
+        logger.info(
             `[${printChain(gateway.fromChain.chain)}⇢${printChain(
                 gateway.toChain.chain,
             )}]: ${gateway.fromChain.chain} ${asset} balance: ${(
@@ -56,7 +51,7 @@ export const defaultGatewayHandler = async (
     }
 
     try {
-        logger.log(
+        logger.info(
             `[${printChain(gateway.fromChain.chain)}⇢${printChain(
                 gateway.toChain.chain,
             )}]: ${gateway.toChain.chain} ${asset} balance: ${(
@@ -71,13 +66,13 @@ export const defaultGatewayHandler = async (
 
     for (const setupKey of Object.keys(gateway.inSetup)) {
         const setup = gateway.inSetup[setupKey];
-        logger.log(
+        logger.info(
             `[${printChain(gateway.fromChain.chain)}⇢${printChain(
                 gateway.toChain.chain,
             )}]: Calling ${setupKey} setup for ${String(setup.chain)}`,
         );
         setup.eventEmitter.on("progress", (progress) =>
-            logger.log(
+            logger.info(
                 `[${printChain(gateway.params.from.chain)}⇢${printChain(
                     gateway.params.to.chain,
                 )}]`,
@@ -89,34 +84,39 @@ export const defaultGatewayHandler = async (
     }
 
     if (gateway.in) {
-        logger.log(
+        logger.info(
             `[${printChain(gateway.params.from.chain)}⇢${printChain(
                 gateway.params.to.chain,
             )}]: Receiving ${receivedAmount.toFixed()} ${
                 gateway.params.asset
             }.`,
         );
-        logger.log(
-            `[${printChain(gateway.params.from.chain)}⇢${printChain(
-                gateway.params.to.chain,
-            )}]: Submitting to ${printChain(gateway.params.from.chain, {
-                pad: false,
-            })}.`,
-        );
 
         gateway.in.eventEmitter.on("progress", (progress) =>
-            logger.log(
+            logger.info(
                 `[${printChain(gateway.params.from.chain)}⇢${printChain(
                     gateway.params.to.chain,
                 )}]`,
                 progress,
             ),
         );
-        await utils.tryIndefinitely(async () => await gateway.in.submit());
+
+        if (gateway.in.submit) {
+            logger.info(
+                `[${printChain(gateway.params.from.chain)}⇢${printChain(
+                    gateway.params.to.chain,
+                )}]: Submitting to ${printChain(gateway.params.from.chain, {
+                    pad: false,
+                })}.`,
+            );
+
+            await utils.tryIndefinitely(async () => await gateway.in.submit());
+        }
+
         // Wait for just 1 transaction for now - tx.in.wait() is called below.
         await utils.tryIndefinitely(async () => await gateway.in.wait(1));
     } else {
-        logger.log(
+        logger.info(
             `Deposit at least ${minimumAmount.toFixed()} ${asset} to ${
                 gateway.gatewayAddress
             } (to receive at least ${receivedAmount.toFixed()})`,
@@ -130,12 +130,12 @@ export const defaultGatewayHandler = async (
                     minimumAmount.times(5),
                 );
             } catch (error: unknown) {
-                // logger.log(error.request);
-                // logger.log(error.response);
+                // logger.info(error.request);
+                // logger.info(error.response);
                 throw error;
             }
         } else {
-            logger.log("Waiting for deposit...");
+            logger.info("Waiting for deposit...");
         }
     }
 
@@ -145,9 +145,9 @@ export const defaultGatewayHandler = async (
         gateway.on("transaction", (tx) => {
             (async () => {
                 foundDeposits += 1;
-                logger.log(tx.in.progress.transaction);
+                logger.info(tx.in.progress.transaction);
 
-                logger.log(
+                logger.info(
                     `[${printChain(from.chain)}⇢${printChain(to.chain)}][${
                         tx.hash
                     }] Detected:`,
@@ -155,7 +155,7 @@ export const defaultGatewayHandler = async (
                 );
 
                 tx.in.eventEmitter.on("progress", (progress) =>
-                    logger.log(
+                    logger.info(
                         `[${printChain(tx.in.chain)}⇢${printChain(
                             tx.out.chain,
                         )}][${tx.hash.slice(0, 6)}]: ${
@@ -181,7 +181,7 @@ export const defaultGatewayHandler = async (
                 }
 
                 tx.renVM.eventEmitter.on("progress", (progress) =>
-                    logger.log(
+                    logger.info(
                         `[${printChain(gateway.params.from.chain)}⇢${printChain(
                             gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: RenVM status: ${
@@ -190,7 +190,7 @@ export const defaultGatewayHandler = async (
                     ),
                 );
 
-                logger.log("RenVM tx: ", tx.renVM.export());
+                logger.info("RenVM tx: ", tx.renVM.export());
 
                 while (true) {
                     try {
@@ -198,7 +198,7 @@ export const defaultGatewayHandler = async (
                         await tx.renVM.wait();
                         break;
                     } catch (error: unknown) {
-                        logger.log("RenVM tx: ", tx.renVM.export());
+                        logger.info("RenVM tx: ", tx.renVM.export());
                         logger.error(error);
                         if (
                             tx.renVM.progress.status ===
@@ -209,7 +209,7 @@ export const defaultGatewayHandler = async (
                         await utils.sleep(10 * utils.sleep.SECONDS);
                     }
                 }
-                logger.log(
+                logger.info(
                     `[${printChain(tx.in.chain)}⇢${printChain(
                         tx.out.chain,
                     )}][${tx.hash.slice(0, 6)}]: Submitting to ${printChain(
@@ -221,7 +221,7 @@ export const defaultGatewayHandler = async (
                 );
 
                 tx.out.eventEmitter.on("progress", (progress) =>
-                    logger.log(
+                    logger.info(
                         `[${printChain(gateway.params.from.chain)}⇢${printChain(
                             gateway.params.to.chain,
                         )}]`,
@@ -231,7 +231,7 @@ export const defaultGatewayHandler = async (
 
                 for (const setupKey of Object.keys(tx.outSetup)) {
                     const setup = tx.outSetup[setupKey];
-                    logger.log(
+                    logger.info(
                         `[${printChain(gateway.fromChain.chain)}⇢${printChain(
                             gateway.toChain.chain,
                         )}]: Calling ${setupKey} setup for ${String(
@@ -239,7 +239,7 @@ export const defaultGatewayHandler = async (
                         )}`,
                     );
                     setup.eventEmitter.on("progress", (progress) =>
-                        logger.log(
+                        logger.info(
                             `[${printChain(
                                 gateway.params.from.chain,
                             )}⇢${printChain(gateway.params.to.chain)}]`,
@@ -277,7 +277,7 @@ export const defaultGatewayHandler = async (
 
                 foundDeposits -= 1;
 
-                logger.log(
+                logger.info(
                     `[${printChain(from.chain)}⇢${printChain(
                         to.chain,
                     )}][${tx.hash.slice(

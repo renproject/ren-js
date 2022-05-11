@@ -4,9 +4,9 @@ import Wallet from "@project-serum/sol-wallet-adapter";
 import {
     assert,
     ChainTransaction,
+    defaultLogger,
     InputChainTransaction,
     Logger,
-    nullLogger,
     utils,
 } from "@renproject/utils";
 import * as Layout from "@solana/buffer-layout";
@@ -28,9 +28,11 @@ import tweetnacl from "tweetnacl";
 
 import {
     BurnLogLayout,
+    GatewayLayout,
     GatewayRegistryLayout,
     GatewayRegistryState,
     GatewayRegistryStateKey,
+    GatewayStateKey,
     RenVmMsgLayout,
 } from "./layouts";
 
@@ -116,12 +118,12 @@ export const createInstructionWithEthAddress2 = (
  * transaction to be finalized, so we return after 20 seconds.
  */
 export const finalizeTransaction = async (
-    connection: Connection,
+    provider: Connection,
     signature: TransactionSignature,
 ): Promise<void> => {
     // Wait up to 20 seconds for the transaction to be finalized.
     await Promise.race([
-        connection.confirmTransaction(signature, "finalized"),
+        provider.confirmTransaction(signature, "finalized"),
         20 * utils.sleep.SECONDS,
     ]);
 };
@@ -132,7 +134,7 @@ export const constructRenVMMsg = (
     token: Uint8Array,
     to: string,
     n_hash: Uint8Array,
-    logger: Logger = nullLogger,
+    logger: Logger = defaultLogger,
 ): Uint8Array[] => {
     try {
         const renvmmsg = Buffer.from(new Array(160));
@@ -271,7 +273,66 @@ export const txHashToChainTransaction = (
 });
 
 /**
- * Fetch the submission details of a previous burn from a burn nonce.
+ * Fetch the burn ID from a transaction. The burn's account key is the fourth
+ * account in the transaction.
+ */
+export const getBurnPublicKey = async (
+    provider: Connection,
+    txidFormatted: string,
+): Promise<PublicKey> => {
+    const tx = await provider.getTransaction(txidFormatted, {
+        commitment: "confirmed",
+    });
+    if (!tx) {
+        throw new Error(`Unable to find transaction ${txidFormatted}`);
+    }
+
+    return tx.transaction.message.accountKeys[4];
+};
+
+/**
+ * Fetch a burn's nonce from its burn ID / public key.
+ */
+export const getNonceFromBurnId = async (
+    provider: Connection,
+    mintGateway: PublicKey,
+    burnId: PublicKey,
+): Promise<number> => {
+    const mintGatewayStateAddress = (
+        await PublicKey.findProgramAddress(
+            [utils.fromUTF8String(GatewayStateKey)],
+            mintGateway,
+        )
+    )[0];
+
+    // Fetch gateway state.
+    const encodedGatewayState = await provider.getAccountInfo(
+        mintGatewayStateAddress,
+    );
+    if (!encodedGatewayState) {
+        throw new Error("incorrect gateway program address");
+    }
+    const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
+
+    // Calculate
+    const maximum = new BigNumber(gatewayState.burn_count.toString())
+        .plus(1)
+        .toNumber();
+
+    for (let i = 0; i <= maximum; i++) {
+        const leNonce = utils.toNBytes(i, 8, "le");
+        const burnIdI: PublicKey = (
+            await PublicKey.findProgramAddress([leNonce], mintGateway)
+        )[0];
+        if (burnIdI.equals(burnId)) {
+            return i;
+        }
+    }
+    throw new Error(`Burn with ID ${burnId.toBase58()} not found.`);
+};
+
+/**
+ * Fetch a burn's details from the burn's nonce.
  */
 export const getBurnFromNonce = async (
     provider: Connection,
@@ -279,6 +340,7 @@ export const getBurnFromNonce = async (
     asset: string,
     mintGateway: PublicKey,
     burnNonce: Uint8Array | number | string,
+    txidFormattedIn?: string,
 ): Promise<InputChainTransaction | undefined> => {
     let leNonce: Uint8Array;
     if (typeof burnNonce == "number") {
@@ -291,15 +353,23 @@ export const getBurnFromNonce = async (
 
     const burnId = await PublicKey.findProgramAddress([leNonce], mintGateway);
 
-    const burnInfo = await provider.getAccountInfo(burnId[0]);
+    const burnInfo = await provider.getAccountInfo(burnId[0], "processed");
     if (!burnInfo) {
         return undefined;
     }
 
     const burnData = BurnLogLayout.decode(burnInfo.data);
-    const transactions = await provider.getConfirmedSignaturesForAddress2(
-        burnId[0],
-    );
+
+    let txidFormatted = txidFormattedIn;
+    if (!txidFormatted) {
+        const transactions = await provider.getConfirmedSignaturesForAddress2(
+            burnId[0],
+            undefined,
+            "confirmed",
+        );
+        txidFormatted =
+            transactions.length > 0 ? transactions[0].signature : "";
+    }
 
     // Concatenate four u64s into a u256 value.
     const burnAmount = utils.fromBytes(
@@ -314,8 +384,6 @@ export const getBurnFromNonce = async (
     // Convert borsh `Number` to built-in number
     const recipientLength = parseInt(burnData.recipient_len.toString());
 
-    const txidFormatted =
-        transactions.length > 0 ? transactions[0].signature : "";
     const txid = txidFormatted
         ? utils.toURLBase64(new Uint8Array(base58.decode(txidFormatted)))
         : "";
@@ -328,11 +396,39 @@ export const getBurnFromNonce = async (
         // Input details
         asset,
         amount: burnAmount.toFixed(),
-        nonce: utils.fromBytes(leNonce, "le").toFixed(),
+        nonce: utils.toURLBase64(
+            utils.toNBytes(utils.fromBytes(leNonce, "le"), 32),
+        ),
         toRecipient: base58.encode(
             burnData.recipient.slice(0, recipientLength),
         ),
     };
+};
+
+/**
+ * Fetch a burn's details from the signature of the transaction in which the burn
+ * was made.
+ */
+export const getBurnFromTxid = async (
+    provider: Connection,
+    chain: string,
+    asset: string,
+    mintGateway: PublicKey,
+    txidFormatted: string,
+    nonce?: number,
+): Promise<InputChainTransaction | undefined> => {
+    const burnId = await getBurnPublicKey(provider, txidFormatted);
+    nonce = utils.isDefined(nonce)
+        ? nonce
+        : await getNonceFromBurnId(provider, mintGateway, burnId);
+    return getBurnFromNonce(
+        provider,
+        chain,
+        asset,
+        mintGateway,
+        nonce,
+        txidFormatted,
+    );
 };
 
 /**

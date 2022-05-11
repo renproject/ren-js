@@ -1,4 +1,4 @@
-import { Logger, LogLevel, nullLogger, utils } from "@renproject/utils";
+import { defaultLogger, Logger, LogLevel, utils } from "@renproject/utils";
 
 export { LogLevel } from "@renproject/utils";
 
@@ -31,7 +31,7 @@ export interface RenJSConfig {
 
 export const defaultRenJSConfig = {
     logLevel: LogLevel.Debug,
-    logger: nullLogger,
+    logger: defaultLogger,
     networkDelay: 15 * utils.sleep.SECONDS,
     // loadCompletedDeposits: false as boolean,
 };

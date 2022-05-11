@@ -2,9 +2,12 @@ import {
     ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
+    defaultLogger,
     eventEmitter,
     EventEmitterTyped,
+    Logger,
     PromiEvent,
+    SyncOrPromise,
     TxSubmitter,
     utils,
 } from "@renproject/utils";
@@ -21,13 +24,20 @@ import { txidFormattedToTxid } from "./utils";
 export class SolanaTxWaiter
     implements TxSubmitter<ChainTransactionProgress, {}, string>
 {
-    private _getTransaction: () => Promise<Transaction>;
+    private _getTransaction: () => Promise<{
+        transaction: Transaction;
+        nonce?: number;
+    }>;
     private _provider: Connection;
     private _getSigner: () => SolanaSigner | undefined;
-    private _onReceipt?: (signature: string) => void;
+    private _onReceipt?: (
+        signature: string,
+        nonce?: number,
+    ) => SyncOrPromise<void>;
     private _findExistingTransaction?: () => Promise<
         ChainTransaction | undefined
     >;
+    private _logger: Logger;
 
     public chain: string;
     public progress: ChainTransactionProgress;
@@ -58,14 +68,19 @@ export class SolanaTxWaiter
         getTransaction,
         onReceipt,
         findExistingTransaction,
+        logger,
     }: {
         chain: string;
         target: number;
         provider: Connection;
         getSigner: () => SolanaSigner | undefined;
-        getTransaction: () => Promise<Transaction>;
-        onReceipt?: (signature: string) => void;
+        getTransaction: () => Promise<{
+            transaction: Transaction;
+            nonce?: number;
+        }>;
+        onReceipt?: (signature: string, nonce?: number) => SyncOrPromise<void>;
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
+        logger?: Logger;
     }) {
         this._getTransaction = getTransaction;
         this.chain = chain;
@@ -73,6 +88,7 @@ export class SolanaTxWaiter
         this._getSigner = getSigner;
         this._onReceipt = onReceipt;
         this._findExistingTransaction = findExistingTransaction;
+        this._logger = logger || defaultLogger;
 
         this.eventEmitter = eventEmitter();
 
@@ -103,7 +119,9 @@ export class SolanaTxWaiter
      * );
      */
     public async export(): Promise<string> {
-        return base58.encode((await this._getTransaction()).serializeMessage());
+        return base58.encode(
+            (await this._getTransaction()).transaction.serializeMessage(),
+        );
     }
 
     public setTransaction = async (
@@ -146,11 +164,11 @@ export class SolanaTxWaiter
                 }
             }
 
-            const tx = await this._getTransaction();
+            const { transaction, nonce } = await this._getTransaction();
 
             // sendAndConfirmRawTransaction already calls simulate.
             const simulationResult = await utils.tryNTimes(
-                async () => this._provider.simulateTransaction(tx),
+                async () => this._provider.simulateTransaction(transaction),
                 5,
             );
             if (simulationResult.value.err) {
@@ -165,7 +183,7 @@ export class SolanaTxWaiter
                 throw new Error(`Must connect ${this.chain} signer.`);
             }
 
-            const signed = await signer.signTransaction(tx);
+            const signed = await signer.signTransaction(transaction);
             if (!signed.signature) {
                 throw new Error("failed to sign");
             }
@@ -178,7 +196,11 @@ export class SolanaTxWaiter
             );
 
             if (this._onReceipt) {
-                this._onReceipt(confirmedSignature);
+                try {
+                    await this._onReceipt(confirmedSignature, nonce);
+                } catch (error) {
+                    this._logger.error(error);
+                }
             }
 
             this.updateProgress({

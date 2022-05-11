@@ -357,7 +357,7 @@ export class Terra
      *
      * @category Main
      */
-    public Address(address: string): { chain: string; address: string } {
+    public Address(address: string): TerraOutputPayload {
         // Type validation
         assertType<string>("string", { address });
 
@@ -370,7 +370,10 @@ export class Terra
 
         return {
             chain: this.chain,
-            address,
+            type: "address",
+            params: {
+                address,
+            },
         };
     }
 
@@ -383,6 +386,7 @@ export class Terra
     public GatewayAddress(): TerraInputPayload {
         return {
             chain: this.chain,
+            type: "gatewayAddress",
         };
     }
 

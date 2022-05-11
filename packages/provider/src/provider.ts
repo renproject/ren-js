@@ -1,8 +1,8 @@
 import {
     assertType,
+    defaultLogger,
     ErrorWithCode,
     Logger,
-    nullLogger,
     pack,
     RenJSError,
     RenNetwork,
@@ -126,7 +126,7 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
             | RenNetworkString
             | string
             | Provider<RPCParams, RPCResponses>,
-        logger: Logger = nullLogger,
+        logger: Logger = defaultLogger,
     ) {
         super(
             // Check if the first parameter is a provider to forward calls to.

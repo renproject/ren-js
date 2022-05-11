@@ -3,12 +3,12 @@ import {
     assertType,
     ChainTransaction,
     ContractChain,
+    defaultLogger,
     DefaultTxWaiter,
     ErrorWithCode,
     InputChainTransaction,
     InputType,
     Logger,
-    nullLogger,
     OutputType,
     populateChainTransaction,
     RenJSError,
@@ -114,7 +114,7 @@ export class EthereumBaseChain
         this.explorer = StandardEVMExplorer(
             this.network.config.blockExplorerUrls[0],
         );
-        this._logger = (config && config.logger) || nullLogger;
+        this._logger = (config && config.logger) || defaultLogger;
 
         // Ignore not configured error.
         this.provider = undefined as never;

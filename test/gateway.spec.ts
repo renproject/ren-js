@@ -1,3 +1,4 @@
+import { getMintGateway } from "@renproject/chains-ethereum/src/utils/gatewayRegistry";
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { Bitcoin } from "packages/chains/chains-bitcoin/src";
@@ -7,14 +8,13 @@ import {
     Ethereum,
     Fantom,
 } from "packages/chains/chains-ethereum/src";
-import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
 import { Terra } from "packages/chains/chains-terra/src";
 import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
-import { getInputAndOutputTypes } from "packages/ren/src/utils/inputAndOutputTypes";
-import { RenNetwork } from "packages/utils/src";
+import { RenNetwork, utils } from "packages/utils/src";
 
+import { Dogecoin, Filecoin } from "../packages/chains/chains/src";
 import { defaultGatewayHandler } from "./utils/defaultGatewayHandler";
 import { initializeChain } from "./utils/testUtils";
 
@@ -23,6 +23,55 @@ chai.should();
 loadDotEnv();
 
 describe("Gateway", () => {
+    it("burn sentry", async () => {
+        const nonce = 44530;
+
+        const { provider } = initializeChain(Ethereum, RenNetwork.Mainnet);
+        const asset = "BTC";
+
+        const gatewayAddress = await getMintGateway(
+            Ethereum.configMap.mainnet,
+            provider,
+            asset,
+        );
+
+        const burnLogs = await provider.getLogs({
+            address: gatewayAddress,
+            fromBlock: 0,
+            toBlock: "latest",
+            topics: [
+                utils.Ox(
+                    utils.keccak256(
+                        Buffer.from("LogBurn(bytes,uint256,uint256,bytes)"),
+                    ),
+                ),
+                utils.Ox(utils.toNBytes(nonce, 32)),
+            ],
+        });
+        console.log(burnLogs[0]);
+    });
+
+    it("recover solana", async function () {
+        this.timeout(100000000000);
+
+        const network = RenNetwork.Mainnet;
+        const asset = Dogecoin.assets.DOGE;
+        const from = initializeChain(Solana, network);
+        const to = initializeChain<Dogecoin>(Dogecoin, network);
+        const renJS = new RenJS(network).withChains(from, to);
+
+        const gatewayParams: GatewayParams = {
+            asset,
+            from: from.Transaction({
+                txidFormatted:
+                    "2NEUJeqtgR95oWaKAYwCPLpH3BqS76kruZXPL1tJ51TSwuEBeyfmqmxMuvhYi4ibuNJzuqr3ETooaMhbbsgyUBJt",
+            }),
+            to: to.Address("A5ZfLr3zZwsEnVvJD4Z28Dr93RDCJgQSkv"),
+        };
+
+        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    });
+
     // it("Get fees", async function () {
     //     this.timeout(100000000000);
 
@@ -99,26 +148,71 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     });
 
-    it("BTC/fromEthereum", async function () {
+    it.only("BNB/toSolana", async function () {
+        this.timeout(100000000000);
+
+        const network = RenNetwork.Testnet;
+        const asset = BinanceSmartChain.assets.BNB;
+        const from = initializeChain(BinanceSmartChain);
+        const to = initializeChain(Solana);
+        const renJS = new RenJS(network).withChains(from, to);
+
+        const gatewayParams: GatewayParams = {
+            asset,
+            from: from.Account({ amount: 0.001, convertUnit: true }),
+            to: to.Account(),
+        };
+
+        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    });
+
+    it("FIL/fromSolana", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
 
-        const asset = Bitcoin.assets.BTC;
-        const ethereum = initializeChain(Ethereum);
-        const bitcoin = initializeChain(Bitcoin);
+        const asset = Filecoin.assets.FIL;
+        const from = initializeChain(Solana);
+        const to = initializeChain(Filecoin);
 
-        const renJS = new RenJS(network).withChains(bitcoin, ethereum);
+        const renJS = new RenJS(network).withChains(to, from);
 
         const gatewayParams = {
             asset,
-            // from: ethereum.Transaction({
+            // from: from.Transaction({
             //     // txidFormatted:
             //     // "0xef9d844602f21bae9cc38db39ce077f1bcff0517ae735f87c274b0d70e1fd6e5",
-            //     txid: "752ERgLyG66cw42znOB38bz_BReuc1-HwnSw1w4f1uU",
+            //     txidFormatted:
+            //         "5CuhGcME4DhLhtQ6PksgyL9rKs8UYUGc9rCzUBJGHRZM5VGp7oiXtKPjEwWyaa1rGvGqJ1ta74Y2mDbpaLLK1Gtb",
             // }),
-            from: ethereum.Account({ amount: 0.0001, convertUnit: true }),
-            to: bitcoin.Address("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6"),
+            from: from.Account({ amount: 0.0001, convertUnit: true }),
+            to: to.Address("t14wczuvodunv3xzexobzywpbj6qpr6jwdrbkrmbq"),
+        };
+
+        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    });
+
+    it("DOGE/fromSolana", async function () {
+        this.timeout(100000000000);
+
+        const network = RenNetwork.Testnet;
+
+        const asset = Dogecoin.assets.DOGE;
+        const from = initializeChain(Solana);
+        const to = initializeChain(Dogecoin);
+
+        const renJS = new RenJS(network).withChains(to, from);
+
+        const gatewayParams = {
+            asset,
+            from: from.Transaction({
+                // txidFormatted:
+                // "0xef9d844602f21bae9cc38db39ce077f1bcff0517ae735f87c274b0d70e1fd6e5",
+                txidFormatted:
+                    "5CuhGcME4DhLhtQ6PksgyL9rKs8UYUGc9rCzUBJGHRZM5VGp7oiXtKPjEwWyaa1rGvGqJ1ta74Y2mDbpaLLK1Gtb",
+            }),
+            // from: from.Account({ amount: 0.0001, convertUnit: true }),
+            to: to.Address("t14wczuvodunv3xzexobzywpbj6qpr6jwdrbkrmbq"),
         };
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));

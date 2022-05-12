@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import { Gateway } from "packages/ren/src";
 import { ChainTransactionStatus, Logger, utils } from "packages/utils/src";
 
@@ -11,15 +12,10 @@ export const defaultGatewayHandler = async (
     const from = gateway.fromChain;
     const to = gateway.toChain;
 
-    // const decimalsOnFromChain = await (from as ChainCommon).assetDecimals(
-    //     asset,
-    // );
-    // const decimalsOnToChain = await (to as ChainCommon).assetDecimals(asset);
-    // // No other way of getting proper decimals for burn-and-mints.
-    // const nativeDecimals = Math.max(decimalsOnFromChain, decimalsOnToChain);
-    const decimalsOnFromChain = 18;
-    const decimalsOnToChain = 18;
-    const nativeDecimals = 18;
+    const decimalsOnFromChain = await from.assetDecimals(asset);
+    const decimalsOnToChain = await to.assetDecimals(asset);
+    // No other way of getting proper decimals for burn-and-mints.
+    const nativeDecimals = Math.max(decimalsOnFromChain, decimalsOnToChain);
 
     logger.info(
         `[${printChain(from.chain)}⇢${printChain(to.chain)}]: Fees: ${

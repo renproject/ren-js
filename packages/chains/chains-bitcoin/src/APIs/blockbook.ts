@@ -11,13 +11,13 @@ export class Blockbook implements BitcoinAPI {
         this.url = url.replace(/\/$/, "");
     }
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         return (
             await utils.GET<{ bestHeight: number }>(`${this.url}`)
         ).bestHeight.toString();
-    }
+    };
 
-    public async fetchUTXOs(address: string): Promise<UTXO[]> {
+    public fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const url = `${this.url}/utxo/${address}`;
         const response = await utils.GET<FetchUTXOResult>(
             url,
@@ -58,7 +58,7 @@ export class Blockbook implements BitcoinAPI {
                     ),
             )
         ).sort(sortUTXOs);
-    }
+    };
 
     // fetchTXs = async (address: string): Promise<Array<{ tx: InputChainTransaction, height: string }>> => {
     //     const url = `${this.url}/txs/?address=${address}`;
@@ -95,7 +95,7 @@ export class Blockbook implements BitcoinAPI {
     //     return received.sort(sortUTXOs);
     // };
 
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.url}/tx/${txid}`;
         const tx = await utils.GET<TxResponse>(url);
         return fixUTXO(
@@ -110,9 +110,9 @@ export class Blockbook implements BitcoinAPI {
             },
             8,
         );
-    }
+    };
 
-    public async broadcastTransaction(txHex: string): Promise<string> {
+    public broadcastTransaction = async (txHex: string): Promise<string> => {
         const url = `${this.url}/tx/send`;
         const response = await utils.POST<{
             error: string | null;
@@ -123,7 +123,7 @@ export class Blockbook implements BitcoinAPI {
             throw new Error(response.error);
         }
         return response.txid;
-    }
+    };
 }
 
 export interface ScriptSig {

@@ -318,7 +318,7 @@ export const encodePackValue = (
  * Encode a `{ t, v }` pair by concatenating the pack type-encoding of `t`
  * followed by the pack value-encoding of `v`.
  */
-export function encodeTypedPackValue({ t, v }: TypedPackValue): Uint8Array {
+export const encodeTypedPackValue = ({ t, v }: TypedPackValue): Uint8Array => {
     try {
         const encodedType = encodePackTypeDefinition(t);
         const encodedValue = encodePackValue(t, v);
@@ -332,4 +332,4 @@ export function encodeTypedPackValue({ t, v }: TypedPackValue): Uint8Array {
             `Error encoding typed pack value: ${utils.extractError(error)}`,
         );
     }
-}
+};

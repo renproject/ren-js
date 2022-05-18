@@ -109,16 +109,16 @@ export class EVMTxSubmitter
         ChainTransaction | undefined
     >;
 
-    private updateProgress(
+    private updateProgress = (
         progress: Partial<ChainTransactionProgress>,
-    ): ChainTransactionProgress {
+    ): ChainTransactionProgress => {
         this.progress = {
             ...this.progress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
         return this.progress;
-    }
+    };
 
     public constructor({
         network,
@@ -163,13 +163,13 @@ export class EVMTxSubmitter
         };
     }
 
-    public async export(
+    public export = async (
         options: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             overrides?: any[];
             txConfig?: PayableOverrides;
         } = {},
-    ): Promise<PopulatedTransaction> {
+    ): Promise<PopulatedTransaction> => {
         return await this.getPayloadHandler(this.payload.type).export({
             network: this.network,
             signer: this.getSigner(),
@@ -178,7 +178,7 @@ export class EVMTxSubmitter
             overrides: options,
             getPayloadHandler: this.getPayloadHandler,
         });
-    }
+    };
 
     public submit = (
         options: {
@@ -206,7 +206,10 @@ export class EVMTxSubmitter
                     await this.findExistingTransaction();
 
                 if (existingTransaction) {
-                    if (existingTransaction.txidFormatted === "") {
+                    if (
+                        existingTransaction.txHash === "" ||
+                        existingTransaction.txidFormatted === ""
+                    ) {
                         this.updateProgress({
                             status: ChainTransactionStatus.Done,
                             confirmations: this.progress.target,
@@ -214,7 +217,8 @@ export class EVMTxSubmitter
                         return this.progress;
                     }
                     this.tx = await provider.getTransaction(
-                        existingTransaction.txidFormatted,
+                        (existingTransaction.txHash ||
+                            existingTransaction.txidFormatted) as string,
                     );
                 }
             }
@@ -265,7 +269,10 @@ export class EVMTxSubmitter
         chainTransaction: ChainTransaction,
     ): Promise<ChainTransactionProgress> => {
         const provider = this.getProvider();
-        this.tx = await provider.getTransaction(chainTransaction.txidFormatted);
+        this.tx = await provider.getTransaction(
+            (chainTransaction.txHash ||
+                chainTransaction.txidFormatted) as string,
+        );
         return this.updateProgress({
             status:
                 this.tx.confirmations < this.progress.target

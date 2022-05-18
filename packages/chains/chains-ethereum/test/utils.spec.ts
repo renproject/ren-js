@@ -2,6 +2,7 @@
 
 import chai, { expect } from "chai";
 
+import { EthProvider } from "../src";
 import { Ethereum } from "../src/ethereum";
 
 chai.should();
@@ -13,20 +14,18 @@ describe("Utils", () => {
     it("validateTransaction", () => {
         const ethereum = new Ethereum({
             network: "testnet",
-            provider: { _isProvider: true } as any,
+            provider: { _isProvider: true } as unknown as EthProvider,
         });
 
         expect(
             ethereum.validateTransaction({
-                txidFormatted:
-                    "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
+                txHash: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
             }),
         ).to.be.true;
 
         expect(
             ethereum.validateTransaction({
-                txidFormatted:
-                    "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
+                txHash: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
                 txid: "99v5i869e4A5F-AOfjKShDpLe_ZgFmOIEc6kcFoy1z4",
                 txindex: "0",
             }),

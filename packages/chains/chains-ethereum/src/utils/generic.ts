@@ -1,7 +1,3 @@
-import BigNumber from "bignumber.js";
-import { ethers } from "ethers";
-import { defaultAbiCoder, ParamType } from "ethers/lib/utils";
-
 import { Provider } from "@ethersproject/providers";
 import {
     ChainTransaction,
@@ -9,6 +5,9 @@ import {
     RenNetwork,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
+import { ethers } from "ethers";
+import { defaultAbiCoder, ParamType } from "ethers/lib/utils";
 
 import {
     findABIMethod,
@@ -33,25 +32,25 @@ import { EVMNetworkConfig, EVMNetworkInput } from "./types";
  * Convert an Ethereum transaction hash from its standard format to the format
  * required by RenVM.
  *
- * @param txidFormatted An Ethereum transaction hash formatted as a 0x-prefixed
+ * @param txHash An Ethereum transaction hash formatted as a 0x-prefixed
  * hex string.
- * @returns The same Ethereum transaction hash formatted as a base64 string.
+ * @returns The same Ethereum transaction hash formatted as bytes.
  */
-export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(utils.fromHex(txidFormatted));
-}
+export const txHashToBytes = (txHash: string): Uint8Array => {
+    return utils.fromHex(txHash);
+};
 
 /**
  * Convert an Ethereum transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid An Ethereum transaction hash formatted as a base64 string.
+ * @param txid An Ethereum transaction hash formatted as bytes.
  * @returns The same Ethereum transaction hash formatted as a 0x-prefixed hex
  * string.
  */
-export function txidToTxidFormatted(txid: string): string {
-    return utils.Ox(utils.fromBase64(txid));
-}
+export const txHashFromBytes = (bytes: Uint8Array): string => {
+    return utils.Ox(bytes);
+};
 
 export const txHashToChainTransaction = (
     chain: string,
@@ -60,10 +59,12 @@ export const txHashToChainTransaction = (
     const txHashBytes = utils.fromHex(txHash);
     return {
         chain,
-        // Standardize.
-        txidFormatted: utils.Ox(txHashBytes),
+        txHash: utils.Ox(txHashBytes),
         txid: utils.toURLBase64(txHashBytes),
         txindex: "0",
+
+        /** @deprecated Renamed to `txHash`. */
+        txidFormatted: utils.Ox(txHashBytes),
     };
 };
 
@@ -416,11 +417,18 @@ export const validateAddress = (address: string): boolean => {
 
 export const validateTransaction = (
     transaction: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string }),
+        ({ txid: string } | { txHash: string } | { txidFormatted: string }),
 ): boolean => {
     return (
         (utils.isDefined(transaction.txid) ||
+            utils.isDefined(transaction.txHash) ||
             utils.isDefined(transaction.txidFormatted)) &&
+        (transaction.txHash
+            ? utils.isHex(transaction.txHash, {
+                  length: 32,
+                  prefix: true,
+              })
+            : true) &&
         (transaction.txidFormatted
             ? utils.isHex(transaction.txidFormatted, {
                   length: 32,
@@ -435,8 +443,12 @@ export const validateTransaction = (
         (transaction.txindex
             ? !new BigNumber(transaction.txindex).isNaN()
             : true) &&
+        (transaction.txHash && transaction.txid
+            ? utils.toURLBase64(txHashToBytes(transaction.txHash)) ===
+              transaction.txid
+            : true) &&
         (transaction.txidFormatted && transaction.txid
-            ? txidFormattedToTxid(transaction.txidFormatted) ===
+            ? utils.toURLBase64(txHashToBytes(transaction.txidFormatted)) ===
               transaction.txid
             : true) &&
         (transaction.txindex === undefined || transaction.txindex === "0")

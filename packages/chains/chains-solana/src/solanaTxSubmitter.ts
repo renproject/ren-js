@@ -19,7 +19,7 @@ import {
 import base58 from "bs58";
 
 import { SolanaSigner } from "./types/types";
-import { txidFormattedToTxid } from "./utils";
+import { txHashToBytes } from "./utils";
 
 export class SolanaTxWaiter
     implements TxSubmitter<ChainTransactionProgress, {}, string>
@@ -45,16 +45,16 @@ export class SolanaTxWaiter
         progress: [ChainTransactionProgress];
     }>;
 
-    private updateProgress(
+    private updateProgress = (
         progress: Partial<ChainTransactionProgress>,
-    ): ChainTransactionProgress {
+    ): ChainTransactionProgress => {
         this.progress = {
             ...this.progress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
         return this.progress;
-    }
+    };
 
     /**
      * Requires a submitted chainTransaction, a chain object and the target
@@ -118,11 +118,11 @@ export class SolanaTxWaiter
      *     signed.serialize(),
      * );
      */
-    public async export(): Promise<string> {
+    public export = async (): Promise<string> => {
         return base58.encode(
             (await this._getTransaction()).transaction.serializeMessage(),
         );
-    }
+    };
 
     public setTransaction = async (
         chainTransaction: ChainTransaction,
@@ -207,9 +207,12 @@ export class SolanaTxWaiter
                 status: ChainTransactionStatus.Confirming,
                 transaction: {
                     chain: this.progress.chain,
-                    txidFormatted: confirmedSignature,
-                    txid: txidFormattedToTxid(confirmedSignature),
+                    txHash: confirmedSignature,
+                    txid: utils.toURLBase64(txHashToBytes(confirmedSignature)),
                     txindex: "0",
+
+                    /** @deprecated Renamed to `txHash`. */
+                    txidFormatted: confirmedSignature,
                 },
             });
 
@@ -253,7 +256,8 @@ export class SolanaTxWaiter
             let currentConfidenceRatio = -1;
             while (true) {
                 const tx = await this._provider.getConfirmedTransaction(
-                    this.progress.transaction.txidFormatted,
+                    (this.progress.transaction.txHash ||
+                        this.progress.transaction.txidFormatted) as string,
                 );
 
                 const currentSlot = await this._provider.getSlot();

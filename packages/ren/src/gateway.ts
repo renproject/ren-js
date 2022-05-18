@@ -194,7 +194,7 @@ export class Gateway<
      * @hidden - Called automatically when calling [[RenJS.gateway]]. It has
      * been split from the constructor because it is asynchronous.
      */
-    public async initialize(): Promise<Gateway<FromPayload, ToPayload>> {
+    public initialize = async (): Promise<Gateway<FromPayload, ToPayload>> => {
         const { to, asset, from } = this.params;
 
         const { inputType, outputType, selector } =
@@ -447,7 +447,7 @@ export class Gateway<
         }
 
         return this;
-    }
+    };
 
     private addTransaction = async (
         identifier: string,
@@ -478,7 +478,7 @@ export class Gateway<
      * const gatewayTransaction = await gateway
      *   .processDeposit({
      *      chain: "Ethereum",
-     *      txidFormatted: "0xef90...",
+     *      txHash: "0xef90...",
      *      txid: "752...",
      *      txindex: "0",
      *      amount: "1",
@@ -486,9 +486,9 @@ export class Gateway<
      * ```
      * @category Main
      */
-    public async processDeposit(
+    public processDeposit = async (
         inputTx: InputChainTransaction,
-    ): Promise<GatewayTransaction<ToPayload>> {
+    ): Promise<GatewayTransaction<ToPayload>> => {
         const depositIdentifier = inputTx.txid + "_" + String(inputTx.txindex);
         const existingTransaction = this.transactions.get(depositIdentifier);
 
@@ -576,7 +576,7 @@ export class Gateway<
         }
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return (await existingTransaction)!;
-    }
+    };
 
     /**
      * Listen to "transaction" events, registering a callback that will be
@@ -597,21 +597,21 @@ export class Gateway<
 
     /** PRIVATE METHODS */
 
-    private _defaultGetter(name: string) {
+    private _defaultGetter = (name: string) => {
         if (this[name] === undefined) {
             throw new Error(
                 `Must call 'initialize' before accessing '${name}'.`,
             );
         }
         return this[name];
-    }
+    };
 
     /**
      * Internal method that fetches deposits to the gateway address. If there
      * are no listeners to the "transaction" event, then it pauses fetching
      * deposits.
      */
-    private async _watchForDeposits(): Promise<void> {
+    private _watchForDeposits = async (): Promise<void> => {
         if (
             !this.gatewayAddress ||
             !isDepositChain(this.fromChain) ||
@@ -667,5 +667,5 @@ export class Gateway<
 
             await utils.sleep(this.config.networkDelay);
         }
-    }
+    };
 }

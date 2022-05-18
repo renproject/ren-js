@@ -1,10 +1,5 @@
 import { Buffer } from "buffer";
 
-import BigNumber from "bignumber.js";
-import elliptic from "elliptic";
-import { ecsign, privateToAddress } from "ethereumjs-util";
-import { OrderedMap } from "immutable";
-
 import {
     CrossChainParams,
     ParamsQueryConfig,
@@ -39,6 +34,10 @@ import {
     UrlBase64String,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
+import elliptic from "elliptic";
+import { ecsign, privateToAddress } from "ethereumjs-util";
+import { OrderedMap } from "immutable";
 
 import { MockChain } from "./MockChain";
 import { randomBytes } from "./utils";
@@ -107,21 +106,21 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
         this.transactions = new Map();
     }
 
-    public mintAuthority(): string {
+    public mintAuthority = (): string => {
         if (!this.privateKey) {
             throw new Error(
                 `Can't calculate mintAuthority when a gPubKey is provided.`,
             );
         }
         return utils.Ox(privateToAddress(Buffer.from(this.privateKey)));
-    }
+    };
 
-    public updatePrivateKey(privateKey?: Uint8Array): this {
+    public updatePrivateKey = (privateKey?: Uint8Array): this => {
         this.privateKey = privateKey || randomBytes(32);
         return this;
-    }
+    };
 
-    public registerChain(chain: Chain, assets?: string[]): this {
+    public registerChain = (chain: Chain, assets?: string[]): this => {
         this.supportedChains = this.supportedChains.set(chain.chain, chain);
         for (const asset of [
             ...Object.values(chain.assets),
@@ -130,12 +129,12 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
             this.registerAsset(asset, chain);
         }
         return this;
-    }
+    };
 
-    public registerAsset(asset: string, chain: Chain): this {
+    public registerAsset = (asset: string, chain: Chain): this => {
         this.supportedAssets = this.supportedAssets.set(asset, chain.chain);
         return this;
-    }
+    };
 
     public async sendMessage<Method extends keyof RPCParams & string>(
         method: Method,

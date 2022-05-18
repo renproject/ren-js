@@ -1,3 +1,4 @@
+import { RenNetwork } from "@renproject/utils";
 import {
     isMainnetAddress,
     isTestnetAddress,
@@ -5,8 +6,6 @@ import {
     toCashAddress,
 } from "bchaddrjs";
 import bs58 from "bs58";
-
-import { RenNetwork } from "@renproject/utils";
 
 import { BitcoinDotCom } from "./APIs/bitcoinDotCom";
 import { Blockchain, BlockchainNetwork } from "./APIs/blockchain";
@@ -79,22 +78,26 @@ export class BitcoinCash extends BitcoinBaseChain {
     };
     public assets = BitcoinCash.assets;
 
-    public validateAddress(address: string): boolean {
-        return (
-            isValidAddress(address) &&
-            (this.network.isTestnet
-                ? isTestnetAddress(address)
-                : isMainnetAddress(address))
-        );
-    }
+    public validateAddress = (address: string): boolean => {
+        try {
+            return (
+                isValidAddress(address) &&
+                (this.network.isTestnet
+                    ? isTestnetAddress(address)
+                    : isMainnetAddress(address))
+            );
+        } catch (error) {
+            return false;
+        }
+    };
 
-    public encodeAddress(bytes: Uint8Array): string {
+    public addressFromBytes = (bytes: Uint8Array): string => {
         return toCashAddress(bs58.encode(bytes));
-    }
+    };
 
-    public decodeAddress(address: string): Uint8Array {
+    public addressToBytes = (address: string): Uint8Array => {
         return decodeBitcoinCashAddress(address);
-    }
+    };
 
     public constructor({ network }: { network: BitcoinNetworkInput }) {
         super({

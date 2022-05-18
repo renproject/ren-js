@@ -7,7 +7,6 @@ import { config as loadDotEnv } from "dotenv";
 
 import { Filecoin } from "../src";
 import { fetchDeposits, getHeight } from "../src/utils/lotus";
-import { txidFormattedToTxid } from "../src/utils/utils";
 
 chai.should();
 
@@ -41,15 +40,13 @@ describe("Filecoin", () => {
 
         expect(
             filecoin.validateTransaction({
-                txidFormatted:
-                    "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
+                txHash: "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
             }),
         ).to.be.true;
 
         expect(
             filecoin.validateTransaction({
-                txidFormatted:
-                    "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
+                txHash: "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
                 txid: "AXGg5AIgHO4ySOdnt4TldXZqU6vfCKm9J6FngY8ajU5dO6BKErI",
                 txindex: "0",
             }),
@@ -99,9 +96,7 @@ describe("Filecoin", () => {
 
 // Slow test.
 describe.skip("Filecoin", () => {
-    it("lotus", async function () {
-        this.timeout(100000000000);
-
+    it("lotus", async () => {
         const client = new FilecoinClient({
             apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
         });
@@ -117,5 +112,5 @@ describe.skip("Filecoin", () => {
                 height,
             ),
         );
-    });
+    }).timeout(100000000000);
 });

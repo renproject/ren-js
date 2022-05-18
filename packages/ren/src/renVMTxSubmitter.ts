@@ -108,21 +108,24 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
             transaction: {
                 chain: this.chain,
                 txid: this.tx.hash,
-                txidFormatted: this.tx.hash,
+                txHash: this.tx.hash,
                 txindex: "0",
+
+                /** @deprecated Renamed to `txHash`. */
+                txidFormatted: this.tx.hash,
             },
         };
     }
 
-    public export(): TransactionInput<TypedPackValue> {
+    public export = (): TransactionInput<TypedPackValue> => {
         return this.tx;
-    }
+    };
 
-    public async query(): Promise<
+    public query = async (): Promise<
         ChainTransactionProgress & {
             response?: RenVMTransactionWithStatus<Transaction>;
         }
-    > {
+    > => {
         const tx: RenVMTransactionWithStatus<Transaction> =
             await this.provider.queryTx(this.tx.hash, 1);
 
@@ -137,7 +140,7 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 status: ChainTransactionStatus.Confirming,
             });
         }
-    }
+    };
 
     public submit = (): PromiEvent<
         ChainTransactionProgress & {

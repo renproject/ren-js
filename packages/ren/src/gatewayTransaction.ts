@@ -137,7 +137,7 @@ export class GatewayTransaction<
     }
 
     /** @hidden */
-    public async initialize(): Promise<this> {
+    public initialize: () => Promise<this> = async () => {
         const { inputType, outputType, selector } =
             await getInputAndOutputTypes({
                 asset: this.params.asset,
@@ -211,14 +211,16 @@ export class GatewayTransaction<
                 const txid = utils.toURLBase64(tx.out.txid);
                 const txindex = tx.out.txindex.toFixed();
 
+                const txHash = this.toChain.txHashFromBytes(
+                    utils.fromBase64(txid),
+                );
+
                 await this.out.setTransaction({
                     chain: this.toChain.chain,
                     txid,
                     txindex,
-                    txidFormatted: this.toChain.txidToTxidFormatted({
-                        txid,
-                        txindex,
-                    }),
+                    txHash,
+                    txidFormatted: txHash,
                 });
             } else if (
                 isDepositChain(this.toChain) &&
@@ -329,16 +331,16 @@ export class GatewayTransaction<
         }
 
         return this;
-    }
+    };
 
     /** PRIVATE METHODS */
 
-    private _defaultGetter(name: string) {
+    private _defaultGetter = (name: string) => {
         if (this[name] === undefined) {
             throw new Error(
                 `Must call 'initialize' before accessing '${name}'.`,
             );
         }
         return this[name];
-    }
+    };
 }

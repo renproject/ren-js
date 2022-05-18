@@ -1,8 +1,7 @@
-import { expect } from "chai";
-import { describe, it } from "mocha";
-
 /* eslint-disable no-console */
 import { RenNetwork } from "@renproject/utils";
+import { expect } from "chai";
+import { describe, it } from "mocha";
 
 import { Bitcoin, DigiByte } from "../src";
 
@@ -58,11 +57,13 @@ describe("Address validation", () => {
                     // Decode, encode and then decode again.
                     // This is because
                     expect(
-                        chain.decodeAddress(
-                            chain.encodeAddress(chain.decodeAddress(address)),
+                        chain.addressToBytes(
+                            chain.addressFromBytes(
+                                chain.addressToBytes(address),
+                            ),
                         ),
                     ).to.deep.equal(
-                        chain.decodeAddress(address),
+                        chain.addressToBytes(address),
                         `Expected decode(encode(decode(${String(
                             address,
                         )}))) to equal decode(${String(address)}).`,

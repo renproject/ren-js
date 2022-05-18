@@ -227,7 +227,6 @@ export const initializeChain = <T extends ChainCommon>(
         case Solana.chain:
             return new (Chain as unknown as typeof Solana)({
                 network,
-                provider: new Connection(renTestnet.endpoint),
                 signer: signerFromPrivateKey(
                     Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex"),
                 ),

@@ -84,10 +84,10 @@ export class Web3PromiEvent<
     /**
      * Proxy handler to call the promise or eventEmitter methods
      */
-    public proxyHandler(
+    public proxyHandler = (
         target: Web3PromiEvent<T, EventTypes>,
         name: string,
-    ): unknown {
+    ): unknown => {
         if (name === "resolve" || name === "reject") {
             // eslint-disable-next-line security/detect-object-injection
             return target[name];
@@ -124,5 +124,5 @@ export class Web3PromiEvent<
         }
 
         return;
-    }
+    };
 }

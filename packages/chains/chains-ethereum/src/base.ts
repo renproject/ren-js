@@ -51,8 +51,8 @@ import {
     mapBurnToChainLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
-    txidFormattedToTxid,
-    txidToTxidFormatted,
+    txHashFromBytes,
+    txHashToBytes,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
@@ -125,7 +125,7 @@ export class EthereumBaseChain
     }
 
     private _getMintAsset__memoized?: (asset: string) => Promise<string>;
-    public async getMintAsset(asset_: string): Promise<string> {
+    public getMintAsset = async (asset_: string): Promise<string> => {
         this._getMintAsset__memoized =
             this._getMintAsset__memoized ||
             utils.memoize(
@@ -133,10 +133,10 @@ export class EthereumBaseChain
                     await getRenAsset(this.network, this.provider, asset),
             );
         return this._getMintAsset__memoized(asset_);
-    }
+    };
 
     private _getMintGateway__memoized?: (asset: string) => Promise<string>;
-    public async getMintGateway(asset_: string): Promise<string> {
+    public getMintGateway = async (asset_: string): Promise<string> => {
         this._getMintGateway__memoized =
             this._getMintGateway__memoized ||
             utils.memoize(
@@ -144,10 +144,10 @@ export class EthereumBaseChain
                     await getMintGateway(this.network, this.provider, asset),
             );
         return this._getMintGateway__memoized(asset_);
-    }
+    };
 
     private _getLockAsset__memoized?: (asset: string) => Promise<string>;
-    public async getLockAsset(asset_: string): Promise<string> {
+    public getLockAsset = async (asset_: string): Promise<string> => {
         this._getLockAsset__memoized =
             this._getLockAsset__memoized ||
             utils.memoize(
@@ -155,10 +155,10 @@ export class EthereumBaseChain
                     await getLockAsset(this.network, this.provider, asset),
             );
         return this._getLockAsset__memoized(asset_);
-    }
+    };
 
     private _getLockGateway__memoized?: (asset: string) => Promise<string>;
-    public async getLockGateway(asset_: string): Promise<string> {
+    public getLockGateway = async (asset_: string): Promise<string> => {
         this._getLockGateway__memoized =
             this._getLockGateway__memoized ||
             utils.memoize(
@@ -166,39 +166,61 @@ export class EthereumBaseChain
                     await getLockGateway(this.network, this.provider, asset),
             );
         return this._getLockGateway__memoized(asset_);
-    }
+    };
 
     public validateAddress = validateAddress;
     public validateTransaction = validateTransaction;
-    public addressExplorerLink(address: string): string {
+    public addressExplorerLink = (address: string): string => {
         return this.explorer.address(address);
-    }
+    };
 
-    public txidFormattedToTxid(formattedTxid: string): string {
-        return txidFormattedToTxid(formattedTxid);
-    }
+    public addressToBytes = (address: string): Uint8Array => {
+        return utils.fromHex(address);
+    };
 
-    public txidToTxidFormatted({ txid }: { txid: string }): string {
-        return txidToTxidFormatted(txid);
-    }
-    public formattedTransactionHash = this.txidToTxidFormatted;
+    public addressFromBytes = (bytes: Uint8Array): string => {
+        return ethers.utils.getAddress(utils.Ox(bytes));
+    };
 
-    public transactionExplorerLink({
+    public txHashToBytes = (txHash: string): Uint8Array => {
+        return txHashToBytes(txHash);
+    };
+
+    public txHashFromBytes = (bytes: Uint8Array): string => {
+        return txHashFromBytes(bytes);
+    };
+
+    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
+    public txidFormattedToTxid = (txHash: string): string => {
+        return utils.toURLBase64(txHashToBytes(txHash));
+    };
+
+    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
+    public txidToTxidFormatted = ({ txid }: { txid: string }): string => {
+        return txHashFromBytes(utils.fromBase64(txid));
+    };
+
+    public transactionExplorerLink = ({
         txid,
+        txHash,
         txidFormatted,
     }: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string })): string | undefined {
-        if (txidFormatted) {
-            return this.explorer.transaction(txidFormatted);
+        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
+        | string
+        | undefined => {
+        if (txHash || txidFormatted) {
+            return this.explorer.transaction(
+                (txHash || txidFormatted) as string,
+            );
         } else if (txid) {
             return this.explorer.transaction(
                 this.txidToTxidFormatted({ txid }),
             );
         }
         return undefined;
-    }
+    };
 
-    public withProvider(web3Provider: EthProvider): this {
+    public withProvider = (web3Provider: EthProvider): this => {
         this.provider = Provider.isProvider(web3Provider)
             ? web3Provider
             : typeof web3Provider === "string"
@@ -221,9 +243,9 @@ export class EthereumBaseChain
             }
         }
         return this;
-    }
+    };
 
-    public withSigner(signer: EthSigner): this {
+    public withSigner = (signer: EthSigner): this => {
         this.signer = signer;
         try {
             this.signer.connect(this.provider);
@@ -233,9 +255,9 @@ export class EthereumBaseChain
             // `cannot alter JSON-RPC Signer connection`.
         }
         return this;
-    }
+    };
 
-    public async checkProviderNetwork(): Promise<void> {
+    public checkProviderNetwork = async (): Promise<void> => {
         const actualChainID = (await this.provider.getNetwork()).chainId;
         const expectedChainID = new BigNumber(
             this.network.config.chainId,
@@ -246,9 +268,9 @@ export class EthereumBaseChain
                 `${this.chain} provider connected to wrong network: expected ${expectedChainID}, got ${actualChainID}.`,
             );
         }
-    }
+    };
 
-    public async getOutputPayload(
+    public getOutputPayload = async (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
@@ -257,7 +279,7 @@ export class EthereumBaseChain
         to: string;
         toBytes: Uint8Array;
         payload: Uint8Array;
-    }> {
+    }> => {
         await this.checkProviderNetwork();
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler.getPayload) {
@@ -282,7 +304,7 @@ export class EthereumBaseChain
             ),
             getPayloadHandler: this.getPayloadHandler,
         });
-    }
+    };
 
     // Supported assets
 
@@ -290,7 +312,7 @@ export class EthereumBaseChain
 
     private _isLockAsset__memoized?: (assetSymbol: string) => Promise<boolean>;
     // Wrapper to expose _isLockAsset as a class method instead of a property
-    public async isLockAsset(assetSymbol_: string): Promise<boolean> {
+    public isLockAsset = async (assetSymbol_: string): Promise<boolean> => {
         this._isLockAsset__memoized =
             this._isLockAsset__memoized ||
             utils.memoize(async (assetSymbol: string): Promise<boolean> => {
@@ -314,11 +336,11 @@ export class EthereumBaseChain
                 return false;
             });
         return this._isLockAsset__memoized(assetSymbol_);
-    }
+    };
 
-    public isDepositAsset(assetSymbol: string): boolean {
+    public isDepositAsset = (assetSymbol: string): boolean => {
         return assetSymbol === this.network.nativeAsset.symbol;
-    }
+    };
 
     /**
      * `assetIsSupported` should return true if the asset is native to the
@@ -329,7 +351,7 @@ export class EthereumBaseChain
      * ```
      */
     private _isMintAsset__memoized?: (asset_: string) => Promise<boolean>;
-    public async isMintAsset(asset_: string): Promise<boolean> {
+    public isMintAsset = async (asset_: string): Promise<boolean> => {
         this._isMintAsset__memoized =
             this._isMintAsset__memoized ||
             utils.memoize(async (asset: string): Promise<boolean> => {
@@ -354,7 +376,7 @@ export class EthereumBaseChain
                 }
             });
         return this._isMintAsset__memoized(asset_);
-    }
+    };
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
@@ -363,7 +385,7 @@ export class EthereumBaseChain
      *
      */
     private _assetDecimals__memoized?: (asset_: string) => Promise<number>;
-    public async assetDecimals(asset_: string): Promise<number> {
+    public assetDecimals = async (asset_: string): Promise<number> => {
         this._assetDecimals__memoized =
             this._assetDecimals__memoized ||
             utils.memoize(
@@ -413,11 +435,11 @@ export class EthereumBaseChain
                 { expiry: false },
             );
         return this._assetDecimals__memoized(asset_);
-    }
+    };
 
-    public async transactionConfidence(
+    public transactionConfidence = async (
         transaction: ChainTransaction,
-    ): Promise<BigNumber> {
+    ): Promise<BigNumber> => {
         if (transaction.txid === "") {
             throw new Error(
                 `Unable to fetch transaction confidence, transaction hash not set.`,
@@ -435,7 +457,7 @@ export class EthereumBaseChain
                     `${String(
                         transaction.chain,
                     )} transaction not found: ${String(
-                        transaction.txidFormatted,
+                        transaction.txHash || transaction.txidFormatted,
                     )}`,
                 ),
                 RenJSError.TRANSACTION_NOT_FOUND,
@@ -449,12 +471,12 @@ export class EthereumBaseChain
         } else {
             return new BigNumber(0);
         }
-    }
+    };
 
-    public async getBalance(
+    public getBalance = async (
         asset: string,
         address?: string,
-    ): Promise<BigNumber> {
+    ): Promise<BigNumber> => {
         if (!address) {
             if (!this.signer) {
                 throw new Error(
@@ -510,9 +532,9 @@ export class EthereumBaseChain
         const balanceRaw = await await tokenContract.balanceOf(address);
 
         return new BigNumber(balanceRaw.toString());
-    }
+    };
 
-    public async getOutputTx(
+    public getOutputTx = async (
         inputType: InputType,
         outputType: OutputType,
         asset: string,
@@ -525,7 +547,7 @@ export class EthereumBaseChain
             signature?: Uint8Array;
         },
         confirmationTarget: number,
-    ): Promise<TxSubmitter | TxWaiter> {
+    ): Promise<TxSubmitter | TxWaiter> => {
         await this.checkProviderNetwork();
 
         const findExistingTransaction = async (): Promise<
@@ -616,13 +638,13 @@ export class EthereumBaseChain
                 ),
             findExistingTransaction,
         });
-    }
+    };
 
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    public async getInputTx(
+    public getInputTx = async (
         inputType: InputType,
         outputType: OutputType,
         asset: string,
@@ -637,7 +659,7 @@ export class EthereumBaseChain
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
-    ): Promise<TxSubmitter | TxWaiter> {
+    ): Promise<TxSubmitter | TxWaiter> => {
         await this.checkProviderNetwork();
 
         // if (!transaction && burnNonce) {
@@ -744,7 +766,7 @@ export class EthereumBaseChain
                 onFirstProgress: async (tx: ChainTransaction) => {
                     onReceipt(
                         await this.provider.getTransactionReceipt(
-                            tx.txidFormatted,
+                            (tx.txHash || tx.txidFormatted) as string,
                         ),
                     );
                 },
@@ -776,9 +798,9 @@ export class EthereumBaseChain
                 ),
             onReceipt: onReceipt,
         });
-    }
+    };
 
-    public async getInSetup(
+    public getInSetup = async (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
@@ -792,7 +814,7 @@ export class EthereumBaseChain
             };
             gatewayAddress?: string;
         },
-    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> {
+    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> => {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
@@ -847,9 +869,9 @@ export class EthereumBaseChain
             }
         }
         return txSubmitted;
-    }
+    };
 
-    public async getOutSetup(
+    public getOutSetup = async (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
@@ -861,7 +883,7 @@ export class EthereumBaseChain
             sigHash?: Uint8Array;
             signature?: Uint8Array;
         },
-    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> {
+    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> => {
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
@@ -916,7 +938,7 @@ export class EthereumBaseChain
             }
         }
         return txSubmitted;
-    }
+    };
 
     private getPayloadHandler = (payloadType: string): PayloadHandler => {
         switch (payloadType) {
@@ -935,12 +957,12 @@ export class EthereumBaseChain
         throw new Error(`Unknown payload type ${payloadType}`);
     };
 
-    public createGatewayAddress(
+    public createGatewayAddress = (
         _asset: string,
         fromPayload: EVMPayload,
         shardPublicKey: Uint8Array,
         gHash: Uint8Array,
-    ): Promise<string> | string {
+    ): Promise<string> | string => {
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
@@ -966,9 +988,9 @@ export class EthereumBaseChain
         return computeAddress(
             utils.fromHex(derivedPublicKey.getPublic(false, "hex")),
         );
-    }
+    };
 
-    private getEVMParams(
+    private getEVMParams = (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
@@ -989,7 +1011,7 @@ export class EthereumBaseChain
             sigHash?: Uint8Array;
             signature?: Uint8Array;
         },
-    ): EVMParamValues {
+    ): EVMParamValues => {
         return {
             // Always available
             [EVMParam.EVM_INPUT_TYPE]: inputType,
@@ -1095,11 +1117,11 @@ export class EthereumBaseChain
             [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]: params.gatewayAddress,
             [EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]: this.isDepositAsset(asset),
         };
-    }
+    };
 
     /* ====================================================================== */
 
-    public Account({
+    public Account = ({
         account,
         amount,
         convertToWei,
@@ -1114,7 +1136,7 @@ export class EthereumBaseChain
         convertToWei?: boolean;
         convertUnit?: boolean;
         anyoneCanSubmit?: boolean;
-    } = {}): EVMPayload {
+    } = {}): EVMPayload => {
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
             { amount },
@@ -1156,9 +1178,9 @@ export class EthereumBaseChain
                 anyoneCanSubmit,
             },
         };
-    }
+    };
 
-    public Address(address: string): EVMPayload {
+    public Address = (address: string): EVMPayload => {
         assertType<string>("string", {
             address,
         });
@@ -1182,15 +1204,15 @@ export class EthereumBaseChain
                 anyoneCanSubmit: true,
             },
         };
-    }
+    };
 
-    public Contract(params: {
+    public Contract = (params: {
         to: string;
         method: string;
         params: EthArg[];
         withRenParams: boolean;
         txConfig?: ethers.PayableOverrides;
-    }): EVMPayload {
+    }): EVMPayload => {
         return {
             chain: this.chain,
             type: "contract",
@@ -1228,20 +1250,20 @@ export class EthereumBaseChain
                 txConfig: params.txConfig,
             },
         };
-    }
+    };
 
     /**
      * Import an existing Ethereum transaction.
      *
      * @example
      * ethereum.Transaction({
-     *   txidFormatted: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
+     *   txHash: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
      * })
      */
-    public Transaction(
+    public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): EVMPayload {
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ): EVMPayload => {
         return {
             chain: this.chain,
             type: "transaction",
@@ -1249,11 +1271,11 @@ export class EthereumBaseChain
                 tx: populateChainTransaction({
                     partialTx,
                     chain: this.chain,
-                    txidToTxidFormatted,
-                    txidFormattedToTxid,
+                    txHashToBytes,
+                    txHashFromBytes,
                     defaultTxindex: "0",
                 }),
             },
         };
-    }
+    };
 }

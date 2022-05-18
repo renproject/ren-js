@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 export interface TerraNetworkConfig {
     selector: string;
     chainId: string;
+    addressPrefix: string;
 
     nativeAsset: {
         name: string;

@@ -10,9 +10,7 @@ chai.should();
 loadDotEnv();
 
 describe.skip("Filecoin explorers", () => {
-    it("mint to contract", async function () {
-        this.timeout(100000000000);
-
+    it("mint to contract", async () => {
         const filfox = new Filfox("mainnet");
 
         console.debug(
@@ -23,5 +21,5 @@ describe.skip("Filecoin explorers", () => {
                 1,
             ),
         );
-    });
+    }).timeout(100000000000);
 });

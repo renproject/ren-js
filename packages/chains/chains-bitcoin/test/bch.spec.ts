@@ -1,8 +1,7 @@
+import { utils } from "@renproject/utils";
 import { expect } from "chai";
 /* eslint-disable no-console */
 import { describe, it } from "mocha";
-
-import { utils } from "@renproject/utils";
 
 import { BitcoinCash } from "../src";
 
@@ -11,7 +10,7 @@ describe("BCH", () => {
         const bch = new BitcoinCash({ network: "testnet" });
         expect(
             utils.toHex(
-                bch.decodeAddress(
+                bch.addressToBytes(
                     "bchtest:pq35hhjj35we555szq8xsa47ry093mkasudz8aetvr",
                 ),
             ),

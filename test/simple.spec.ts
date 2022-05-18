@@ -1,10 +1,9 @@
+import { Ethereum } from "@renproject/chains-ethereum/src";
+import { RenNetwork } from "@renproject/utils";
 /* eslint-disable no-console */
 import chalk from "chalk";
 import { BinanceSmartChain } from "packages/chains/chains/src";
 import RenJS from "packages/ren/src";
-
-import { Ethereum } from "@renproject/chains-ethereum/src";
-import { RenNetwork } from "@renproject/utils";
 
 import { getEVMProvider } from "./utils/testUtils";
 
@@ -18,9 +17,7 @@ const network = RenNetwork.Testnet;
  */
 
 describe("DAI/toBinanceSmartChain - simpler", () => {
-    it("DAI/toBinanceSmartChain - simpler", async function () {
-        this.timeout(100000000000);
-
+    it("DAI/toBinanceSmartChain - simpler", async () => {
         const ethereum = new Ethereum({
             network,
             ...getEVMProvider(Ethereum, network),
@@ -82,5 +79,5 @@ describe("DAI/toBinanceSmartChain - simpler", () => {
                 })().catch(reject);
             });
         });
-    });
+    }).timeout(100000000000);
 });

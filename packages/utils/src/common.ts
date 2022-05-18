@@ -28,8 +28,8 @@ export const decodeRenVMSelector = (
     const regex =
         // Regular Expression to match selectors in the form of
         // ASSET/fromCHAINtoCHAIN, ASSET/fromCHAIN or ASSET/toCHAIN.
-        // ^(  ASSET )/[      [from(        CHAIN    ) _   to(   CHAIN  )] OR [from( CHAIN )] OR ( to(  CHAIN  ))]$
-        /^([a-zA-Z]+)\/(?:(?:(?:from([a-zA-Z]+?(?=To)))_(?:to([a-zA-Z]+))?)|(?:from([a-zA-Z]+))|(?:to([a-zA-Z]+)))$/;
+        // ^(  ASSET )/[      [from(        CHAIN      ) _   to(   CHAIN  )] OR [from( CHAIN )] OR ( to(  CHAIN  ))]$
+        /^([a-zA-Z]+)\/(?:(?:(?:from([a-zA-Z]+?(?=_to)))\_(?:to([a-zA-Z]+))?)|(?:from([a-zA-Z]+))|(?:to([a-zA-Z]+)))$/;
     const match = regex.exec(selector);
     if (!match) {
         throw new Error(`Invalid selector format '${selector}'.`);
@@ -96,30 +96,30 @@ export const normalizeSignature = (signature: Uint8Array): Uint8Array => {
     return utils.concat([r, utils.toNBytes(sBN, 32), new Uint8Array([v])]);
 };
 
-export function populateChainTransaction({
+export const populateChainTransaction = ({
     partialTx,
     chain,
-    txidToTxidFormatted,
-    txidFormattedToTxid,
+    txHashToBytes,
+    txHashFromBytes,
     defaultTxindex,
 }: {
     partialTx: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string });
+        ({ txid: string } | { txHash: string } | { txidFormatted: string });
     chain: string;
-    txidToTxidFormatted: (txid: string) => string;
-    txidFormattedToTxid: (txidFormatted: string) => string;
+    txHashToBytes: (txHash: string) => Uint8Array;
+    txHashFromBytes: (bytes: Uint8Array) => string;
     defaultTxindex?: string;
-}): ChainTransaction {
+}): ChainTransaction => {
+    const maybeTxHash = partialTx.txHash || partialTx.txidFormatted;
     const txid =
         partialTx.txid ||
-        (partialTx.txidFormatted &&
-            txidFormattedToTxid(partialTx.txidFormatted));
-    const txidFormatted =
-        partialTx.txidFormatted ||
-        (partialTx.txid && txidToTxidFormatted(partialTx.txid));
-    if (!txid || !txidFormatted) {
+        (maybeTxHash && utils.toURLBase64(txHashToBytes(maybeTxHash)));
+    const txHash =
+        maybeTxHash ||
+        (partialTx.txid && txHashFromBytes(utils.fromBase64(partialTx.txid)));
+    if (!txid || !txHash) {
         throw new Error(
-            `Must provide either 'txid' or 'txidFormatted' for ${chain} transaction.`,
+            `Must provide either 'txid' or 'txHash' for ${chain} transaction.`,
         );
     }
     if (partialTx.chain && partialTx.chain !== chain) {
@@ -136,7 +136,10 @@ export function populateChainTransaction({
         ...partialTx,
         chain,
         txid,
-        txidFormatted,
+        txHash,
         txindex,
+
+        /** @deprecated Renamed to `txHash`. */
+        txidFormatted: txHash,
     };
-}
+};

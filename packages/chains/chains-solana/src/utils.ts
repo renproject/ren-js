@@ -27,7 +27,9 @@ import { derivePath } from "ed25519-hd-key";
 import tweetnacl from "tweetnacl";
 
 import {
+    BurnLog,
     BurnLogLayout,
+    BurnLogLayoutV0,
     GatewayLayout,
     GatewayRegistryLayout,
     GatewayRegistryState,
@@ -267,9 +269,12 @@ export const txHashToChainTransaction = (
     txHash: string,
 ): ChainTransaction => ({
     chain: chain,
-    txidFormatted: txHash,
-    txid: txidFormattedToTxid(txHash),
+    txHash,
+    txid: utils.toURLBase64(txHashToBytes(txHash)),
     txindex: "0",
+
+    /** @deprecated Renamed to `txHash`. */
+    txidFormatted: txHash,
 });
 
 /**
@@ -278,13 +283,13 @@ export const txHashToChainTransaction = (
  */
 export const getBurnPublicKey = async (
     provider: Connection,
-    txidFormatted: string,
+    txHash: string,
 ): Promise<PublicKey> => {
-    const tx = await provider.getTransaction(txidFormatted, {
+    const tx = await provider.getTransaction(txHash, {
         commitment: "confirmed",
     });
     if (!tx) {
-        throw new Error(`Unable to find transaction ${txidFormatted}`);
+        throw new Error(`Unable to find transaction ${txHash}`);
     }
 
     return tx.transaction.message.accountKeys[4];
@@ -340,7 +345,7 @@ export const getBurnFromNonce = async (
     asset: string,
     mintGateway: PublicKey,
     burnNonce: Uint8Array | number | string,
-    txidFormattedIn?: string,
+    txHashIn?: string,
 ): Promise<InputChainTransaction | undefined> => {
     let leNonce: Uint8Array;
     if (typeof burnNonce == "number") {
@@ -358,17 +363,21 @@ export const getBurnFromNonce = async (
         return undefined;
     }
 
-    const burnData = BurnLogLayout.decode(burnInfo.data);
+    let burnData: BurnLog;
+    try {
+        burnData = BurnLogLayout.decode(burnInfo.data);
+    } catch (error) {
+        burnData = BurnLogLayoutV0.decode(burnInfo.data);
+    }
 
-    let txidFormatted = txidFormattedIn;
-    if (!txidFormatted) {
+    let txHash = txHashIn;
+    if (!txHash) {
         const transactions = await provider.getConfirmedSignaturesForAddress2(
             burnId[0],
             undefined,
             "confirmed",
         );
-        txidFormatted =
-            transactions.length > 0 ? transactions[0].signature : "";
+        txHash = transactions.length > 0 ? transactions[0].signature : "";
     }
 
     // Concatenate four u64s into a u256 value.
@@ -384,24 +393,32 @@ export const getBurnFromNonce = async (
     // Convert borsh `Number` to built-in number
     const recipientLength = parseInt(burnData.recipient_len.toString());
 
-    const txid = txidFormatted
-        ? utils.toURLBase64(new Uint8Array(base58.decode(txidFormatted)))
+    const truncatedRecipient = burnData.recipient.slice(0, recipientLength);
+    let toRecipient;
+    try {
+        toRecipient = utils.toUTF8String(truncatedRecipient);
+    } catch (error) {
+        toRecipient = base58.encode(truncatedRecipient);
+    }
+
+    const txid = txHash
+        ? utils.toURLBase64(new Uint8Array(base58.decode(txHash)))
         : "";
     return {
         // Tx Details
         chain: chain,
         txid,
         txindex: "0",
-        txidFormatted,
+        txHash,
+        /** @deprecated Renamed to `txHash`. */
+        txidFormatted: txHash,
         // Input details
         asset,
         amount: burnAmount.toFixed(),
         nonce: utils.toURLBase64(
             utils.toNBytes(utils.fromBytes(leNonce, "le"), 32),
         ),
-        toRecipient: base58.encode(
-            burnData.recipient.slice(0, recipientLength),
-        ),
+        toRecipient,
     };
 };
 
@@ -414,21 +431,14 @@ export const getBurnFromTxid = async (
     chain: string,
     asset: string,
     mintGateway: PublicKey,
-    txidFormatted: string,
+    txHash: string,
     nonce?: number,
 ): Promise<InputChainTransaction | undefined> => {
-    const burnId = await getBurnPublicKey(provider, txidFormatted);
+    const burnId = await getBurnPublicKey(provider, txHash);
     nonce = utils.isDefined(nonce)
         ? nonce
         : await getNonceFromBurnId(provider, mintGateway, burnId);
-    return getBurnFromNonce(
-        provider,
-        chain,
-        asset,
-        mintGateway,
-        nonce,
-        txidFormatted,
-    );
+    return getBurnFromNonce(provider, chain, asset, mintGateway, nonce, txHash);
 };
 
 /**
@@ -438,9 +448,9 @@ export const getBurnFromTxid = async (
  * @param txidFormatted A Solana transaction hash formatted as a base58 string.
  * @returns The same Solana transaction hash formatted as a base64 string.
  */
-export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(new Uint8Array(base58.decode(txidFormatted)));
-}
+export const txHashToBytes = (txHash: string): Uint8Array => {
+    return base58.decode(txHash);
+};
 
 /**
  * Convert a Solana transaction hash from the format required by RenVM to its
@@ -449,9 +459,9 @@ export function txidFormattedToTxid(txidFormatted: string): string {
  * @param txid A Solana transaction hash formatted as a base64 string.
  * @returns The same Solana transaction hash formatted as a base58 string.
  */
-export function txidToTxidFormatted(txid: string): string {
-    return base58.encode(utils.fromBase64(txid));
-}
+export const txHashFromBytes = (bytes: Uint8Array): string => {
+    return base58.encode(bytes);
+};
 
 export const isBase58 = utils.doesntError(
     (

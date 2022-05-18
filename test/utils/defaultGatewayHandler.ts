@@ -147,7 +147,7 @@ export const defaultGatewayHandler = async (
                     `[${printChain(from.chain)}⇢${printChain(to.chain)}][${
                         tx.hash
                     }] Detected:`,
-                    tx.in.progress.transaction?.txidFormatted,
+                    tx.in.progress.transaction?.txHash,
                 );
 
                 tx.in.eventEmitter.on("progress", (progress) =>
@@ -280,7 +280,7 @@ export const defaultGatewayHandler = async (
                         0,
                         6,
                     )}]: Done. (${foundDeposits} other deposits remaining)`,
-                    tx.out.progress.transaction?.txidFormatted,
+                    tx.out.progress.transaction?.txHash,
                 );
                 if (foundDeposits === 0) {
                     resolve();

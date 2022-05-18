@@ -11,19 +11,19 @@ export class Blockstream implements BitcoinAPI {
         this.apiKey = apiKey;
     }
 
-    public getAPIUrl(path: string): string {
+    public getAPIUrl = (path: string): string => {
         return `https://blockstream.info/${
             this.testnet ? "testnet/" : ""
         }api${path}${this.apiKey ? `?key=${this.apiKey}` : ""}`;
-    }
+    };
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         return (
             await utils.GET<string>(this.getAPIUrl(`/blocks/tip/height`))
         ).toString();
-    }
+    };
 
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const utxo = await utils.GET<BlockstreamTX>(
             this.getAPIUrl(`/tx/${txid}`),
         );
@@ -36,9 +36,9 @@ export class Blockstream implements BitcoinAPI {
                 ? utxo.status.block_height.toString()
                 : null,
         };
-    }
+    };
 
-    public async fetchUTXOs(address: string): Promise<UTXO[]> {
+    public fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const response = await utils.GET<BlockstreamUTXO[]>(
             this.getAPIUrl(`/address/${address}/utxo`),
         );
@@ -53,9 +53,9 @@ export class Blockstream implements BitcoinAPI {
                     : null,
             }))
             .sort(sortUTXOs);
-    }
+    };
 
-    public async fetchTXs(address: string): Promise<UTXO[]> {
+    public fetchTXs = async (address: string): Promise<UTXO[]> => {
         const response = await utils.GET<BlockstreamTX[]>(
             this.getAPIUrl(`/address/${address}/txs`),
         );
@@ -79,12 +79,12 @@ export class Blockstream implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    }
+    };
 
-    public async broadcastTransaction(txHex: string): Promise<string> {
+    public broadcastTransaction = async (txHex: string): Promise<string> => {
         const response = await utils.POST<string>(this.getAPIUrl(`/tx`), txHex);
         return response;
-    }
+    };
 }
 
 interface BlockstreamUTXO<vout = number> {

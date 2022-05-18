@@ -1,7 +1,6 @@
-import BigNumber from "bignumber.js";
-
 // import https from "https";
 import { utils } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { BitcoinAPI, fixUTXO, fixValue, sortUTXOs, UTXO } from "./API";
 
@@ -12,16 +11,16 @@ export class Insight implements BitcoinAPI {
         this.url = url.replace(/\/$/, "");
     }
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         return (
             await utils.GET<{ height: number }>(`${this.url}/sync`)
         ).height.toString();
-    }
+    };
 
-    public async fetchUTXOs(
+    public fetchUTXOs = async (
         address: string,
         confirmations: number = 0,
-    ): Promise<UTXO[]> {
+    ): Promise<UTXO[]> => {
         const url = `${this.url}/addr/${address}/utxo`;
         const response = await utils.GET<FetchUTXOResult>(
             url,
@@ -72,9 +71,9 @@ export class Insight implements BitcoinAPI {
                     ),
             )
         ).sort(sortUTXOs);
-    }
+    };
 
-    public async fetchTXs(address: string): Promise<UTXO[]> {
+    public fetchTXs = async (address: string): Promise<UTXO[]> => {
         const url = `${this.url}/txs/?address=${address}`;
         const response = await utils.GET<FetchTXsResult>(
             url,
@@ -109,9 +108,9 @@ export class Insight implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    }
+    };
 
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.url}/tx/${txid}`;
         const tx = await utils.GET<TxResponse>(url);
         return fixUTXO(
@@ -126,9 +125,9 @@ export class Insight implements BitcoinAPI {
             },
             8,
         );
-    }
+    };
 
-    public async broadcastTransaction(txHex: string): Promise<string> {
+    public broadcastTransaction = async (txHex: string): Promise<string> => {
         const url = `${this.url}/tx/send`;
         const response = await utils.POST<{
             error: string | null;
@@ -139,7 +138,7 @@ export class Insight implements BitcoinAPI {
             throw new Error(response.error);
         }
         return response.txid;
-    }
+    };
 }
 
 export interface ScriptSig {

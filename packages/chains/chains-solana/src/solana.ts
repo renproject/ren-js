@@ -55,9 +55,9 @@ import {
     getGatewayRegistryState,
     isBase58,
     resolveTokenGatewayContract,
+    txHashFromBytes,
+    txHashToBytes,
     txHashToChainTransaction,
-    txidFormattedToTxid,
-    txidToTxidFormatted,
 } from "./utils";
 
 interface SolOptions {
@@ -107,24 +107,30 @@ export class Solana
     /**
      * A Solana address is a base58-encoded 32-byte ed25519 public key.
      */
-    public validateAddress(address: string): boolean {
+    public validateAddress = (address: string): boolean => {
         try {
             return base58.decode(address).length === 32;
         } catch (error: unknown) {
             return false;
         }
-    }
+    };
 
     /**
      * A Solana transaction's ID is a base58-encoded 64-byte signature.
      */
-    public validateTransaction(
+    public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): boolean {
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
+                utils.isDefined(transaction.txHash) ||
                 utils.isDefined(transaction.txidFormatted)) &&
+            (transaction.txHash
+                ? isBase58(transaction.txHash, {
+                      length: 64,
+                  })
+                : true) &&
             (transaction.txidFormatted
                 ? isBase58(transaction.txidFormatted, {
                       length: 64,
@@ -138,34 +144,52 @@ export class Solana
             (transaction.txindex
                 ? !new BigNumber(transaction.txindex).isNaN()
                 : true) &&
-            (transaction.txidFormatted && transaction.txid
-                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+            (transaction.txHash && transaction.txid
+                ? utils.toURLBase64(this.txHashToBytes(transaction.txHash)) ===
                   transaction.txid
+                : true) &&
+            (transaction.txidFormatted && transaction.txid
+                ? utils.toURLBase64(
+                      this.txHashToBytes(transaction.txidFormatted),
+                  ) === transaction.txid
+                : true) &&
+            (transaction.txHash && transaction.txidFormatted
+                ? transaction.txHash === transaction.txidFormatted
                 : true) &&
             (transaction.txindex === undefined || transaction.txindex === "0")
         );
-    }
+    };
 
-    public addressExplorerLink(address: string): string {
+    public addressExplorerLink = (address: string): string => {
         return `${this.network.chainExplorer}/address/${address}?cluster=${this.network.chain}`;
-    }
+    };
 
-    public transactionExplorerLink({
+    public transactionExplorerLink = ({
         txid,
+        txHash,
         txidFormatted,
     }: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string })): string | undefined {
+        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
+        | string
+        | undefined => {
         const hash =
-            txidFormatted || (txid && this.txidToTxidFormatted({ txid }));
+            txHash ||
+            txidFormatted ||
+            (txid && this.txidToTxidFormatted({ txid }));
+        if (!hash) {
+            return "";
+        }
         return hash
-            ? `${this.network.chainExplorer}/tx/${hash}?cluster=${this.network.chain}`
+            ? `${this.network.chainExplorer}/tx/${String(hash)}?cluster=${
+                  this.network.chain
+              }`
             : undefined;
-    }
+    };
 
     private _getGatewayRegistryData__memoized?: () => Promise<GatewayRegistryState>;
     // Wrapper to expose _getGatewayRegistryData as a class method instead of a
     // property.
-    public async getGatewayRegistryData(): Promise<GatewayRegistryState> {
+    public getGatewayRegistryData = async (): Promise<GatewayRegistryState> => {
         this._getGatewayRegistryData__memoized =
             this._getGatewayRegistryData__memoized ||
             utils.memoize(async () => {
@@ -175,21 +199,21 @@ export class Solana
                 );
             });
         return this._getGatewayRegistryData__memoized();
-    }
+    };
 
-    public withProvider(provider: Connection): this {
+    public withProvider = (provider: Connection): this => {
         this.provider = provider;
         return this;
-    }
+    };
 
-    public withSigner(signer: Wallet): this {
+    public withSigner = (signer: Wallet): this => {
         this.signer = signer;
         return this;
-    }
+    };
 
-    public isLockAsset(asset: string): boolean {
+    public isLockAsset = (asset: string): boolean => {
         return asset === this.network.symbol;
-    }
+    };
 
     /**
      * `assetIsSupported` should return true if the the asset is native to the
@@ -199,14 +223,14 @@ export class Solana
      * ethereum.assetIsSupported = asset => asset === "ETH" || asset === "BTC" || ...;
      * ```
      */
-    public async isMintAsset(asset: string): Promise<boolean> {
+    public isMintAsset = async (asset: string): Promise<boolean> => {
         const gatewayRegistryData = await this.getGatewayRegistryData();
         const gateway = resolveTokenGatewayContract(gatewayRegistryData, asset);
 
         return gateway !== undefined;
-    }
+    };
 
-    public async assetDecimals(asset: string): Promise<number> {
+    public assetDecimals = async (asset: string): Promise<number> => {
         if (asset === this.network.nativeAsset.symbol) {
             return this.network.nativeAsset.decimals;
         }
@@ -215,27 +239,45 @@ export class Solana
         const res = await this.provider.getTokenSupply(new PublicKey(address));
 
         return res.value.decimals;
-    }
+    };
 
-    public async transactionConfidence(
+    public transactionConfidence = async (
         transaction: ChainTransaction,
-    ): Promise<BigNumber> {
-        const tx = await this.provider.getConfirmedTransaction(
-            transaction.txidFormatted,
+    ): Promise<BigNumber> => {
+        const tx = await this.provider.getTransaction(
+            (transaction.txHash || transaction.txidFormatted) as string,
+            { commitment: "confirmed" },
         );
 
         const currentSlot = await this.provider.getSlot();
         return new BigNumber(currentSlot - (tx && tx.slot ? tx.slot : 0));
-    }
+    };
 
-    public txidFormattedToTxid(formattedTxid: string): string {
-        return txidFormattedToTxid(formattedTxid);
-    }
+    public addressToBytes = (address: string): Uint8Array => {
+        throw base58.decode(address);
+    };
 
-    public txidToTxidFormatted({ txid }: { txid: string }): string {
-        return txidToTxidFormatted(txid);
-    }
-    public formattedTransactionHash = this.txidToTxidFormatted;
+    public addressFromBytes = (bytes: Uint8Array): string => {
+        return base58.encode(bytes);
+    };
+
+    public txHashToBytes = (txHash: string): Uint8Array => {
+        return txHashToBytes(txHash);
+    };
+
+    public txHashFromBytes = (bytes: Uint8Array): string => {
+        return txHashFromBytes(bytes);
+    };
+
+    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
+    public txidFormattedToTxid = (txHash: string): string => {
+        return utils.toURLBase64(txHashToBytes(txHash));
+    };
+
+    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
+    public txidToTxidFormatted = ({ txid }: { txid: string }): string => {
+        return txHashFromBytes(utils.fromBase64(txid));
+    };
 
     public async getMintGateway<ReturnPublicKey extends true | false = false>(
         asset: string,
@@ -285,7 +327,7 @@ export class Solana
         throw new Error(`Solana does not currently support lock assets.`);
     }
 
-    public async getOutputPayload(
+    public getOutputPayload = async (
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
@@ -294,7 +336,7 @@ export class Solana
         to: string;
         toBytes: Uint8Array;
         payload: Uint8Array;
-    }> {
+    }> => {
         const associatedTokenAccount = await this.getAssociatedTokenAccount(
             asset,
             contractCall.params.to,
@@ -304,13 +346,13 @@ export class Solana
             toBytes: new Uint8Array(associatedTokenAccount.toBuffer()),
             payload: new Uint8Array(),
         };
-    }
+    };
 
     /**
      * `submitMint` should take the completed mint transaction from RenVM and
      * submit its signature to the mint chain to finalize the mint.
      */
-    public async getOutputTx(
+    public getOutputTx = async (
         _inputType: InputType,
         _outputType: OutputType,
         asset: string,
@@ -325,7 +367,7 @@ export class Solana
             signature?: Uint8Array;
         },
         confirmationTarget: number,
-    ): Promise<TxSubmitter | TxWaiter> {
+    ): Promise<TxSubmitter | TxWaiter> => {
         const mintGateway = await this.getMintGateway(asset, {
             publicKey: true,
         });
@@ -545,8 +587,9 @@ export class Solana
                 mintGatewayStateAddress,
             );
 
-            if (!encodedGatewayState)
+            if (!encodedGatewayState) {
                 throw new Error("incorrect gateway program address");
+            }
 
             const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
 
@@ -587,15 +630,15 @@ export class Solana
             getTransaction,
             findExistingTransaction,
         });
-    }
+    };
 
     /**
      * Fetch the addresses' balance of the asset's representation on the chain.
      */
-    public async getBalance(
+    public getBalance = async (
         asset: string,
         address?: string,
-    ): Promise<BigNumber> {
+    ): Promise<BigNumber> => {
         if (!address) {
             if (!this.signer) {
                 throw new Error(
@@ -625,13 +668,13 @@ export class Solana
         return new BigNumber(
             (await this.provider.getTokenAccountBalance(source)).value.amount,
         );
-    }
+    };
 
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    public async getInputTx(
+    public getInputTx = async (
         _inputType: InputType,
         _outputType: OutputType,
         asset: string,
@@ -646,7 +689,7 @@ export class Solana
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
-    ): Promise<TxSubmitter | TxWaiter> {
+    ): Promise<TxSubmitter | TxWaiter> => {
         const { toPayload } = getParams();
         if (toPayload && toPayload.payload.length > 0) {
             throw new Error(
@@ -665,7 +708,7 @@ export class Solana
             )
         )[0];
 
-        const onReceipt = async (txidFormatted: string, nonce?: number) => {
+        const onReceipt = async (txHash: string, nonce?: number) => {
             const burnDetails = await utils.tryNTimes(
                 () =>
                     getBurnFromTxid(
@@ -673,7 +716,7 @@ export class Solana
                         this.chain,
                         asset,
                         mintGateway,
-                        txidFormatted,
+                        txHash,
                         nonce,
                     ),
                 5,
@@ -681,7 +724,7 @@ export class Solana
             );
             if (!burnDetails) {
                 throw new Error(
-                    `Unable to get burn details from transaction ${txidFormatted}`,
+                    `Unable to get burn details from transaction ${txHash}`,
                 );
             }
             onInput(burnDetails);
@@ -708,7 +751,7 @@ export class Solana
                 chain: this,
                 target: confirmationTarget,
                 onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt(tx.txidFormatted),
+                    onReceipt((tx.txHash || tx.txidFormatted) as string),
             });
         }
 
@@ -718,7 +761,7 @@ export class Solana
                 chain: this,
                 target: confirmationTarget,
                 onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt(tx.txidFormatted),
+                    onReceipt((tx.txHash || tx.txidFormatted) as string),
             });
         }
 
@@ -850,9 +893,11 @@ export class Solana
             getTransaction,
             onReceipt,
         });
-    }
+    };
 
-    public async associatedTokenAccountExists(asset: string): Promise<boolean> {
+    public associatedTokenAccountExists = async (
+        asset: string,
+    ): Promise<boolean> => {
         const associatedTokenAddress = await this.getAssociatedTokenAccount(
             asset,
         );
@@ -871,32 +916,32 @@ export class Solana
             setupRequired = true;
         }
         return !setupRequired;
-    }
+    };
 
-    public async getOutSetup(
+    public getOutSetup = async (
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
         _contractCall: SolanaOutputPayload,
     ): Promise<{
         [key: string]: TxSubmitter | TxWaiter;
-    }> {
+    }> => {
         if (!(await this.associatedTokenAccountExists(asset))) {
             return {
                 createTokenAccount: this.createAssociatedTokenAccount(asset),
             };
         }
         return {};
-    }
+    };
 
     /*
      * Solana specific utility for checking whether a token account has been
      * instantiated for the selected asset
      */
-    public async getAssociatedTokenAccount(
+    public getAssociatedTokenAccount = async (
         asset: string,
         address?: string,
-    ): Promise<PublicKey> {
+    ): Promise<PublicKey> => {
         let targetAddress = address ? new PublicKey(address) : undefined;
         if (!targetAddress) {
             if (!this.signer) {
@@ -930,7 +975,7 @@ export class Solana
         //     return undefined;
         // }
         return destination;
-    }
+    };
 
     /*
      * Solana specific utility for creating a token account for a given user
@@ -938,10 +983,10 @@ export class Solana
      * @param address? If provided, will create the token account for the given solana address,
      *                 otherwise, use the address of the wallet connected to the provider
      */
-    public createAssociatedTokenAccount(
+    public createAssociatedTokenAccount = (
         asset: string,
         address?: string,
-    ): SolanaTxWaiter {
+    ): SolanaTxWaiter => {
         const getTransaction = async (): Promise<{
             transaction: Transaction;
         }> => {
@@ -994,6 +1039,9 @@ export class Solana
                     chain: this.chain,
                     txid: "",
                     txindex: "0",
+                    txHash: "",
+
+                    /** @deprecated Renamed to `txHash`. */
                     txidFormatted: "",
                 };
             }
@@ -1008,15 +1056,15 @@ export class Solana
             getTransaction,
             findExistingTransaction,
         });
-    }
+    };
 
-    public Account({
+    public Account = ({
         amount,
         convertUnit,
     }: {
         amount?: BigNumber | string | number;
         convertUnit?: boolean;
-    } = {}): SolanaOutputPayload | SolanaInputPayload {
+    } = {}): SolanaOutputPayload | SolanaInputPayload => {
         if (amount) {
             return {
                 chain: this.chain,
@@ -1034,9 +1082,11 @@ export class Solana
             throw new Error(`Must connected signer or use .Address instead.`);
         }
         return this.Address(this.signer.publicKey.toString());
-    }
+    };
 
-    public Address(address: string): SolanaOutputPayload | SolanaInputPayload {
+    public Address = (
+        address: string,
+    ): SolanaOutputPayload | SolanaInputPayload => {
         return {
             chain: this.chain,
             type: "mintToAddress",
@@ -1044,7 +1094,7 @@ export class Solana
                 to: address,
             },
         };
-    }
+    };
 
     /**
      * Import an existing Solana transaction instead of watching for deposits
@@ -1052,13 +1102,13 @@ export class Solana
      *
      * @example
      * solana.Transaction({
-     *   txidFormatted: "3mabcf8...",
+     *   txHash: "3mabcf8...",
      * })
      */
-    public Transaction(
+    public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): SolanaInputPayload {
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ): SolanaInputPayload => {
         return {
             chain: this.chain,
             type: "transaction",
@@ -1066,17 +1116,17 @@ export class Solana
                 tx: populateChainTransaction({
                     partialTx,
                     chain: this.chain,
-                    txidToTxidFormatted,
-                    txidFormattedToTxid,
+                    txHashToBytes,
+                    txHashFromBytes,
                     defaultTxindex: "0",
                 }),
             },
         };
-    }
+    };
 
-    public BurnNonce(
+    public BurnNonce = (
         burnNonce: Uint8Array | string | number,
-    ): SolanaInputPayload {
+    ): SolanaInputPayload => {
         return {
             chain: this.chain,
             type: "burnNonce",
@@ -1087,5 +1137,5 @@ export class Solana
                         : burnNonce.toString(),
             },
         };
-    }
+    };
 }

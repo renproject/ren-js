@@ -22,11 +22,17 @@ export enum OutputType {
 export type NumericString = string;
 
 export interface ChainTransaction {
+    /** The chain on which the transaction is on. */
     chain: string;
+    /** A base64-formatted transaction hash. */
     txid: UrlBase64String;
+    /** The index of the specific event/message/transfer inside the transaction - "0" if not applicable. */
     txindex: NumericString;
+    /** A human-readable form of the txid. */
+    txHash: string;
 
-    txidFormatted: string;
+    /** @deprecated Renamed to txHash. */
+    txidFormatted?: string;
 }
 
 export interface InputChainTransaction extends ChainTransaction {
@@ -108,22 +114,26 @@ export interface ChainCommon {
     /** Check if the transaction's format is valid. */
     validateTransaction(
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): boolean;
 
     /** Return a URL to the address's page on an explorer. */
     addressExplorerLink: (address: string) => string | undefined;
 
-    txidToTxidFormatted(transaction: { txid: string; txindex: string }): string;
-    /** @deprecated Renamed to txidToTxidFormatted. */
-    formattedTransactionHash: ChainCommon["txidToTxidFormatted"];
+    addressToBytes: (address: string) => Uint8Array;
+    addressFromBytes: (bytes: Uint8Array) => string;
+    txHashToBytes: (txHash: string) => Uint8Array;
+    txHashFromBytes: (bytes: Uint8Array) => string;
 
+    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
+    txidToTxidFormatted(transaction: { txid: string; txindex: string }): string;
+    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
     txidFormattedToTxid(formattedTxid: string): string;
 
     /** Return a URL to the transaction's page on an explorer. */
     transactionExplorerLink: (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined;
 
     // /** Return a TxWaiter instance for the provided chain transaction. */

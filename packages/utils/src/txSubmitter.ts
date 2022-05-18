@@ -147,12 +147,14 @@ export class TxWaiterProxy {
         });
     }
 
-    public _wait(target?: number): PromiEvent<
+    public _wait = (
+        target?: number,
+    ): PromiEvent<
         ChainTransactionProgress,
         {
             progress: [ChainTransactionProgress];
         }
-    > {
+    > => {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress,
             {
@@ -167,12 +169,12 @@ export class TxWaiterProxy {
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 
     /**
      * Proxy handler to call the promise or eventEmitter methods
      */
-    public proxyHandler(target: TxWaiterProxy, name: string): unknown {
+    public proxyHandler = (target: TxWaiterProxy, name: string): unknown => {
         if (name === "transaction") {
             return target._transaction;
         }
@@ -193,7 +195,7 @@ export class TxWaiterProxy {
         }
 
         return target._txWaiter[name];
-    }
+    };
 }
 
 /**
@@ -210,16 +212,16 @@ export class DefaultTxWaiter implements TxWaiter {
     }>;
     private _onFirstProgress?: (tx: ChainTransaction) => SyncOrPromise<void>;
 
-    private updateProgress(
+    private updateProgress = (
         progress: Partial<ChainTransactionProgress>,
-    ): ChainTransactionProgress {
+    ): ChainTransactionProgress => {
         this.progress = {
             ...this.progress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
         return this.progress;
-    }
+    };
 
     /**
      * Requires a submitted chainTransaction, a chain object and the target
@@ -259,9 +261,9 @@ export class DefaultTxWaiter implements TxWaiter {
      * hash isn't available yet. For example, a release transaction submitted
      * by RenVM.
      */
-    public setTransaction(
+    public setTransaction = (
         chainTransaction: ChainTransaction,
-    ): ChainTransactionProgress {
+    ): ChainTransactionProgress => {
         return this.updateProgress({
             transaction: chainTransaction,
             status:
@@ -269,7 +271,7 @@ export class DefaultTxWaiter implements TxWaiter {
                     ? ChainTransactionStatus.Done
                     : ChainTransactionStatus.Confirming,
         });
-    }
+    };
 
     public wait = (
         target?: number,

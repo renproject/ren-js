@@ -121,7 +121,7 @@ export const unmarshalPackValue = <
  * Converts a { t, v } pack object, using `t` as a pack type and `v` as a pack
  * value.
  */
-export function unmarshalTypedPackValue({ t, v }: TypedPackValue): any {
+export const unmarshalTypedPackValue = ({ t, v }: TypedPackValue): any => {
     try {
         return unmarshalPackValue(t, v);
     } catch (error: unknown) {
@@ -136,4 +136,4 @@ export function unmarshalTypedPackValue({ t, v }: TypedPackValue): any {
             )}`,
         );
     }
-}
+};

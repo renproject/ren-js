@@ -116,22 +116,22 @@ export const hash160 = (...msg: Uint8Array[]): Uint8Array => {
  * Convert a Bitcoin transaction hash from its standard format to the format
  * required by RenVM.
  *
- * @param txidFormatted A Bitcoin transaction hash formatted as an unprefixed
+ * @param txHash A Bitcoin transaction hash formatted as an unprefixed
  * hex string.
- * @returns The same Bitcoin transaction hash formatted as a base64 string.
+ * @returns The bytes representing the same txHash.
  */
-export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(utils.fromHex(txidFormatted).reverse());
-}
+export const txHashToBytes = (txHash: string): Uint8Array => {
+    return utils.fromHex(txHash).reverse();
+};
 
 /**
  * Convert a Bitcoin transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid A Bitcoin transaction hash formatted as a base64 string.
+ * @param bytes Bytes representing a Bitcoin hash.
  * @returns The same Bitcoin transaction hash formatted as an unprefixed hex
  * string.
  */
-export function txidToTxidFormatted(txid: string): string {
-    return utils.toHex(utils.fromBase64(txid).reverse());
-}
+export const txHashFromBytes = (bytes: Uint8Array): string => {
+    return utils.toHex(bytes.reverse());
+};

@@ -61,10 +61,10 @@
 //             await tx.out.wait();
 
 //             // All transactions return a `ChainTransaction` object in the
-//             // progress, with a `txid` field (base64) and a `txidFormatted`
+//             // progress, with a `txid` field (base64) and a `txHash`
 //             // field (chain-dependent).
 //             const outTx = tx.out.progress.transaction;
-//             console.log("Done:", outTx.txidFormatted);
+//             console.log("Done:", outTx.txHash);
 
 //             // All chain classes expose a common set of helper functions (see
 //             // `Chain` class.)

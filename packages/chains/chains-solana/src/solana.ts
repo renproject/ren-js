@@ -751,7 +751,7 @@ export class Solana
                 chain: this,
                 target: confirmationTarget,
                 onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt((tx.txHash || tx.txidFormatted) as string),
+                    onReceipt((tx.txHash || tx.txidFormatted)!),
             });
         }
 
@@ -761,7 +761,7 @@ export class Solana
                 chain: this,
                 target: confirmationTarget,
                 onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt((tx.txHash || tx.txidFormatted) as string),
+                    onReceipt((tx.txHash || tx.txidFormatted)!),
             });
         }
 
@@ -897,9 +897,11 @@ export class Solana
 
     public associatedTokenAccountExists = async (
         asset: string,
+        address?: string,
     ): Promise<boolean> => {
         const associatedTokenAddress = await this.getAssociatedTokenAccount(
             asset,
+            address,
         );
         let setupRequired = false;
         try {
@@ -922,11 +924,16 @@ export class Solana
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
-        _contractCall: SolanaOutputPayload,
+        contractCall: SolanaOutputPayload,
     ): Promise<{
         [key: string]: TxSubmitter | TxWaiter;
     }> => {
-        if (!(await this.associatedTokenAccountExists(asset))) {
+        if (
+            !(await this.associatedTokenAccountExists(
+                asset,
+                contractCall.params.to,
+            ))
+        ) {
             return {
                 createTokenAccount: this.createAssociatedTokenAccount(asset),
             };
@@ -1034,7 +1041,7 @@ export class Solana
         const findExistingTransaction = async (): Promise<
             ChainTransaction | undefined
         > => {
-            if (await this.associatedTokenAccountExists(asset)) {
+            if (await this.associatedTokenAccountExists(asset, address)) {
                 return {
                     chain: this.chain,
                     txid: "",
@@ -1061,7 +1068,9 @@ export class Solana
     public Account = ({
         amount,
         convertUnit,
+        address,
     }: {
+        address?: string;
         amount?: BigNumber | string | number;
         convertUnit?: boolean;
     } = {}): SolanaOutputPayload | SolanaInputPayload => {
@@ -1074,8 +1083,13 @@ export class Solana
                         ? amount.toFixed()
                         : amount,
                     convertUnit,
+                    address,
                 },
             };
+        }
+
+        if (address) {
+            return this.Address(address);
         }
 
         if (!this.signer || !this.signer.publicKey) {

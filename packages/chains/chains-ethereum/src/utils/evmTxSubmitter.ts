@@ -166,7 +166,7 @@ export class EVMTxSubmitter
     public export = async (
         options: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            overrides?: any[];
+            overrides?: { [key: string]: any };
             txConfig?: PayableOverrides;
         } = {},
     ): Promise<PopulatedTransaction> => {
@@ -183,7 +183,7 @@ export class EVMTxSubmitter
     public submit = (
         options: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            overrides?: any[];
+            overrides?: { [key: string]: any };
             txConfig?: PayableOverrides;
         } = {},
     ): PromiEvent<
@@ -231,9 +231,25 @@ export class EVMTxSubmitter
                 if (!signer.provider) {
                     throw new Error("EVM signer has no connected provider.");
                 }
-                const tx = await this.getPayloadHandler(
+                const payloadHandler = this.getPayloadHandler(
                     this.payload.type,
-                ).export({
+                );
+                if (payloadHandler.required) {
+                    const required = await payloadHandler.required({
+                        network: this.network,
+                        signer: signer,
+                        payload: this.payload,
+                        evmParams: this.getParams(),
+                        getPayloadHandler: this.getPayloadHandler,
+                    });
+                    if (!required) {
+                        this.updateProgress({
+                            status: ChainTransactionStatus.Done,
+                            confirmations: this.progress.target,
+                        });
+                    }
+                }
+                const tx = await payloadHandler.export({
                     network: this.network,
                     signer: signer,
                     payload: this.payload,

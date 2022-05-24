@@ -114,7 +114,7 @@ export interface ChainCommon {
     /** Check if the transaction's format is valid. */
     validateTransaction(
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string }),
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
     ): boolean;
 
     /** Return a URL to the address's page on an explorer. */
@@ -133,7 +133,7 @@ export interface ChainCommon {
     /** Return a URL to the transaction's page on an explorer. */
     transactionExplorerLink: (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string }),
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
     ) => string | undefined;
 
     // /** Return a TxWaiter instance for the provided chain transaction. */

@@ -1,12 +1,3 @@
-import BigNumber from "bignumber.js";
-import {
-    Contract,
-    PayableOverrides,
-    PopulatedTransaction,
-    Signer,
-} from "ethers";
-import { ParamType } from "ethers/lib/utils";
-
 import {
     ChainTransaction,
     ErrorWithCode,
@@ -16,6 +7,14 @@ import {
     SyncOrPromise,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
+import {
+    Contract,
+    PayableOverrides,
+    PopulatedTransaction,
+    Signer,
+} from "ethers";
+import { ParamType } from "ethers/lib/utils";
 
 import { getERC20Instance } from "../../contracts";
 import { EthArg, payloadToABI } from "../abi";
@@ -145,7 +144,7 @@ export interface PayloadHandler<P extends EVMPayload = EVMPayload> {
         evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            params?: { [key: string]: any };
+            overrides?: { [key: string]: any };
             txConfig?: PayableOverrides;
         };
         getPayloadHandler: (payloadType: string) => PayloadHandler;
@@ -280,7 +279,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            params?: { [key: string]: any };
+            overrides?: { [key: string]: any };
             txConfig?: PayableOverrides;
         };
     }): Promise<PopulatedTransaction> => {
@@ -297,10 +296,10 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         // Get parameter values, checking first if each value has been
         // overridden.
         const params = payload.params.params.map((x) =>
-            overrides.params && utils.isDefined(overrides.params[x.name])
+            overrides.overrides && utils.isDefined(overrides.overrides[x.name])
                 ? {
                       ...x,
-                      value: overrides.params[x.name],
+                      value: overrides.overrides[x.name],
                   }
                 : x,
         );
@@ -419,17 +418,6 @@ const getContractFromAccount = async (
                             value: amount,
                         },
                     ],
-                },
-                setup: {
-                    approval: {
-                        chain: network.selector,
-                        type: "approval",
-                        params: {
-                            token: EVMParam.EVM_TOKEN_ADDRESS,
-                            spender: EVMParam.EVM_GATEWAY,
-                            amount: amount,
-                        },
-                    } as EVMApprovalPayload,
                 },
             };
         case InputType.Burn:
@@ -681,6 +669,7 @@ export type EVMAddressPayload = EVMPayloadInterface<
          */
         convertToWei?: boolean;
         convertUnit?: boolean;
+        infiniteApproval?: boolean;
     }
 >;
 
@@ -697,7 +686,9 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         payload: EVMAddressPayload;
         evmParams: EVMParamValues;
         getPayloadHandler: (payloadType: string) => PayloadHandler;
-    }) => {
+    }): Promise<{
+        [name: string]: EVMPayload;
+    }> => {
         if (!contractPayloadHandler.getSetup) {
             throw new Error(`Missing contract payload handler.`);
         }
@@ -709,13 +700,52 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         if (!contractPayload) {
             return {};
         }
-        return await contractPayloadHandler.getSetup({
-            network,
-            signer,
-            payload: contractPayload,
-            evmParams,
-            getPayloadHandler,
-        });
+
+        const amount = payload.params.infiniteApproval
+            ? new BigNumber(2).pow(256).minus(1).toFixed()
+            : utils.isDefined(payload.params.amount)
+            ? new BigNumber(payload.params.amount)
+                  .shiftedBy(
+                      payload.params.convertUnit || payload.params.convertToWei
+                          ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
+                          : 0,
+                  )
+                  .toFixed()
+            : undefined;
+
+        if (!amount) {
+            throw ErrorWithCode.updateError(
+                new Error(`Must provide amount to .Account()`),
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
+
+        if (!evmParams[EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]) {
+            const approval: EVMApprovalPayload = {
+                chain: network.selector,
+                type: "approval",
+                params: {
+                    token: EVMParam.EVM_TOKEN_ADDRESS,
+                    spender: EVMParam.EVM_GATEWAY,
+                    amount,
+                },
+            };
+
+            if (
+                approvalPayloadHandler.required &&
+                (await approvalPayloadHandler.required({
+                    network,
+                    signer,
+                    payload: approval,
+                    evmParams,
+                    getPayloadHandler,
+                }))
+            ) {
+                return { approval };
+            }
+        }
+
+        return {};
     },
 
     getPayload: async ({
@@ -794,7 +824,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            params?: { [key: string]: any };
+            overrides?: { [key: string]: any };
             txConfig?: PayableOverrides;
         };
         getPayloadHandler: (payloadType: string) => PayloadHandler;
@@ -912,7 +942,14 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
                 await erc20Instance.allowance(account, payload.params.spender)
             ).toString(),
         );
-        return allowance.lt(new BigNumber(payload.params.amount));
+
+        const amount = new BigNumber(payload.params.amount).shiftedBy(
+            payload.params.convertUnit || payload.params.convertToWei
+                ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
+                : 0,
+        );
+
+        return allowance.lt(amount);
     },
 
     export: async ({
@@ -929,7 +966,7 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         evmParams: EVMParamValues;
         overrides: {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            params?: { [key: string]: any };
+            overrides?: { [key: string]: any };
             txConfig?: PayableOverrides;
         };
         getPayloadHandler: (payloadType: string) => PayloadHandler;

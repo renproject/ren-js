@@ -278,13 +278,14 @@ export const txHashToChainTransaction = (
 });
 
 /**
- * Fetch the burn ID from a transaction. The burn's account key is the fourth
- * account in the transaction.
+ * Fetch the burn ID from a transaction.
+ * TODO: Improve detecting which account is the burn ID - on mainnet it is the
+ * fourth and on devnet it's the third?
  */
 export const getBurnPublicKey = async (
     provider: Connection,
     txHash: string,
-): Promise<PublicKey> => {
+): Promise<[PublicKey, PublicKey]> => {
     const tx = await provider.getTransaction(txHash, {
         commitment: "confirmed",
     });
@@ -292,7 +293,10 @@ export const getBurnPublicKey = async (
         throw new Error(`Unable to find transaction ${txHash}`);
     }
 
-    return tx.transaction.message.accountKeys[4];
+    return [
+        tx.transaction.message.accountKeys[3],
+        tx.transaction.message.accountKeys[4],
+    ];
 };
 
 /**
@@ -302,6 +306,7 @@ export const getNonceFromBurnId = async (
     provider: Connection,
     mintGateway: PublicKey,
     burnId: PublicKey,
+    burnIdAlt: PublicKey,
 ): Promise<number> => {
     const mintGatewayStateAddress = (
         await PublicKey.findProgramAddress(
@@ -329,7 +334,7 @@ export const getNonceFromBurnId = async (
         const burnIdI: PublicKey = (
             await PublicKey.findProgramAddress([leNonce], mintGateway)
         )[0];
-        if (burnIdI.equals(burnId)) {
+        if (burnIdI.equals(burnId) || burnIdI.equals(burnIdAlt)) {
             return i;
         }
     }
@@ -434,10 +439,10 @@ export const getBurnFromTxid = async (
     txHash: string,
     nonce?: number,
 ): Promise<InputChainTransaction | undefined> => {
-    const burnId = await getBurnPublicKey(provider, txHash);
+    const [burnId, burnIdAlt] = await getBurnPublicKey(provider, txHash);
     nonce = utils.isDefined(nonce)
         ? nonce
-        : await getNonceFromBurnId(provider, mintGateway, burnId);
+        : await getNonceFromBurnId(provider, mintGateway, burnId, burnIdAlt);
     return getBurnFromNonce(provider, chain, asset, mintGateway, nonce, txHash);
 };
 

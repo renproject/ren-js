@@ -1,8 +1,7 @@
-import BigNumber from "bignumber.js";
-
 import Wallet from "@project-serum/sol-wallet-adapter";
 import { ChainTransaction } from "@renproject/utils";
 import { Connection } from "@solana/web3.js";
+import BigNumber from "bignumber.js";
 
 export type SolanaProvider = Connection;
 export type SolanaSigner = Wallet;
@@ -29,6 +28,7 @@ export type BurnFromAddress = SolanaPayloadInterface<
     {
         amount: number | string;
         convertUnit?: boolean;
+        address?: string;
     }
 >;
 

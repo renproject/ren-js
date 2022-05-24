@@ -15,6 +15,7 @@ import { GatewayParams } from "packages/ren/src/params";
 import { RenNetwork } from "packages/utils/src";
 
 import {
+    Arbitrum,
     BitcoinCash,
     DigiByte,
     Dogecoin,
@@ -111,7 +112,6 @@ describe("Gateway", () => {
         renJS.withChains(from, to);
 
         const address = await from.signer.getAddress();
-        console.log("address", address);
 
         const amount = new BigNumber(0.1).shiftedBy(18);
 
@@ -123,7 +123,6 @@ describe("Gateway", () => {
             "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
             amount.toFixed(),
         );
-        console.log(tx.hash);
         await tx.wait();
 
         const gatewayParams: GatewayParams = {
@@ -307,16 +306,43 @@ describe("Gateway", () => {
     //     await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     // }).timeout(100000000000);
 
-    it("DAI/toSolana", async () => {
+    it("AVAX/toSolana", async () => {
         const network = RenNetwork.Testnet;
-        const asset = Ethereum.assets.DAI;
-        const from = initializeChain(Ethereum);
+        const asset = Avalanche.assets.AVAX;
+        const from = initializeChain(Avalanche);
         const to = initializeChain(Solana);
         const renJS = new RenJS(network).withChains(from, to);
 
+        const amount = new BigNumber(2).shiftedBy(18);
+
+        // const dai = getERC20Instance(
+        //     from.signer,
+        //     await from.getLockAsset(asset),
+        // );
+        // const tx = await dai.approve(
+        //     "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
+        //     amount.toFixed(),
+        // );
+        // console.log(tx.hash);
+        // await tx.wait();
+
+        // console.log(
+        //     new BigNumber(
+        //         (
+        //             await dai.allowance(
+        //                 await from.signer.getAddress(),
+        //                 "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
+        //             )
+        //         ).toString(),
+        //     )
+        //         .shiftedBy(-18)
+        //         .toFixed(),
+        //     "DAI",
+        // );
+
         const gatewayParams: GatewayParams = {
             asset,
-            from: from.Account({ amount: 1, convertUnit: true }),
+            from: from.Account({ amount }),
             to: to.Account(),
         };
 
@@ -358,28 +384,27 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("BTC/fromSolana", async () => {
+    it.only("AVAX/fromSolana", async () => {
         const network = RenNetwork.Testnet;
         const renJS = new RenJS(network);
 
-        const asset = Bitcoin.assets.BTC;
-        const solana = initializeChain(Solana);
-        const bitcoin = initializeChain(Bitcoin);
-        renJS.withChains(bitcoin, solana);
+        const asset = Avalanche.assets.AVAX;
+        const from = initializeChain(Solana);
+        const to = initializeChain(Avalanche);
+        renJS.withChains(to, from);
 
-        const fees = await renJS.getFees({
-            asset,
-            from: solana,
-            to: bitcoin,
-        });
-
-        const minimumAmount = fees.minimumAmount;
-        const amount = minimumAmount.times(2);
+        // const fees = await renJS.getFees({
+        //     asset,
+        //     from: from,
+        //     to: to,
+        // });
 
         const gatewayParams: GatewayParams = {
             asset: asset,
-            from: solana.Account({ amount }),
-            to: bitcoin.Address("miMi2VET41YV1j6SDNTeZoPBbmH8B4nEx6"),
+            from: from.Transaction({
+                txid: "VKzZnqT-sO9kKt43HgCE4Jc18Zd3q5pHddDwK2-2Xw9QMSfqGKS6g-QcPNVMcKMddf16nC0wQf3y25UQU1eeCg",
+            }),
+            to: to.Address(await to.signer.getAddress()),
         };
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));

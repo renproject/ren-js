@@ -105,11 +105,14 @@ export abstract class BitcoinBaseChain
     public transactionExplorerLink = ({
         txid,
         txHash,
-    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
+        txidFormatted,
+    }: Partial<ChainTransaction> &
+        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
         | string
         | undefined => {
-        if (txHash) {
-            return this.network.explorer.transaction(txHash);
+        const txHashOrTxHashFormatted = txHash || txidFormatted;
+        if (txHashOrTxHashFormatted) {
+            return this.network.explorer.transaction(txHashOrTxHashFormatted);
         } else if (txid) {
             return this.network.explorer.transaction(
                 this.txHashFromBytes(utils.fromBase64(txid)),

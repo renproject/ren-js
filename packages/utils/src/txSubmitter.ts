@@ -59,9 +59,7 @@ export interface TxWaiter<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submit?(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params?: { overrides?: any[] },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        txConfig?: any,
+        params?: { overrides?: { [key: string]: any }; txConfig?: any },
     ): PromiEvent<
         Progress,
         {
@@ -70,7 +68,10 @@ export interface TxWaiter<
     >;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    export?(params?: { overrides?: any[]; txConfig?: any }): SyncOrPromise<any>;
+    export?(params?: {
+        overrides?: { [key: string]: any };
+        txConfig?: any;
+    }): SyncOrPromise<any>;
 
     /**
      * Wait for the required finality / number of confirmations.
@@ -98,7 +99,10 @@ export interface TxSubmitter<
      * Submit the transaction to the chain.
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    submit(params?: { overrides?: any[]; txConfig?: TxConfig }): PromiEvent<
+    submit(params?: {
+        overrides?: { [key: string]: any };
+        txConfig?: TxConfig;
+    }): PromiEvent<
         Progress,
         {
             progress: [Progress];
@@ -111,7 +115,7 @@ export interface TxSubmitter<
      */
     export(params?: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        overrides?: any[];
+        overrides?: { [key: string]: any };
         txConfig?: TxConfig;
     }): SyncOrPromise<TxExport>;
 }

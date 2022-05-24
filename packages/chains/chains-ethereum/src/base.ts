@@ -208,10 +208,9 @@ export class EthereumBaseChain
         ({ txid: string } | { txHash: string } | { txidFormatted: string })):
         | string
         | undefined => {
-        if (txHash || txidFormatted) {
-            return this.explorer.transaction(
-                (txHash || txidFormatted) as string,
-            );
+        const txHashOrTxHashFormatted = txHash || txidFormatted;
+        if (txHashOrTxHashFormatted) {
+            return this.explorer.transaction(txHashOrTxHashFormatted);
         } else if (txid) {
             return this.explorer.transaction(
                 this.txidToTxidFormatted({ txid }),
@@ -1127,6 +1126,7 @@ export class EthereumBaseChain
         convertToWei,
         convertUnit,
         anyoneCanSubmit,
+        infiniteApproval,
     }: {
         account?: string;
         amount?: BigNumber | string | number;
@@ -1136,6 +1136,7 @@ export class EthereumBaseChain
         convertToWei?: boolean;
         convertUnit?: boolean;
         anyoneCanSubmit?: boolean;
+        infiniteApproval?: boolean;
     } = {}): EVMPayload => {
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
@@ -1176,6 +1177,7 @@ export class EthereumBaseChain
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
                 convertUnit,
                 anyoneCanSubmit,
+                infiniteApproval,
             },
         };
     };

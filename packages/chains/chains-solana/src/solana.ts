@@ -949,6 +949,7 @@ export class Solana
         asset: string,
         address?: string,
     ): Promise<PublicKey> => {
+        console.log("address", address);
         let targetAddress = address ? new PublicKey(address) : undefined;
         if (!targetAddress) {
             if (!this.signer) {

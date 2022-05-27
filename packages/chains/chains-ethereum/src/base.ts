@@ -97,6 +97,7 @@ export class EthereumBaseChain
     public explorer: EVMExplorer;
 
     private _logger: Logger;
+    private _config: EthereumClassConfig | undefined;
 
     public constructor({
         network,
@@ -115,6 +116,7 @@ export class EthereumBaseChain
             this.network.config.blockExplorerUrls[0],
         );
         this._logger = (config && config.logger) || defaultLogger;
+        this._config = config;
 
         // Ignore not configured error.
         this.provider = undefined as never;
@@ -290,7 +292,7 @@ export class EthereumBaseChain
             );
         }
 
-        return await handler.getPayload({
+        const { to, toBytes, payload } = await handler.getPayload({
             network: this.network,
             signer: this.signer,
             payload: contractCall,
@@ -303,6 +305,15 @@ export class EthereumBaseChain
             ),
             getPayloadHandler: this.getPayloadHandler,
         });
+
+        return {
+            to:
+                this._config && this._config.truncate0xPrefix
+                    ? utils.strip0x(to)
+                    : to,
+            toBytes,
+            payload,
+        };
     };
 
     // Supported assets

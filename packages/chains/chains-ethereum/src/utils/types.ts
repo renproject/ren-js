@@ -1,11 +1,10 @@
-import { ethers } from "ethers";
-
 import { Provider } from "@ethersproject/providers";
 import {
     ExternalProvider,
     JsonRpcFetchFunc,
 } from "@ethersproject/providers/lib/web3-provider";
 import { Logger, RenNetwork, RenNetworkString } from "@renproject/utils";
+import { ethers } from "ethers";
 
 export interface EVMExplorer {
     url: string;
@@ -121,4 +120,5 @@ export type EthSigner = ethers.Signer;
 
 export interface EthereumClassConfig {
     logger?: Logger;
+    truncate0xPrefix?: boolean;
 }

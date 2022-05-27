@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains",
-    "version": "3.0.0-alpha.32",
+    "version": "3.0.0-alpha.33",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -44,9 +44,9 @@
     },
     "dependencies": {
         "@renproject/chains-bitcoin": "^3.0.0-alpha.32",
-        "@renproject/chains-ethereum": "^3.0.0-alpha.32",
+        "@renproject/chains-ethereum": "^3.0.0-alpha.33",
         "@renproject/chains-filecoin": "^3.0.0-alpha.32",
-        "@renproject/chains-solana": "^3.0.0-alpha.32",
+        "@renproject/chains-solana": "^3.0.0-alpha.33",
         "@renproject/chains-terra": "^3.0.0-alpha.32",
         "@renproject/utils": "^3.0.0-alpha.32"
     },

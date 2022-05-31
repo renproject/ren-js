@@ -97,17 +97,21 @@ export class EVMTxSubmitter
         progress: [ChainTransactionProgress];
     }>;
 
-    private network: EVMNetworkConfig;
-    private getProvider: () => Provider;
-    private getSigner: () => Signer | undefined;
-    private payload: EVMPayload;
-    private tx?: TransactionResponse;
-    private getPayloadHandler: (payloadType: string) => PayloadHandler;
-    private getParams: () => EVMParamValues;
-    private onReceipt?: (tx: TransactionReceipt) => void;
-    public findExistingTransaction?: () => Promise<
+    private _network: EVMNetworkConfig;
+    private _getProvider: () => Provider;
+    private _getSigner: () => Signer | undefined;
+    private _payload: EVMPayload;
+    private _tx?: TransactionResponse;
+    private _getPayloadHandler: (payloadType: string) => PayloadHandler;
+    private _getParams: () => EVMParamValues;
+    private _onReceipt?: (tx: TransactionReceipt) => void;
+    private _findExistingTransaction?: () => Promise<
         ChainTransaction | undefined
     >;
+    private _transactionExplorerLink?: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ) => string | undefined;
 
     private updateProgress = (
         progress: Partial<ChainTransactionProgress>,
@@ -131,6 +135,7 @@ export class EVMTxSubmitter
         getParams,
         onReceipt,
         findExistingTransaction,
+        transactionExplorerLink,
     }: {
         network: EVMNetworkConfig;
         getProvider: () => Provider;
@@ -142,16 +147,25 @@ export class EVMTxSubmitter
         getParams: () => EVMParamValues;
         onReceipt?: (tx: TransactionReceipt) => void;
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
+        transactionExplorerLink?: (
+            params: Partial<ChainTransaction> &
+                (
+                    | { txid: string }
+                    | { txHash: string }
+                    | { txidFormatted: string }
+                ),
+        ) => string | undefined;
     }) {
-        this.network = network;
-        this.getProvider = getProvider;
-        this.getSigner = getSigner;
+        this._network = network;
+        this._getProvider = getProvider;
+        this._getSigner = getSigner;
         this.chain = chain;
-        this.payload = payload;
-        this.getPayloadHandler = getPayloadHandler;
-        this.getParams = getParams;
-        this.onReceipt = onReceipt;
-        this.findExistingTransaction = findExistingTransaction;
+        this._payload = payload;
+        this._getPayloadHandler = getPayloadHandler;
+        this._getParams = getParams;
+        this._onReceipt = onReceipt;
+        this._findExistingTransaction = findExistingTransaction;
+        this._transactionExplorerLink = transactionExplorerLink;
 
         this.eventEmitter = eventEmitter();
 
@@ -170,13 +184,13 @@ export class EVMTxSubmitter
             txConfig?: PayableOverrides;
         } = {},
     ): Promise<PopulatedTransaction> => {
-        return await this.getPayloadHandler(this.payload.type).export({
-            network: this.network,
-            signer: this.getSigner(),
-            payload: this.payload,
-            evmParams: this.getParams(),
+        return await this._getPayloadHandler(this._payload.type).export({
+            network: this._network,
+            signer: this._getSigner(),
+            payload: this._payload,
+            evmParams: this._getParams(),
             overrides: options,
-            getPayloadHandler: this.getPayloadHandler,
+            getPayloadHandler: this._getPayloadHandler,
         });
     };
 
@@ -200,10 +214,10 @@ export class EVMTxSubmitter
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
-            const provider = this.getProvider();
-            if (this.findExistingTransaction && provider) {
+            const provider = this._getProvider();
+            if (this._findExistingTransaction && provider) {
                 const existingTransaction =
-                    await this.findExistingTransaction();
+                    await this._findExistingTransaction();
 
                 if (existingTransaction) {
                     if (
@@ -216,31 +230,31 @@ export class EVMTxSubmitter
                         });
                         return this.progress;
                     }
-                    this.tx = await provider.getTransaction(
+                    this._tx = await provider.getTransaction(
                         (existingTransaction.txHash ||
                             existingTransaction.txidFormatted) as string,
                     );
                 }
             }
 
-            if (!this.tx) {
-                const signer = this.getSigner();
+            if (!this._tx) {
+                const signer = this._getSigner();
                 if (!signer) {
                     throw new Error(`Must connect ${this.chain} signer.`);
                 }
                 if (!signer.provider) {
                     throw new Error("EVM signer has no connected provider.");
                 }
-                const payloadHandler = this.getPayloadHandler(
-                    this.payload.type,
+                const payloadHandler = this._getPayloadHandler(
+                    this._payload.type,
                 );
                 if (payloadHandler.required) {
                     const required = await payloadHandler.required({
-                        network: this.network,
+                        network: this._network,
                         signer: signer,
-                        payload: this.payload,
-                        evmParams: this.getParams(),
-                        getPayloadHandler: this.getPayloadHandler,
+                        payload: this._payload,
+                        evmParams: this._getParams(),
+                        getPayloadHandler: this._getPayloadHandler,
                     });
                     if (!required) {
                         this.updateProgress({
@@ -250,27 +264,35 @@ export class EVMTxSubmitter
                     }
                 }
                 const tx = await payloadHandler.export({
-                    network: this.network,
+                    network: this._network,
                     signer: signer,
-                    payload: this.payload,
-                    evmParams: this.getParams(),
+                    payload: this._payload,
+                    evmParams: this._getParams(),
                     overrides: options,
-                    getPayloadHandler: this.getPayloadHandler,
+                    getPayloadHandler: this._getPayloadHandler,
                 });
                 // `populateTransaction` fills in the missing details - e.g.
                 // gas details. It's commented out because it seems that it's
                 // better to calculate this in the `sendTransaction` step.
                 // const populatedTx = await signer.populateTransaction(tx);
-                this.tx = await signer.sendTransaction(tx);
+                this._tx = await signer.sendTransaction(tx);
             }
 
             this.updateProgress({
                 status:
-                    this.tx.confirmations < this.progress.target
+                    this._tx.confirmations < this.progress.target
                         ? ChainTransactionStatus.Confirming
                         : ChainTransactionStatus.Done,
-                transaction: txHashToChainTransaction(this.chain, this.tx.hash),
-                confirmations: this.tx.confirmations,
+                transaction: txHashToChainTransaction(
+                    this.chain,
+                    this._tx.hash,
+                    (this._transactionExplorerLink &&
+                        this._transactionExplorerLink({
+                            txHash: this._tx.hash,
+                        })) ||
+                        "",
+                ),
+                confirmations: this._tx.confirmations,
             });
 
             return this.progress;
@@ -284,18 +306,26 @@ export class EVMTxSubmitter
     public setTransaction = async (
         chainTransaction: ChainTransaction,
     ): Promise<ChainTransactionProgress> => {
-        const provider = this.getProvider();
-        this.tx = await provider.getTransaction(
+        const provider = this._getProvider();
+        this._tx = await provider.getTransaction(
             (chainTransaction.txHash ||
                 chainTransaction.txidFormatted) as string,
         );
         return this.updateProgress({
             status:
-                this.tx.confirmations < this.progress.target
+                this._tx.confirmations < this.progress.target
                     ? ChainTransactionStatus.Confirming
                     : ChainTransactionStatus.Done,
-            transaction: txHashToChainTransaction(this.chain, this.tx.hash),
-            confirmations: this.tx.confirmations,
+            transaction: txHashToChainTransaction(
+                this.chain,
+                this._tx.hash,
+                (this._transactionExplorerLink &&
+                    this._transactionExplorerLink({
+                        txHash: this._tx.hash,
+                    })) ||
+                    "",
+            ),
+            confirmations: this._tx.confirmations,
         });
     };
 
@@ -323,33 +353,38 @@ export class EVMTxSubmitter
 
             // Wait for each confirmation until the target is reached.
             while (
-                this.tx &&
-                (this.tx.confirmations < target || this.onReceipt)
+                this._tx &&
+                (this._tx.confirmations < target || this._onReceipt)
             ) {
                 try {
-                    const receipt = await this.tx.wait(
-                        Math.min(this.tx.confirmations + 1, target),
+                    const receipt = await this._tx.wait(
+                        Math.min(this._tx.confirmations + 1, target),
                     );
-                    if (this.onReceipt) {
-                        const onReceipt = this.onReceipt;
-                        this.onReceipt = undefined;
+                    if (this._onReceipt) {
+                        const onReceipt = this._onReceipt;
+                        this._onReceipt = undefined;
                         onReceipt(receipt);
                     }
-                    const existingConfirmations = this.tx.confirmations;
-                    this.tx.confirmations = receipt.confirmations;
+                    const existingConfirmations = this._tx.confirmations;
+                    this._tx.confirmations = receipt.confirmations;
 
                     if (receipt.confirmations > existingConfirmations) {
                         this.updateProgress({
                             ...this.progress,
                             status:
-                                this.tx.confirmations < this.progress.target
+                                this._tx.confirmations < this.progress.target
                                     ? ChainTransactionStatus.Confirming
                                     : ChainTransactionStatus.Done,
                             transaction: txHashToChainTransaction(
                                 this.chain,
-                                this.tx.hash,
+                                this._tx.hash,
+                                (this._transactionExplorerLink &&
+                                    this._transactionExplorerLink({
+                                        txHash: this._tx.hash,
+                                    })) ||
+                                    "",
                             ),
-                            confirmations: this.tx.confirmations,
+                            confirmations: this._tx.confirmations,
                         });
                     }
                 } catch (error: unknown) {
@@ -358,14 +393,19 @@ export class EVMTxSubmitter
                             // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion,@typescript-eslint/no-explicit-any
                             const replacement = (error as any)
                                 .replacement as TransactionResponse;
-                            const previousTx = this.tx;
-                            this.tx = replacement;
+                            const previousTx = this._tx;
+                            this._tx = replacement;
 
                             this.updateProgress({
                                 status: ChainTransactionStatus.Confirming,
                                 transaction: txHashToChainTransaction(
                                     this.chain,
                                     replacement.hash,
+                                    (this._transactionExplorerLink &&
+                                        this._transactionExplorerLink({
+                                            txHash: replacement.hash,
+                                        })) ||
+                                        "",
                                 ),
                                 target: target,
                                 confirmations: replacement.confirmations,
@@ -373,6 +413,11 @@ export class EVMTxSubmitter
                                 replaced: txHashToChainTransaction(
                                     this.chain,
                                     previousTx.hash,
+                                    (this._transactionExplorerLink &&
+                                        this._transactionExplorerLink({
+                                            txHash: previousTx.hash,
+                                        })) ||
+                                        "",
                                 ),
                             });
 
@@ -384,7 +429,12 @@ export class EVMTxSubmitter
                                 status: ChainTransactionStatus.Reverted,
                                 transaction: txHashToChainTransaction(
                                     this.chain,
-                                    this.tx.hash,
+                                    this._tx.hash,
+                                    (this._transactionExplorerLink &&
+                                        this._transactionExplorerLink({
+                                            txHash: this._tx.hash,
+                                        })) ||
+                                        "",
                                 ),
                                 target: target,
                                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion,@typescript-eslint/no-explicit-any
@@ -403,8 +453,8 @@ export class EVMTxSubmitter
 
             if (
                 this.progress.status !== ChainTransactionStatus.Done &&
-                this.tx &&
-                this.tx.confirmations >= this.progress.target
+                this._tx &&
+                this._tx.confirmations >= this.progress.target
             ) {
                 this.updateProgress({
                     status: ChainTransactionStatus.Done,

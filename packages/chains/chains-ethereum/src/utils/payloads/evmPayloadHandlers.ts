@@ -714,10 +714,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
             : undefined;
 
         if (!amount) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must provide amount to .Account()`),
-                RenJSError.PARAMETER_ERROR,
-            );
+            return {};
         }
 
         if (!evmParams[EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]) {
@@ -997,8 +994,22 @@ export const txPayloadHandler: PayloadHandler<EVMTxPayload> = {
     },
 };
 
+export type EVMNoncePayload = EVMPayloadInterface<
+    "nonce",
+    {
+        nonce: string | number;
+    }
+>;
+
+export const noncePayloadHandler: PayloadHandler<EVMNoncePayload> = {
+    export: (): PopulatedTransaction => {
+        throw new Error(`Unable to export nonce payload.`);
+    },
+};
+
 export type EVMPayload =
     | EVMContractPayload
     | EVMAddressPayload
     | EVMApprovalPayload
-    | EVMTxPayload;
+    | EVMTxPayload
+    | EVMNoncePayload;

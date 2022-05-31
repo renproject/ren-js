@@ -258,6 +258,15 @@ export class Gateway<
             ),
         ]);
 
+        // Check if the selector is whitelisted - ie currently enabled in RenVM.
+        // Run this later because the underlying queryConfig is cached by
+        // `selectShard`.
+        if (!(await this.provider.selectorWhitelisted(selector))) {
+            throw new Error(
+                `Unable to bridge ${asset} from ${from.chain} to ${to.chain}: Selector ${selector} not whitelisted.`,
+            );
+        }
+
         if (
             this.outputType === OutputType.Release &&
             payload.payload.length > 0

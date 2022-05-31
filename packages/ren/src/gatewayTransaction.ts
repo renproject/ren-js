@@ -221,6 +221,12 @@ export class GatewayTransaction<
                     txindex,
                     txHash,
                     txidFormatted: txHash,
+                    explorerLink:
+                        this.toChain.transactionExplorerLink({
+                            txHash,
+                            txindex,
+                            txid,
+                        }) || "",
                 });
             } else if (
                 isDepositChain(this.toChain) &&
@@ -233,7 +239,7 @@ export class GatewayTransaction<
             }
         };
 
-        console.log("!!! payload.to", payload.to);
+        const network = await this.provider.getNetwork();
 
         this.renVM = new RenVMCrossChainTxSubmitter(
             this.provider,
@@ -252,6 +258,7 @@ export class GatewayTransaction<
             },
             onSignatureReady,
             this._config,
+            network,
         );
         this._hash = this.renVM.tx.hash;
 

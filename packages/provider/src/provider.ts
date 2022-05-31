@@ -14,6 +14,7 @@ import {
 
 import {
     ParamsSubmitTx,
+    ResponseQueryConfig,
     ResponseQueryTx,
     RPCMethod,
     RPCParams,
@@ -138,7 +139,7 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
     }
 
     public getNetwork = async (): Promise<string> => {
-        const renVMConfig = await this.sendMessage(RPCMethod.QueryConfig, {});
+        const renVMConfig = await this.queryConfig();
         return renVMConfig.network;
     };
 
@@ -241,6 +242,26 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
                 retry,
             )
         ).txs.map((tx) => unmarshalRenVMTransaction(tx));
+
+    private _queryConfig__memoized?: (
+        retry?: number,
+    ) => Promise<ResponseQueryConfig>;
+    public queryConfig = async (
+        retry?: number,
+    ): Promise<ResponseQueryConfig> => {
+        this._queryConfig__memoized =
+            this._queryConfig__memoized ||
+            utils.memoize(
+                async (retry_?: number): Promise<ResponseQueryConfig> => {
+                    return await this.sendMessage<RPCMethod.QueryConfig>(
+                        RPCMethod.QueryConfig,
+                        {},
+                        retry_,
+                    );
+                },
+            );
+        return this._queryConfig__memoized(retry);
+    };
 
     private _queryBlockState__memoized?: (
         contract: string,
@@ -417,7 +438,12 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
     public getConfirmationTarget = async (
         chainName: string,
     ): Promise<number> => {
-        const renVMConfig = await this.sendMessage(RPCMethod.QueryConfig, {});
+        const renVMConfig = await this.queryConfig();
         return parseInt(renVMConfig.confirmations[chainName], 10);
+    };
+
+    public selectorWhitelisted = async (selector: string): Promise<boolean> => {
+        const renVMConfig = await this.queryConfig();
+        return renVMConfig.whitelist.includes(selector);
     };
 }

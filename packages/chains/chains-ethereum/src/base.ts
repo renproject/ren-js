@@ -45,6 +45,7 @@ import {
 } from "./utils/gatewayRegistry";
 import {
     filterLogs,
+    findInputByNonce,
     findMintBySigHash,
     findReleaseBySigHash,
     mapBurnLogToInputChainTransaction,
@@ -53,6 +54,7 @@ import {
     mapTransferLogToInputChainTransaction,
     txHashFromBytes,
     txHashToBytes,
+    txHashToChainTransaction,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
@@ -564,25 +566,32 @@ export class EthereumBaseChain
             ChainTransaction | undefined
         > => {
             const { nHash, sigHash } = getParams();
-            if (outputType === OutputType.Release) {
-                return await findReleaseBySigHash(
-                    this.network,
-                    this.provider,
-                    asset,
-                    nHash,
-                    this.network.logRequestLimit,
-                );
-            } else {
-                return await findMintBySigHash(
-                    this.network,
-                    this.provider,
-                    asset,
-                    nHash,
-                    sigHash,
-                    this.network.logRequestLimit,
-                );
-            }
-            return undefined;
+            const txHash: string | undefined =
+                outputType === OutputType.Release
+                    ? await findReleaseBySigHash(
+                          this.network,
+                          this.provider,
+                          asset,
+                          nHash,
+                          this.network.logRequestLimit,
+                      )
+                    : await findMintBySigHash(
+                          this.network,
+                          this.provider,
+                          asset,
+                          nHash,
+                          sigHash,
+                          this.network.logRequestLimit,
+                      );
+            return utils.isDefined(txHash)
+                ? txHashToChainTransaction(
+                      this.chain,
+                      txHash,
+                      (this.transactionExplorerLink &&
+                          this.transactionExplorerLink({ txHash })) ||
+                          "",
+                  )
+                : undefined;
         };
 
         const existingTransaction = await findExistingTransaction();
@@ -710,7 +719,14 @@ export class EthereumBaseChain
                 const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
                 filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
                     .map((e) =>
-                        mapBurnLogToInputChainTransaction(this.chain, asset, e),
+                        mapBurnLogToInputChainTransaction(
+                            this.chain,
+                            asset,
+                            e,
+                            this.transactionExplorerLink({
+                                txHash: e.transactionHash,
+                            }) || "",
+                        ),
                     )
                     .map(onInput);
 
@@ -732,6 +748,9 @@ export class EthereumBaseChain
                             this.chain,
                             asset,
                             e,
+                            this.transactionExplorerLink({
+                                txHash: e.transactionHash,
+                            }) || "",
                         ),
                     )
                     .map(onInput);
@@ -744,7 +763,14 @@ export class EthereumBaseChain
                     receipt.logs,
                     logLockABI,
                 ).map((e) =>
-                    mapLockLogToInputChainTransaction(this.chain, asset, e),
+                    mapLockLogToInputChainTransaction(
+                        this.chain,
+                        asset,
+                        e,
+                        this.transactionExplorerLink({
+                            txHash: e.transactionHash,
+                        }) || "",
+                    ),
                 );
                 lockEvents.map(onInput);
 
@@ -756,7 +782,14 @@ export class EthereumBaseChain
                     receipt.logs,
                     logTransferredABI,
                 ).map((e) =>
-                    mapTransferLogToInputChainTransaction(this.chain, asset, e),
+                    mapTransferLogToInputChainTransaction(
+                        this.chain,
+                        asset,
+                        e,
+                        this.transactionExplorerLink({
+                            txHash: e.transactionHash,
+                        }) || "",
+                    ),
                 );
                 transferEvents.map(onInput);
 
@@ -773,6 +806,39 @@ export class EthereumBaseChain
                 chain: this,
                 target: confirmationTarget,
                 chainTransaction: contractCall.params.tx,
+                onFirstProgress: async (tx: ChainTransaction) => {
+                    onReceipt(
+                        await this.provider.getTransactionReceipt(
+                            (tx.txHash || tx.txidFormatted) as string,
+                        ),
+                    );
+                },
+            });
+        }
+
+        if (contractCall.type === "nonce") {
+            const nonce = utils.toNBytes(
+                new BigNumber(contractCall.params.nonce),
+                32,
+            );
+            const chainTransaction = await findInputByNonce(
+                this.chain,
+                inputType,
+                this.network,
+                this.provider,
+                asset,
+                nonce,
+                this.transactionExplorerLink,
+            );
+            if (!chainTransaction) {
+                throw new Error(
+                    `Unable to find ${asset} ${inputType} on ${this.chain} with nonce ${contractCall.params.nonce}.`,
+                );
+            }
+            return new DefaultTxWaiter({
+                chain: this,
+                target: confirmationTarget,
+                chainTransaction,
                 onFirstProgress: async (tx: ChainTransaction) => {
                     onReceipt(
                         await this.provider.getTransactionReceipt(
@@ -1287,6 +1353,7 @@ export class EthereumBaseChain
                     txHashToBytes,
                     txHashFromBytes,
                     defaultTxindex: "0",
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };

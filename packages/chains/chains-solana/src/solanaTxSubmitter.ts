@@ -37,6 +37,10 @@ export class SolanaTxWaiter
     private _findExistingTransaction?: () => Promise<
         ChainTransaction | undefined
     >;
+    private _transactionExplorerLink?: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ) => string | undefined;
     private _logger: Logger;
 
     public chain: string;
@@ -68,6 +72,7 @@ export class SolanaTxWaiter
         getTransaction,
         onReceipt,
         findExistingTransaction,
+        transactionExplorerLink,
         logger,
     }: {
         chain: string;
@@ -80,6 +85,14 @@ export class SolanaTxWaiter
         }>;
         onReceipt?: (signature: string, nonce?: number) => SyncOrPromise<void>;
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
+        transactionExplorerLink?: (
+            params: Partial<ChainTransaction> &
+                (
+                    | { txid: string }
+                    | { txHash: string }
+                    | { txidFormatted: string }
+                ),
+        ) => string | undefined;
         logger?: Logger;
     }) {
         this._getTransaction = getTransaction;
@@ -88,6 +101,7 @@ export class SolanaTxWaiter
         this._getSigner = getSigner;
         this._onReceipt = onReceipt;
         this._findExistingTransaction = findExistingTransaction;
+        this._transactionExplorerLink = transactionExplorerLink;
         this._logger = logger || defaultLogger;
 
         this.eventEmitter = eventEmitter();
@@ -210,6 +224,12 @@ export class SolanaTxWaiter
                     txHash: confirmedSignature,
                     txid: utils.toURLBase64(txHashToBytes(confirmedSignature)),
                     txindex: "0",
+                    explorerLink:
+                        (this._transactionExplorerLink &&
+                            this._transactionExplorerLink({
+                                txHash: confirmedSignature,
+                            })) ||
+                        "",
 
                     /** @deprecated Renamed to `txHash`. */
                     txidFormatted: confirmedSignature,

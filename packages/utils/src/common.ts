@@ -96,11 +96,13 @@ export const normalizeSignature = (signature: Uint8Array): Uint8Array => {
     return utils.concat([r, utils.toNBytes(sBN, 32), new Uint8Array([v])]);
 };
 
+/** Convert a partial chain transaction to a chain transaction with all its fields. */
 export const populateChainTransaction = ({
     partialTx,
     chain,
     txHashToBytes,
     txHashFromBytes,
+    explorerLink,
     defaultTxindex,
 }: {
     partialTx: Partial<ChainTransaction> &
@@ -108,6 +110,10 @@ export const populateChainTransaction = ({
     chain: string;
     txHashToBytes: (txHash: string) => Uint8Array;
     txHashFromBytes: (bytes: Uint8Array) => string;
+    explorerLink: (
+        transaction: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ) => string | undefined;
     defaultTxindex?: string;
 }): ChainTransaction => {
     const maybeTxHash = partialTx.txHash || partialTx.txidFormatted;
@@ -132,7 +138,7 @@ export const populateChainTransaction = ({
         throw new Error(`Must provide txindex for ${chain} transaction.`);
     }
 
-    return {
+    const tx = {
         ...partialTx,
         chain,
         txid,
@@ -141,5 +147,10 @@ export const populateChainTransaction = ({
 
         /** @deprecated Renamed to `txHash`. */
         txidFormatted: txHash,
+    };
+
+    return {
+        ...tx,
+        explorerLink: explorerLink(tx) || "",
     };
 };

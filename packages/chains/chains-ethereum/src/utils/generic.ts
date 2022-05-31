@@ -2,6 +2,7 @@ import { Provider } from "@ethersproject/providers";
 import {
     ChainTransaction,
     InputChainTransaction,
+    InputType,
     RenNetwork,
     utils,
 } from "@renproject/utils";
@@ -52,9 +53,15 @@ export const txHashFromBytes = (bytes: Uint8Array): string => {
     return utils.Ox(bytes);
 };
 
+/**
+ * Convert an EVM txHash to a RenVM ChainTransaction struct.
+ * The txindex for Ethereum is currently set to 0, and the nonce is used instead
+ * to differentiate locks/burns in the same EVM transaction.
+ */
 export const txHashToChainTransaction = (
     chain: string,
     txHash: string,
+    explorerLink: string,
 ): ChainTransaction => {
     const txHashBytes = utils.fromHex(txHash);
     return {
@@ -62,6 +69,7 @@ export const txHashToChainTransaction = (
         txHash: utils.Ox(txHashBytes),
         txid: utils.toURLBase64(txHashBytes),
         txindex: "0",
+        explorerLink,
 
         /** @deprecated Renamed to `txHash`. */
         txidFormatted: utils.Ox(txHashBytes),
@@ -72,10 +80,11 @@ export const mapBurnLogToInputChainTransaction = (
     chain: string,
     asset: string,
     event: LogBurnEvent,
+    explorerLink: string,
 ): InputChainTransaction => {
     const [to, amount, burnNonce] = event.args;
     return {
-        ...txHashToChainTransaction(chain, event.transactionHash),
+        ...txHashToChainTransaction(chain, event.transactionHash, explorerLink),
         asset,
         amount: amount.toString(),
         toRecipient: to,
@@ -87,6 +96,7 @@ export const mapBurnToChainLogToInputChainTransaction = (
     chain: string,
     asset: string,
     event: LogBurnToChainEvent,
+    explorerLink: string,
 ): InputChainTransaction => {
     const [
         recipientAddress,
@@ -96,7 +106,7 @@ export const mapBurnToChainLogToInputChainTransaction = (
         burnNonce,
     ] = event.args;
     return {
-        ...txHashToChainTransaction(chain, event.transactionHash),
+        ...txHashToChainTransaction(chain, event.transactionHash, explorerLink),
         asset,
         amount: amount.toString(),
         toRecipient: recipientAddress,
@@ -108,6 +118,7 @@ export const mapLockLogToInputChainTransaction = (
     chain: string,
     asset: string,
     event: LogLockToChainEvent,
+    explorerLink: string,
 ): InputChainTransaction => {
     const [
         recipientAddress,
@@ -121,7 +132,7 @@ export const mapLockLogToInputChainTransaction = (
         throw new Error("Invalid nonce length");
     }
     return {
-        ...txHashToChainTransaction(chain, event.transactionHash),
+        ...txHashToChainTransaction(chain, event.transactionHash, explorerLink),
         asset,
         amount: amount.toString(),
         nonce: utils.toURLBase64(nonceBytes),
@@ -135,65 +146,101 @@ export const mapTransferLogToInputChainTransaction = (
     chain: string,
     asset: string,
     event: LogTransferredEvent,
+    explorerLink: string,
 ): InputChainTransaction => {
     const [_from, _to, amount] = event.args;
     return {
-        ...txHashToChainTransaction(chain, event.transactionHash),
+        ...txHashToChainTransaction(chain, event.transactionHash, explorerLink),
         asset,
         amount: amount.toString(),
     };
 };
 
-// export const extractBurnDetails = (
-//     chain: string,
-//     receipt: providers.TransactionReceipt,
-// ): InputChainTransaction[] => {
-//     const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
+/** Find an input transaction (i.e. a burn or a lock) by its nonce. */
+export const findInputByNonce = async (
+    chain: string,
+    inputType: InputType,
+    network: EVMNetworkConfig,
+    provider: Provider,
+    asset: string,
+    nonce: Uint8Array,
+    transactionExplorerLink: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ) => string | undefined,
+    blockLimit?: number,
+): Promise<InputChainTransaction | undefined> => {
+    if (inputType === InputType.Burn) {
+        const gatewayAddress = await getMintGateway(network, provider, asset);
 
-//     if (!receipt.blockHash) {
-//         throw new Error(`Transaction not confirmed yet.`);
-//     }
+        const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
+        const burnLogs = await getPastLogs<LogBurnEvent>(
+            provider,
+            gatewayAddress,
+            logBurnABI,
+            [utils.Ox(nonce)],
+            blockLimit,
+        );
 
-//     const burnDetails = filterLogs<LogBurnEvent>(receipt.logs, logBurnABI).map(
-//         (e) => mapBurnLogToInputChainTransaction(chain, e),
-//     );
+        if (burnLogs.length) {
+            return mapBurnLogToInputChainTransaction(
+                chain,
+                asset,
+                burnLogs[0],
+                transactionExplorerLink({
+                    txHash: burnLogs[0].transactionHash,
+                }) || "",
+            );
+        }
 
-//     if (burnDetails.length) {
-//         return burnDetails;
-//     }
+        const logBurnToChainABI = findABIMethod(
+            MintGatewayABI,
+            "LogBurnToChain",
+        );
+        const burnToChainLogs = await getPastLogs<LogBurnToChainEvent>(
+            provider,
+            gatewayAddress,
+            logBurnToChainABI,
+            [utils.Ox(nonce)],
+            blockLimit,
+        );
 
-//     throw Error("No burn found in logs");
-// };
+        if (burnToChainLogs.length) {
+            return mapBurnToChainLogToInputChainTransaction(
+                chain,
+                asset,
+                burnToChainLogs[0],
+                transactionExplorerLink({
+                    txHash: burnToChainLogs[0].transactionHash,
+                }) || "",
+            );
+        }
+    } else {
+        const gatewayAddress = await getLockGateway(network, provider, asset);
 
-// export const findBurnByNonce = async (
-//     network: EVMNetworkConfig,
-//     provider: Provider,
-//     asset: string,
-//     nonce: Uint8Array,
-//     blockLimit?: number,
-// ): Promise<InputChainTransaction | undefined> => {
-//     const gatewayAddress = await getMintGateway(network, provider, asset);
-//     const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
+        const logLockABI = findABIMethod(LockGatewayABI, "LogLockToChain");
+        const logLockLogs = await getPastLogs<LogLockToChainEvent>(
+            provider,
+            gatewayAddress,
+            logLockABI,
+            [utils.Ox(nonce)],
+            blockLimit,
+        );
 
-//     const burnLogs = await getPastLogs<LogBurnEvent>(
-//         provider,
-//         gatewayAddress,
-//         logBurnABI,
-//         [Ox(nonce)],
-//         blockLimit,
-//     );
-//     const decodedBurnLogs = burnLogs.map((e) =>
-//         mapBurnLogToInputChainTransaction(network.selector, e),
-//     );
+        if (logLockLogs.length) {
+            return mapLockLogToInputChainTransaction(
+                chain,
+                asset,
+                logLockLogs[0],
+                transactionExplorerLink({
+                    txHash: logLockLogs[0].transactionHash,
+                }) || "",
+            );
+        }
+    }
 
-//     return decodedBurnLogs.length ? decodedBurnLogs[0] : undefined;
-// };
-
-/**
- * Convert an EVM txHash to a RenVM ChainTransaction struct.
- * The txindex for Ethereum is currently set to 0, and the nonce is used instead
- * to differentiate locks/burns in the same EVM transaction.
- */
+    return undefined;
+};
 
 export const findMintBySigHash = async (
     network: EVMNetworkConfig,
@@ -202,35 +249,32 @@ export const findMintBySigHash = async (
     nHash: Uint8Array,
     sigHash?: Uint8Array,
     blockLimit?: number,
-): Promise<ChainTransaction | undefined> => {
+): Promise<string | undefined> => {
     const gatewayAddress = await getMintGateway(network, provider, asset);
     const gatewayInstance = getMintGatewayInstance(provider, gatewayAddress);
     const logMintABI = findABIMethod(MintGatewayABI, "LogMint");
 
-    const mintEvents = (
-        await getPastLogs<LogMintEvent>(
-            provider,
-            gatewayAddress,
-            logMintABI,
-            [null, null, utils.Ox(nHash)],
-            blockLimit,
-        )
-    ).map((event) =>
-        txHashToChainTransaction(network.selector, event.transactionHash),
+    const mintEvents = await getPastLogs<LogMintEvent>(
+        provider,
+        gatewayAddress,
+        logMintABI,
+        [null, null, utils.Ox(nHash)],
+        blockLimit,
     );
     if (mintEvents.length) {
         if (mintEvents.length > 1) {
             console.warn(`Found more than one mint log.`);
         }
-        return mintEvents[0];
+        return mintEvents[0].transactionHash;
     }
 
     if (sigHash) {
-        // We can skip the `status` check and call `getPastLogs` directly - for now both are called in case
-        // the contract
+        // Check the status in case the mint's event may be too old to be
+        // fetched. If the status is true, the mint succeeded, but no hash
+        // is available - `""` is returned instead.
         const status = await gatewayInstance.status(utils.Ox(sigHash));
         if (status) {
-            return txHashToChainTransaction(network.selector, "");
+            return "";
         }
     }
 
@@ -243,27 +287,25 @@ export const findReleaseBySigHash = async (
     asset: string,
     nHash: Uint8Array,
     blockLimit?: number,
-): Promise<ChainTransaction | undefined> => {
+): Promise<string | undefined> => {
     const gatewayAddress = await getLockGateway(network, provider, asset);
     const logLockABI = findABIMethod(LockGatewayABI, "LogRelease");
 
-    const newReleaseEvents = (
-        await getPastLogs<LogBurnEvent>(
-            provider,
-            gatewayAddress,
-            logLockABI,
-            [null, null, utils.Ox(nHash)],
-            blockLimit,
-        )
-    ).map((event) =>
-        txHashToChainTransaction(network.selector, event.transactionHash),
+    const newReleaseEvents = await getPastLogs<LogBurnEvent>(
+        provider,
+        gatewayAddress,
+        logLockABI,
+        [null, null, utils.Ox(nHash)],
+        blockLimit,
     );
 
     if (newReleaseEvents.length > 1) {
         console.warn(`Found more than one release log.`);
     }
 
-    return newReleaseEvents.length ? newReleaseEvents[0] : undefined;
+    return newReleaseEvents.length
+        ? newReleaseEvents[0].transactionHash
+        : undefined;
 };
 
 export const filterLogs = <T extends TypedEvent>(

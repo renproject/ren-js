@@ -297,6 +297,11 @@ export class Terra
                     /** @deprecated Renamed to `txHash`. */
                     txidFormatted: tx.hash.toUpperCase(),
 
+                    explorerLink:
+                        this.transactionExplorerLink({
+                            txHash: tx.hash.toUpperCase(),
+                        }) || "", // TODO
+
                     asset,
                     amount: tx.amount,
                 }),
@@ -453,6 +458,7 @@ export class Terra
                     chain: this.chain,
                     txHashToBytes,
                     txHashFromBytes,
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };

@@ -191,6 +191,7 @@ export const defaultGatewayHandler = async (
                 while (true) {
                     try {
                         await tx.renVM.submit();
+                        logger.info(tx.renVM.progress.transaction);
                         await tx.renVM.wait();
                         break;
                     } catch (error: unknown) {

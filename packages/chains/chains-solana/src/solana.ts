@@ -235,6 +235,36 @@ export class Solana
             return this.network.nativeAsset.decimals;
         }
 
+        const mintGateway = await this.getMintGateway(asset, {
+            publicKey: true,
+        });
+
+        const mintGatewayStateAddress = (
+            await PublicKey.findProgramAddress(
+                [utils.fromUTF8String(GatewayStateKey)],
+                mintGateway,
+            )
+        )[0];
+
+        // Fetch gateway state.
+        const encodedGatewayState = await this.provider.getAccountInfo(
+            mintGatewayStateAddress,
+        );
+        if (!encodedGatewayState) {
+            throw new Error("incorrect gateway program address");
+        }
+        const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
+
+        return new BigNumber(
+            gatewayState.underlying_decimals.toString(),
+        ).toNumber();
+    };
+
+    public splDecimals = async (asset: string): Promise<number> => {
+        if (asset === this.network.nativeAsset.symbol) {
+            return this.network.nativeAsset.decimals;
+        }
+
         const address = await this.getMintAsset(asset, { publicKey: true });
         const res = await this.provider.getTokenSupply(new PublicKey(address));
 
@@ -444,9 +474,12 @@ export class Solana
                         undefined,
                         "confirmed",
                     );
+                const txHash =
+                    (mintSignatures[0] && mintSignatures[0].signature) || "";
                 return txHashToChainTransaction(
                     this.chain,
-                    (mintSignatures[0] && mintSignatures[0].signature) || "",
+                    txHash,
+                    this.transactionExplorerLink({ txHash }) || "",
                 );
             } catch (error: unknown) {
                 // If getSignaturesForAddress threw an error, the network may be
@@ -459,9 +492,11 @@ export class Solana
                             undefined,
                             "confirmed",
                         );
+                    const txHash = mintSignatures[0].signature;
                     return txHashToChainTransaction(
                         this.chain,
-                        mintSignatures[0].signature,
+                        txHash,
+                        this.transactionExplorerLink({ txHash }) || "",
                     );
                 } catch (errorInner) {
                     // If both threw, throw the error returned from
@@ -529,9 +564,6 @@ export class Solana
                 mintLogAccountId[0].toString(),
             );
 
-            // TODO: we may want to just return this for custom integrations.
-            // users should be able to add this instruction to their
-            // application's instruction set for composition.
             const instruction = new TransactionInstruction({
                 keys: [
                     {
@@ -629,6 +661,7 @@ export class Solana
             getSigner: () => this.signer,
             getTransaction,
             findExistingTransaction,
+            transactionExplorerLink: this.transactionExplorerLink,
         });
     };
 
@@ -665,9 +698,19 @@ export class Solana
             new PublicKey(address),
             tokenMintId,
         );
-        return new BigNumber(
+
+        const [assetDecimals, splDecimals] = await Promise.all([
+            this.assetDecimals(asset),
+            this.splDecimals(asset),
+        ]);
+
+        const balance = new BigNumber(
             (await this.provider.getTokenAccountBalance(source)).value.amount,
         );
+
+        // First shift by -splDecimals to get readable amount, and then convert
+        // to the asset's native unit.
+        return balance.shiftedBy(-splDecimals + assetDecimals);
     };
 
     /**
@@ -718,6 +761,7 @@ export class Solana
                         mintGateway,
                         txHash,
                         nonce,
+                        this.transactionExplorerLink,
                     ),
                 5,
                 5 * utils.sleep.SECONDS,
@@ -782,17 +826,29 @@ export class Solana
                 params: { amount: amount_, convertUnit },
             } = contractCall;
 
-            const amount = convertUnit
-                ? new BigNumber(amount_).shiftedBy(
-                      await this.assetDecimals(asset),
-                  )
-                : new BigNumber(amount_);
+            const [
+                splDecimals,
+                assetDecimals,
+                tokenMintId,
+                encodedGatewayState,
+            ] = await Promise.all([
+                this.splDecimals(asset),
+                this.assetDecimals(asset),
+                this.getMintAsset(asset, {
+                    publicKey: true,
+                }),
+                this.provider.getAccountInfo(mintGatewayStateAddress),
+            ]);
+
+            const amount = new BigNumber(amount_)
+                .shiftedBy(
+                    // If convertUnit is false, first shift by -assetDecimals to get
+                    // readable amount.
+                    (convertUnit ? 0 : -assetDecimals) + splDecimals,
+                )
+                .decimalPlaces(0);
 
             const recipient = utils.fromUTF8String(getParams().toPayload.to);
-
-            const tokenMintId = await this.getMintAsset(asset, {
-                publicKey: true,
-            });
 
             const source = await getAssociatedTokenAddress(
                 this.signer.publicKey,
@@ -804,13 +860,9 @@ export class Solana
                 tokenMintId,
                 this.signer.publicKey,
                 BigInt(amount.toFixed()),
-                await this.assetDecimals(asset),
+                splDecimals,
             );
 
-            // Fetch gateway state.
-            const encodedGatewayState = await this.provider.getAccountInfo(
-                mintGatewayStateAddress,
-            );
             if (!encodedGatewayState) {
                 throw new Error("incorrect gateway program address");
             }
@@ -892,6 +944,7 @@ export class Solana
             getSigner: () => this.signer,
             getTransaction,
             onReceipt,
+            transactionExplorerLink: this.transactionExplorerLink,
         });
     };
 
@@ -949,7 +1002,6 @@ export class Solana
         asset: string,
         address?: string,
     ): Promise<PublicKey> => {
-        console.log("address", address);
         let targetAddress = address ? new PublicKey(address) : undefined;
         if (!targetAddress) {
             if (!this.signer) {
@@ -1048,6 +1100,7 @@ export class Solana
                     txid: "",
                     txindex: "0",
                     txHash: "",
+                    explorerLink: "",
 
                     /** @deprecated Renamed to `txHash`. */
                     txidFormatted: "",
@@ -1063,6 +1116,7 @@ export class Solana
             getSigner: () => this.signer,
             getTransaction,
             findExistingTransaction,
+            transactionExplorerLink: this.transactionExplorerLink,
         });
     };
 
@@ -1134,6 +1188,7 @@ export class Solana
                     txHashToBytes,
                     txHashFromBytes,
                     defaultTxindex: "0",
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };

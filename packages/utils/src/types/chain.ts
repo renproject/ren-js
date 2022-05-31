@@ -33,6 +33,8 @@ export interface ChainTransaction {
 
     /** @deprecated Renamed to txHash. */
     txidFormatted?: string;
+
+    explorerLink: string;
 }
 
 export interface InputChainTransaction extends ChainTransaction {

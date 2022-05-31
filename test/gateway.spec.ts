@@ -22,6 +22,7 @@ import {
     EVMParam,
     Filecoin,
     Polygon,
+    Terra,
 } from "../packages/chains/chains/src";
 import { defaultGatewayHandler } from "./utils/defaultGatewayHandler";
 import { initializeChain } from "./utils/testUtils";
@@ -56,7 +57,7 @@ describe("Gateway", () => {
     //             utils.Ox(utils.toNBytes(nonce, 32)),
     //         ],
     //     });
-    //     console.log(burnLogs[0]);
+    //     console.info(burnLogs[0]);
     // });
 
     it("recover", async () => {
@@ -93,7 +94,7 @@ describe("Gateway", () => {
     //         to,
     //     });
 
-    //     console.log(
+    //     console.info(
     //         fees
     //             .estimateOutput(new BigNumber(100000).shiftedBy(decimals))
     //             .shiftedBy(-decimals)
@@ -323,10 +324,10 @@ describe("Gateway", () => {
         //     "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
         //     amount.toFixed(),
         // );
-        // console.log(tx.hash);
+        // console.info(tx.hash);
         // await tx.wait();
 
-        // console.log(
+        // console.info(
         //     new BigNumber(
         //         (
         //             await dai.allowance(
@@ -346,7 +347,7 @@ describe("Gateway", () => {
             to: to.Account(),
         };
 
-        console.log(
+        console.info(
             (await renJS.getFees(gatewayParams))
                 .estimateOutput({
                     amount: "1.1",
@@ -372,7 +373,7 @@ describe("Gateway", () => {
             nonce: 7,
         };
 
-        console.log(
+        console.info(
             (await renJS.getFees(gatewayParams))
                 .estimateOutput({
                     amount: "1.1",
@@ -384,7 +385,7 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it.only("AVAX/fromSolana", async () => {
+    it("AVAX/fromSolana", async () => {
         const network = RenNetwork.Testnet;
         const renJS = new RenJS(network);
 
@@ -392,6 +393,8 @@ describe("Gateway", () => {
         const from = initializeChain(Solana);
         const to = initializeChain(Avalanche);
         renJS.withChains(to, from);
+
+        const amount = new BigNumber(1).shiftedBy(18);
 
         // const fees = await renJS.getFees({
         //     asset,
@@ -401,9 +404,10 @@ describe("Gateway", () => {
 
         const gatewayParams: GatewayParams = {
             asset: asset,
-            from: from.Transaction({
-                txid: "VKzZnqT-sO9kKt43HgCE4Jc18Zd3q5pHddDwK2-2Xw9QMSfqGKS6g-QcPNVMcKMddf16nC0wQf3y25UQU1eeCg",
-            }),
+            from: from.Account({ amount }),
+            // from: from.Transaction({
+            //     txid: "VKzZnqT-sO9kKt43HgCE4Jc18Zd3q5pHddDwK2-2Xw9QMSfqGKS6g-QcPNVMcKMddf16nC0wQf3y25UQU1eeCg",
+            // }),
             to: to.Address(await to.signer.getAddress()),
         };
 

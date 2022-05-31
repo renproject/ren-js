@@ -264,6 +264,10 @@ export abstract class BitcoinBaseChain
                             txindex: tx.txindex,
                             /** @deprecated */
                             txidFormatted: tx.txid,
+                            explorerLink:
+                                this.transactionExplorerLink({
+                                    txHash: tx.txid,
+                                }) || "",
 
                             asset,
                             amount: tx.amount,
@@ -293,6 +297,10 @@ export abstract class BitcoinBaseChain
                     txindex: tx.txindex,
                     /** @deprecated */
                     txidFormatted: tx.txid,
+                    explorerLink:
+                        this.transactionExplorerLink({
+                            txHash: tx.txid,
+                        }) || "",
 
                     asset,
                     amount: tx.amount,
@@ -318,6 +326,10 @@ export abstract class BitcoinBaseChain
                         txindex: tx.txindex,
                         /** @deprecated */
                         txidFormatted: tx.txid,
+                        explorerLink:
+                            this.transactionExplorerLink({
+                                txHash: tx.txid,
+                            }) || "",
 
                         asset,
                         amount: tx.amount,
@@ -439,6 +451,7 @@ export abstract class BitcoinBaseChain
                     chain: this.chain,
                     txHashToBytes,
                     txHashFromBytes,
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };

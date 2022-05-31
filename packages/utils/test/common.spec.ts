@@ -247,7 +247,7 @@ describe("common utils", () => {
 
     context("fromUTF8String", () => {
         it("should correctly convert from utf8-string", () => {
-            console.log(
+            console.info(
                 utils.fromUTF8String(
                     "terra18wgytl2ktjulm00l2km4g3e3z8aqnmy7829tf6",
                 ),

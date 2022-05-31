@@ -267,11 +267,13 @@ export const resolveTokenGatewayContract = (
 export const txHashToChainTransaction = (
     chain: string,
     txHash: string,
+    explorerLink: string,
 ): ChainTransaction => ({
     chain: chain,
     txHash,
     txid: utils.toURLBase64(txHashToBytes(txHash)),
     txindex: "0",
+    explorerLink,
 
     /** @deprecated Renamed to `txHash`. */
     txidFormatted: txHash,
@@ -351,6 +353,10 @@ export const getBurnFromNonce = async (
     mintGateway: PublicKey,
     burnNonce: Uint8Array | number | string,
     txHashIn?: string,
+    transactionExplorerLink?: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ) => string | undefined,
 ): Promise<InputChainTransaction | undefined> => {
     let leNonce: Uint8Array;
     if (typeof burnNonce == "number") {
@@ -409,6 +415,7 @@ export const getBurnFromNonce = async (
     const txid = txHash
         ? utils.toURLBase64(new Uint8Array(base58.decode(txHash)))
         : "";
+
     return {
         // Tx Details
         chain: chain,
@@ -424,6 +431,10 @@ export const getBurnFromNonce = async (
             utils.toNBytes(utils.fromBytes(leNonce, "le"), 32),
         ),
         toRecipient,
+
+        explorerLink:
+            (transactionExplorerLink && transactionExplorerLink({ txHash })) ||
+            "", // TODO
     };
 };
 
@@ -437,13 +448,25 @@ export const getBurnFromTxid = async (
     asset: string,
     mintGateway: PublicKey,
     txHash: string,
-    nonce?: number,
+    nonce: number | undefined,
+    transactionExplorerLink?: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+    ) => string | undefined,
 ): Promise<InputChainTransaction | undefined> => {
     const [burnId, burnIdAlt] = await getBurnPublicKey(provider, txHash);
     nonce = utils.isDefined(nonce)
         ? nonce
         : await getNonceFromBurnId(provider, mintGateway, burnId, burnIdAlt);
-    return getBurnFromNonce(provider, chain, asset, mintGateway, nonce, txHash);
+    return getBurnFromNonce(
+        provider,
+        chain,
+        asset,
+        mintGateway,
+        nonce,
+        txHash,
+        transactionExplorerLink,
+    );
 };
 
 /**

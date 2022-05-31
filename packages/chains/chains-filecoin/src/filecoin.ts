@@ -72,7 +72,7 @@ const FilecoinMainnet: FilecoinNetworkConfig = {
     averageConfirmationTime: 30,
 
     addressPrefix: "f",
-    explorer: "https://filfox.info/en/",
+    explorer: "https://filfox.info/en",
 
     rpc: {
         apiAddress: `https://multichain-web-proxy.herokuapp.com/mainnet`,
@@ -93,7 +93,7 @@ const FilecoinTestnet: FilecoinNetworkConfig = {
     averageConfirmationTime: 30,
 
     addressPrefix: "t",
-    explorer: "https://filfox.info/en/",
+    explorer: "https://calibration.filscan.io",
 
     rpc: {
         apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
@@ -218,8 +218,13 @@ export class Filecoin
     };
 
     public addressExplorerLink = (address: string): string => {
-        // TODO: Check network.
-        return `https://filfox.info/en/address/${address}`;
+        const explorer = this.network.explorer;
+
+        if (explorer.match(/filscan/)) {
+            return `${explorer}/address/general?address=${address}`;
+        }
+
+        return `${explorer}/address/${address}`;
     };
 
     public transactionExplorerLink = ({
@@ -230,13 +235,22 @@ export class Filecoin
         ({ txid: string } | { txHash: string } | { txidFormatted: string })):
         | string
         | undefined => {
-        const url = `https://filfox.info/en/message/`;
-        if (txHash || txidFormatted) {
-            return `${url}${String(txHash || txidFormatted)}`;
-        } else if (txid) {
-            return url + this.txidToTxidFormatted({ txid });
+        const hash =
+            txHash ||
+            txidFormatted ||
+            (txid && this.txidToTxidFormatted({ txid })) ||
+            undefined;
+        if (!hash) {
+            return undefined;
         }
-        return undefined;
+
+        const explorer = this.network.explorer;
+
+        if (explorer.match(/filscan/)) {
+            return `${explorer}/tipset/message-detail?cid=${hash}`;
+        }
+
+        return `${explorer}/message/${hash}`;
     };
 
     /**
@@ -305,6 +319,11 @@ export class Filecoin
 
                             /** @deprecated Renamed to `txHash`. */
                             txidFormatted: tx.cid,
+
+                            explorerLink:
+                                this.transactionExplorerLink({
+                                    txHash: tx.cid,
+                                }) || "",
 
                             asset,
                             amount: tx.amount,
@@ -377,6 +396,11 @@ export class Filecoin
                                     /** @deprecated Renamed to `txHash`. */
                                     txidFormatted: tx.cid,
 
+                                    explorerLink:
+                                        this.transactionExplorerLink({
+                                            txHash: tx.cid,
+                                        }) || "",
+
                                     asset,
                                     amount: tx.amount,
                                 }),
@@ -416,6 +440,11 @@ export class Filecoin
 
                             /** @deprecated Renamed to `txHash`. */
                             txidFormatted: tx.cid,
+
+                            explorerLink:
+                                this.transactionExplorerLink({
+                                    txHash: tx.cid,
+                                }) || "",
 
                             asset,
                             amount: tx.amount,
@@ -645,6 +674,7 @@ export class Filecoin
                     txHashToBytes,
                     txHashFromBytes,
                     defaultTxindex: "0",
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };

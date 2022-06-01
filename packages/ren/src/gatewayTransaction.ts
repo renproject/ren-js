@@ -148,14 +148,74 @@ export class GatewayTransaction<
         this.outputType = outputType;
         this.selector = selector;
 
-        const { asset, nonce, to } = this.params;
+        const { asset, nonce, to, fromTx } = this.params;
 
-        const payload = await this.toChain.getOutputPayload(
+        let payload = await this.toChain.getOutputPayload(
             asset,
             this.inputType,
             this.outputType,
             to,
         );
+
+        if (fromTx.toRecipient) {
+            try {
+                const fromTxPayload = {
+                    to: fromTx.toRecipient,
+                    toBytes: this.toChain.addressToBytes(fromTx.toRecipient),
+                    payload: fromTx.toPayload
+                        ? utils.fromBase64(fromTx.toPayload)
+                        : new Uint8Array([]),
+                };
+                if (payload) {
+                    if (payload.to !== fromTxPayload.to) {
+                        this._config.logger.warn(
+                            `Expected recipient to be ${fromTxPayload.to}, instead got ${payload.to}.`,
+                        );
+                    }
+                    if (
+                        utils.toBase64(payload.payload) !==
+                        utils.toBase64(fromTxPayload.payload)
+                    ) {
+                        this._config.logger.warn(
+                            `Expected payload to be ${utils.toBase64(
+                                fromTxPayload.payload,
+                            )}, instead got ${utils.toBase64(
+                                payload.payload,
+                            )}.`,
+                        );
+                    }
+                    if (
+                        utils.toBase64(payload.toBytes) !==
+                        utils.toBase64(fromTxPayload.toBytes)
+                    ) {
+                        this._config.logger.warn(
+                            `Expected decoded recipient to be ${utils.toBase64(
+                                fromTxPayload.toBytes,
+                            )}, instead got ${utils.toBase64(
+                                payload.toBytes,
+                            )}.`,
+                        );
+                    }
+                } else {
+                    payload = fromTxPayload;
+                }
+            } catch (error) {
+                if (!payload) {
+                    throw ErrorWithCode.updateError(
+                        error,
+                        RenJSError.PARAMETER_ERROR,
+                        `No target payload provided.`,
+                    );
+                }
+            }
+        }
+
+        if (!payload) {
+            throw new ErrorWithCode(
+                `No target payload provided.`,
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
 
         const sHash = generateSHash(
             `${this.params.asset}/to${this.params.to.chain}`,

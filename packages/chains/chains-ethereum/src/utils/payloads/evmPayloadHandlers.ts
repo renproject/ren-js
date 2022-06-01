@@ -1012,4 +1012,5 @@ export type EVMPayload =
     | EVMAddressPayload
     | EVMApprovalPayload
     | EVMTxPayload
-    | EVMNoncePayload;
+    | EVMNoncePayload
+    | { chain: string; type?: undefined };

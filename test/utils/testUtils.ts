@@ -185,6 +185,7 @@ export const initializeChain = <T extends ChainCommon>(
         new (...params): T;
     },
     network = RenNetwork.Testnet,
+    config?: any,
 ): T => {
     switch (Chain.chain) {
         // Bitcoin chains
@@ -221,6 +222,7 @@ export const initializeChain = <T extends ChainCommon>(
             return new (Chain as unknown as typeof Ethereum)({
                 network,
                 ...getEVMProvider(Chain as unknown as typeof Ethereum, network),
+                config,
             }) as ChainCommon as T;
 
         // Solana
@@ -230,6 +232,7 @@ export const initializeChain = <T extends ChainCommon>(
                 signer: signerFromPrivateKey(
                     Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex"),
                 ),
+                config,
             }) as ChainCommon as T;
     }
     throw new Error(`No test initializer for ${Chain.chain}.`);

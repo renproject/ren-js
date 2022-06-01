@@ -191,11 +191,14 @@ export interface DepositChain<
         inputType: InputType,
         outputType: OutputType,
         toPayload: ToPayload,
-    ) => SyncOrPromise<{
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    }>;
+    ) => SyncOrPromise<
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined
+    >;
 }
 
 export const isDepositChain = (chain: any): chain is DepositChain =>
@@ -226,11 +229,13 @@ export interface ContractChain<
         contractCall: FromContractCall,
         getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                toBytes: Uint8Array;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      toBytes: Uint8Array;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
     ) => SyncOrPromise<{
@@ -265,13 +270,15 @@ export interface ContractChain<
         outputType: OutputType,
         asset: string,
         contractCall: FromContractCall,
-        params: () => {
+        getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                toBytes: Uint8Array;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      toBytes: Uint8Array;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
         confirmationTarget: number,
@@ -307,11 +314,14 @@ export interface ContractChain<
         inputType: InputType,
         outputType: OutputType,
         contractCall: ToContractCall,
-    ) => SyncOrPromise<{
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    }>;
+    ) => SyncOrPromise<
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined
+    >;
 }
 
 export const isContractChain = (chain: any): chain is ContractChain =>

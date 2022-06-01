@@ -184,6 +184,9 @@ export class EVMTxSubmitter
             txConfig?: PayableOverrides;
         } = {},
     ): Promise<PopulatedTransaction> => {
+        if (!this._payload.type) {
+            throw new Error(`No ${this.chain} payload provided.`);
+        }
         return await this._getPayloadHandler(this._payload.type).export({
             network: this._network,
             signer: this._getSigner(),
@@ -214,6 +217,10 @@ export class EVMTxSubmitter
         >(this.eventEmitter);
 
         (async (): Promise<ChainTransactionProgress> => {
+            if (!this._payload.type) {
+                throw new Error(`No ${this.chain} payload provided.`);
+            }
+
             const provider = this._getProvider();
             if (this._findExistingTransaction && provider) {
                 const existingTransaction =

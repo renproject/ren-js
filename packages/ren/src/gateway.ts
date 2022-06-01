@@ -267,17 +267,21 @@ export class Gateway<
             );
         }
 
-        if (
-            this.outputType === OutputType.Release &&
-            payload.payload.length > 0
-        ) {
-            throw new Error(`Burning with a payload is not currently enabled.`);
+        if (payload) {
+            if (
+                this.outputType === OutputType.Release &&
+                payload.payload.length > 0
+            ) {
+                throw new Error(
+                    `Burning with a payload is not currently enabled.`,
+                );
+            }
+
+            this._pHash = generatePHash(payload.payload);
         }
 
         this.params.shard = shard;
         this._inConfirmationTarget = confirmationTarget;
-
-        this._pHash = generatePHash(payload.payload);
 
         // const sHash = utils.Ox(generateSHash(this.selector));
 
@@ -294,6 +298,10 @@ export class Gateway<
                     throw new Error(
                         `Cannot mint ${asset} to non-contract chain ${this.toChain.chain}.`,
                     );
+                }
+
+                if (!payload) {
+                    throw new Error(`No target payload set.`);
                 }
 
                 if (!this.params.shard) {
@@ -429,6 +437,23 @@ export class Gateway<
                 processInput,
                 removeInput,
             );
+
+            if (this.fromChain.getInSetup) {
+                this.inSetup = {
+                    ...this.inSetup,
+                    ...(await this.fromChain.getInSetup(
+                        asset,
+                        this.inputType,
+                        this.outputType,
+                        from,
+                        () => ({
+                            toChain: to.chain,
+                            toPayload: payload,
+                            gatewayAddress: this.gatewayAddress,
+                        }),
+                    )),
+                };
+            }
         }
 
         this._fees = await estimateTransactionFee(
@@ -437,23 +462,6 @@ export class Gateway<
             this.fromChain,
             this.toChain,
         );
-
-        if (isContractChain(this.fromChain) && this.fromChain.getInSetup) {
-            this.inSetup = {
-                ...this.inSetup,
-                ...(await this.fromChain.getInSetup(
-                    asset,
-                    this.inputType,
-                    this.outputType,
-                    from,
-                    () => ({
-                        toChain: to.chain,
-                        toPayload: payload,
-                        gatewayAddress: this.gatewayAddress,
-                    }),
-                )),
-            };
-        }
 
         return this;
     };
@@ -505,7 +513,7 @@ export class Gateway<
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!existingTransaction) {
             const createGatewayTransaction = async () => {
-                if (!this.pHash) {
+                if (!utils.isDefined(this.inConfirmationTarget)) {
                     throw new Error(
                         "Gateway address must be generated before calling 'processDeposit'.",
                     );

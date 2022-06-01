@@ -186,7 +186,10 @@ export const defaultGatewayHandler = async (
                     ),
                 );
 
-                logger.info("RenVM tx: ", tx.renVM.export());
+                logger.info(
+                    "RenVM tx: ",
+                    JSON.stringify(tx.renVM.export(), null, "  "),
+                );
 
                 while (true) {
                     try {
@@ -195,7 +198,10 @@ export const defaultGatewayHandler = async (
                         await tx.renVM.wait();
                         break;
                     } catch (error: unknown) {
-                        logger.info("RenVM tx: ", tx.renVM.export());
+                        logger.info(
+                            "RenVM tx: ",
+                            JSON.stringify(tx.renVM.export(), null, "  "),
+                        );
                         logger.error(error);
                         if (
                             tx.renVM.progress.status ===

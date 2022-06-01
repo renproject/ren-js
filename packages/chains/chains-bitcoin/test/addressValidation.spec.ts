@@ -3,7 +3,7 @@ import { RenNetwork } from "@renproject/utils";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { Bitcoin, DigiByte } from "../src";
+import { Bitcoin, DigiByte, Dogecoin } from "../src";
 
 const testcases = [
     {
@@ -37,11 +37,36 @@ const testcases = [
             [RenNetwork.Testnet]: ["yUxrmTPtDajuTocr4nSUZ4qn5PJ3uqS7GN"],
         },
     },
+    {
+        chain: Dogecoin,
+        addresses: {
+            [RenNetwork.Mainnet]: [
+                "DBs4WcRE7eysKwRxHNX88XZVCQ9M6QSUSz",
+                "DDogepartyxxxxxxxxxxxxxxxxxxw1dfzr",
+            ],
+            [RenNetwork.Testnet]: ["2NEw92VEonb5BoiNgmCkcdewDeiwu6nb9ts"],
+        },
+        failing: {
+            [RenNetwork.Mainnet]: [
+                "bc1qk6yk2ctcu2pmtxfzhya692h774562vlv2g7dvl",
+                "2NEw92VEonb5BoiNgmCkcdewDeiwu6nb9ts",
+            ],
+            [RenNetwork.Testnet]: [
+                "bc1qk6yk2ctcu2pmtxfzhya692h774562vlv2g7dvl",
+                "DBs4WcRE7eysKwRxHNX88XZVCQ9M6QSUSz",
+            ],
+        },
+    },
 ];
 
 describe("Address validation", () => {
     for (const testcase of testcases) {
-        for (const network of Object.keys(testcase.addresses)) {
+        for (const network of Array.from(
+            new Set([
+                ...Object.keys(testcase.addresses || {}),
+                ...Object.keys(testcase.failing || {}),
+            ]),
+        )) {
             it(`${String(testcase.chain.name)} - ${network}`, () => {
                 for (const address of (testcase.addresses || { [network]: [] })[
                     network

@@ -278,12 +278,18 @@ export class EthereumBaseChain
         inputType: InputType,
         outputType: OutputType,
         contractCall: EVMPayload,
-    ): Promise<{
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    }> => {
+    ): Promise<
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined
+    > => {
         await this.checkProviderNetwork();
+        if (contractCall.type === undefined) {
+            return undefined;
+        }
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler.getPayload) {
             throw ErrorWithCode.updateError(
@@ -670,10 +676,12 @@ export class EthereumBaseChain
         contractCall: EVMPayload,
         getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
         confirmationTarget: number,
@@ -856,6 +864,13 @@ export class EthereumBaseChain
             );
         }
 
+        const { toChain, toPayload } = getParams();
+        if (!toPayload) {
+            throw new Error(
+                `Unable to generate ${this.chain} transaction: No ${toChain} payload.`,
+            );
+        }
+
         return new EVMTxSubmitter({
             getProvider: () => this.provider,
             getSigner: () => this.signer,
@@ -883,14 +898,20 @@ export class EthereumBaseChain
         contractCall: EVMPayload,
         getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                toBytes: Uint8Array;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      toBytes: Uint8Array;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
     ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> => {
+        if (!contractCall.type) {
+            return {};
+        }
+
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
@@ -960,6 +981,10 @@ export class EthereumBaseChain
             signature?: Uint8Array;
         },
     ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> => {
+        if (!contractCall.type) {
+            return {};
+        }
+
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};

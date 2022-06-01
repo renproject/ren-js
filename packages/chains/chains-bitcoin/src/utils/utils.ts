@@ -2,8 +2,6 @@ import { ripemd160 as createRipemd160 } from "@noble/hashes/ripemd160";
 import { assertType, utils } from "@renproject/utils";
 import { bech32 } from "bech32";
 import base58 from "bs58";
-import { validate } from "wallet-address-validator";
-import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
 
 import {
     BitcoinNetworkConfig,
@@ -28,26 +26,6 @@ export const addressToBytes = (address: string): Uint8Array => {
             throw new Error(`Unrecognized address format "${address}".`);
         }
     }
-};
-
-export const validateAddress = (
-    address: string,
-    asset: string,
-    network: string,
-): boolean => {
-    if (asset === "DGB") {
-        const currency = {
-            name: "digibyte",
-            symbol: "dgb",
-            addressTypes: { prod: ["1e", "3f"], testnet: ["7e", "8c"] },
-            validator: BTCValidator,
-            segwitHrp: network === "prod" ? "dgb" : "dgbt",
-        };
-
-        return currency.validator.isValidAddress(address, currency, network);
-    }
-
-    return validate(address, asset, network);
 };
 
 export const StandardBitcoinExplorer = (

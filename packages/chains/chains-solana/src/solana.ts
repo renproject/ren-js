@@ -724,16 +724,18 @@ export class Solana
         contractCall: SolanaInputPayload,
         getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
     ): Promise<TxSubmitter | TxWaiter> => {
-        const { toPayload } = getParams();
+        const { toChain, toPayload } = getParams();
         if (toPayload && toPayload.payload.length > 0) {
             throw new Error(
                 `Solana burns do not currently allow burning with a payload. For releasing to EVM chains, use \`evmChain.Account({ anyoneCanSubmit: false })\`.`,
@@ -809,6 +811,12 @@ export class Solana
             });
         }
 
+        if (!toPayload) {
+            throw new Error(
+                `Unable to generate ${this.chain} transaction: No ${toChain} payload.`,
+            );
+        }
+
         const getTransaction = async (): Promise<{
             transaction: Transaction;
             nonce: number;
@@ -848,7 +856,14 @@ export class Solana
                 )
                 .decimalPlaces(0);
 
-            const recipient = utils.fromUTF8String(getParams().toPayload.to);
+            const { toPayload } = getParams();
+            if (!toPayload) {
+                throw new Error(
+                    `Unable to generate ${this.chain} transaction: No ${toChain} payload.`,
+                );
+            }
+
+            const recipient = utils.fromUTF8String(toPayload.to);
 
             const source = await getAssociatedTokenAddress(
                 this.signer.publicKey,

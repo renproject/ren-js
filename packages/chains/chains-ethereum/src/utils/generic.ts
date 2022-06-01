@@ -87,7 +87,7 @@ export const mapBurnLogToInputChainTransaction = (
         ...txHashToChainTransaction(chain, event.transactionHash, explorerLink),
         asset,
         amount: amount.toString(),
-        toRecipient: to,
+        toRecipient: utils.toUTF8String(utils.fromHex(to)),
         nonce: utils.toURLBase64(utils.toNBytes(burnNonce.toString(), 32)),
     };
 };

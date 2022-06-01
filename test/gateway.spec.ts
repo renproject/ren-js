@@ -33,7 +33,7 @@ loadDotEnv();
 
 describe("Gateway", () => {
     // it("burn sentry", async () => {
-    //     const nonce = 44530;
+    //     const nonce = 1696;
 
     //     const { provider } = initializeChain(Ethereum, RenNetwork.Mainnet);
     //     const asset = "BTC";
@@ -60,19 +60,35 @@ describe("Gateway", () => {
     //     console.info(burnLogs[0]);
     // });
 
-    it("recover", async () => {
+    it.only("recover", async () => {
         const network = RenNetwork.Mainnet;
-        const asset = Dogecoin.assets.DOGE;
-        const from = initializeChain(Solana, network);
-        const to = initializeChain<Dogecoin>(Dogecoin, network);
+        const asset = Bitcoin.assets.BTC;
+        const from = initializeChain(Bitcoin, network);
+        const to = initializeChain(Avalanche, network, {
+            truncate0xPrefix: true,
+        });
         const renJS = new RenJS(network).withChains(from, to);
 
         const gatewayParams: GatewayParams = {
             asset,
             from: from.Transaction({
-                txHash: "5wxeaRWAY9Wit6NAen5HAoD8X8pEMgw6FdAQryq6nV9adeKUismzRjSAsxwy1fCnDCYaxxTxDn1XFvrxExQ6zdTv",
+                txHash: "5e0a3b5876ec3b68f7da0a6704c360a7690727682949d8cbe81305eb25e2efda",
+                txindex: "0",
             }),
-            to: to.Address("DE8aTAaquSdsWuMJ51zFWqVsPaUd2Zdhdi"),
+            to: to.Contract({
+                to: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
+                method: "mint",
+                withRenParams: true,
+                params: [
+                    { name: "_symbol", type: "string", value: "BTC" },
+                    {
+                        name: "_recipient",
+                        type: "address",
+                        value: "0x04eeC06EFCCAcC073A595e347Db56E2fc7FFe361",
+                    },
+                ],
+            }),
+            nonce: 19140000,
         };
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
@@ -359,10 +375,10 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("FIL/toSolana", async () => {
+    it.skip("DOGE/toSolana", async () => {
         const network = RenNetwork.Testnet;
-        const asset = Filecoin.assets.FIL;
-        const from = initializeChain(Filecoin);
+        const asset = Dogecoin.assets.DOGE;
+        const from = initializeChain(Dogecoin);
         const to = initializeChain(Solana);
         const renJS = new RenJS(network).withChains(from, to);
 
@@ -373,14 +389,14 @@ describe("Gateway", () => {
             nonce: 7,
         };
 
-        console.info(
-            (await renJS.getFees(gatewayParams))
-                .estimateOutput({
-                    amount: "1.1",
-                    convertUnit: true,
-                })
-                .toFixed(),
-        );
+        // console.info(
+        //     (await renJS.getFees(gatewayParams))
+        //         .estimateOutput({
+        //             amount: "1.1",
+        //             convertUnit: true,
+        //         })
+        //         .toFixed(),
+        // );
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);

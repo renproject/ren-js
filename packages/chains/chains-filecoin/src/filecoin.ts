@@ -592,17 +592,20 @@ export class Filecoin
         _inputType: InputType,
         _outputType: OutputType,
         toPayload: FilecoinOutputPayload,
-    ): {
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    } => {
+    ):
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined => {
         this._assertAssetIsSupported(asset);
         const address = toPayload.params
             ? toPayload.params.address
             : toPayload.address;
         if (!address) {
-            throw new Error(`No ${this.chain} address specified.`);
+            // throw new Error(`No ${this.chain} address specified.`);
+            return undefined;
         }
         return {
             to: address,

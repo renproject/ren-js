@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { Bitcoin } from "../src";
+import { Bitcoin, Dogecoin } from "../src";
 
 describe("Utils", () => {
     it("validateTransaction", () => {
@@ -21,5 +21,7 @@ describe("Utils", () => {
                 txindex: "1",
             }),
         ).to.be.true;
+
+        const dogecoinMainnet = new Dogecoin({ network: "mainnet" });
     });
 });

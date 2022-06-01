@@ -12,6 +12,7 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
+import { validate } from "wallet-address-validator";
 
 import { APIWithPriority, BitcoinAPI, CombinedAPI } from "./APIs/API";
 import { createAddressArray } from "./script/index";
@@ -28,7 +29,6 @@ import {
     hash160,
     txHashFromBytes,
     txHashToBytes,
-    validateAddress,
 } from "./utils/utils";
 
 /**
@@ -79,17 +79,20 @@ export abstract class BitcoinBaseChain
         _inputType: InputType,
         _outputType: OutputType,
         toPayload: BitcoinOutputPayload,
-    ): {
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    } => {
+    ):
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined => {
         this._assertAssetIsSupported(asset);
         const address = toPayload.params
             ? toPayload.params.address
             : toPayload.address;
         if (!address) {
-            throw new Error(`No ${this.chain} address specified.`);
+            // throw new Error(`No ${this.chain} address specified.`);
+            return undefined;
         }
         return {
             to: address,
@@ -136,7 +139,7 @@ export abstract class BitcoinBaseChain
 
     public validateAddress = (address: string): boolean => {
         try {
-            return validateAddress(
+            return validate(
                 address,
                 this.network.nativeAsset.symbol,
                 this.network.isTestnet ? "testnet" : "prod",

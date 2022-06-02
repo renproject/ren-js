@@ -506,7 +506,9 @@ export class Gateway<
     public processDeposit = async (
         inputTx: InputChainTransaction,
     ): Promise<GatewayTransaction<ToPayload>> => {
-        const depositIdentifier = inputTx.txid + "_" + String(inputTx.txindex);
+        const depositIdentifier = `${String(inputTx.txid)}_${String(
+            inputTx.txindex,
+        )}`;
         const existingTransaction = this.transactions.get(depositIdentifier);
 
         // If the transaction hasn't been seen before.

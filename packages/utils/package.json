@@ -34,7 +34,7 @@
         "test": "run-s test:* lint",
         "test:unit": "nyc ../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./src/*.spec.ts ./src/**/*.spec.ts ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
-        "cov": "run-s test:unit cov:html && if command -v open-cli; then open-cli coverage/index.html; fi",
+        "cov": "run-s test:unit cov:html && open-cli coverage/index.html",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 0 --functions 0 --branches 0",
@@ -46,11 +46,11 @@
         "@noble/hashes": "1.0.0",
         "@types/bn.js": "^5.1.0",
         "@types/events": "3.0.0",
-        "axios": "^0.26.1",
+        "axios": "^0.27.2",
         "base64-js": "^1.5.1",
         "bignumber.js": "^9.0.2",
         "events": "^3.3.0",
-        "immutable": "^4.0.0"
+        "immutable": "^4.1.0"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

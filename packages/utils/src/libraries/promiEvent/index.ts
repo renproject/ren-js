@@ -17,7 +17,7 @@ export class Web3PromiEvent<
     // eslint-disable-next-line @typescript-eslint/ban-types
     EventTypes extends { [event: string]: any[] } = {},
 > extends EventEmitterTyped<EventTypes> {
-    public readonly [Symbol.toStringTag]: "Promise";
+    public readonly [Symbol.toStringTag]: "Promise" = "Promise";
     public readonly promise: Promise<T>;
     // @ts-ignore no initializer because of proxyHandler
     public resolve: (value: T | PromiseLike<T>) => void;

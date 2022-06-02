@@ -40,6 +40,7 @@ export enum EVMParam {
     EVM_ACCOUNT_IS_CONTRACT = "__EVM_ACCOUNT_IS_CONTRACT__",
     EVM_GATEWAY = "__EVM_GATEWAY__",
     EVM_ASSET = "__EVM_ASSET__",
+    EVM_CHAIN = "__EVM_CHAIN__",
 
     // Available when minting or releasing
     EVM_AMOUNT = "__EVM_AMOUNT__",
@@ -74,6 +75,7 @@ export type EVMParamValues = {
     [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: () => Promise<boolean | undefined>;
     [EVMParam.EVM_GATEWAY]: () => Promise<string>;
     [EVMParam.EVM_ASSET]: string;
+    [EVMParam.EVM_CHAIN]?: string;
 
     // Available when minting or releasing.
     [EVMParam.EVM_AMOUNT]?: string; // in wei
@@ -772,6 +774,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         );
         if (!contractPayload) {
             const to = await replaceRenParam(payload.params.address, evmParams);
+            console.log(payload.params.address, to);
             return {
                 to,
                 toBytes: utils.fromHex(to),

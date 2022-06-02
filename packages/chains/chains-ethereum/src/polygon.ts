@@ -51,8 +51,10 @@ const polygonTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
         chainName: "Matic(Polygon) Testnet Mumbai",
         nativeCurrency: { name: "Matic", symbol: "tMATIC", decimals: 18 },
         rpcUrls: [
-            "https://rpc-mumbai.maticvigil.com",
             "https://rpc-mumbai.matic.today",
+            "https://matic-mumbai.chainstacklabs.com",
+            "https://rpc-mumbai.maticvigil.com",
+            "https://matic-testnet-archive-rpc.bwarelabs.com",
             "wss://ws-mumbai.matic.today",
         ],
         blockExplorerUrls: ["https://mumbai.polygonscan.com/"],

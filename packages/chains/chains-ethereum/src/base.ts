@@ -638,13 +638,6 @@ export class EthereumBaseChain
             });
         }
 
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-
         return new EVMTxSubmitter({
             getProvider: () => this.provider,
             getSigner: () => this.signer,
@@ -857,13 +850,6 @@ export class EthereumBaseChain
             });
         }
 
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-
         const { toChain, toPayload } = getParams();
         if (!toPayload) {
             throw new Error(
@@ -916,12 +902,7 @@ export class EthereumBaseChain
         if (!handler || !handler.getSetup) {
             return {};
         }
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
+
         const calls = await handler.getSetup({
             network: this.network,
             signer: this.signer,
@@ -989,12 +970,7 @@ export class EthereumBaseChain
         if (!handler || !handler.getSetup) {
             return {};
         }
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
+
         const calls = await handler.getSetup({
             network: this.network,
             signer: this.signer,
@@ -1131,9 +1107,10 @@ export class EthereumBaseChain
             [EVMParam.EVM_TOKEN_DECIMALS]: async () =>
                 await this.assetDecimals(asset),
             [EVMParam.EVM_ACCOUNT]: async () => {
+                console.log("!EVMParam.EVM_ACCOUNT!", this.signer);
                 if (!this.signer) {
                     throw ErrorWithCode.updateError(
-                        new Error(`Must connect signer.`),
+                        new Error(`Must connect ${this.chain} signer.`),
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
@@ -1144,7 +1121,12 @@ export class EthereumBaseChain
                         ErrorWithCode.isErrorWithCode(error) &&
                         error.code === errors.UNSUPPORTED_OPERATION
                     ) {
-                        return undefined;
+                        throw ErrorWithCode.updateError(
+                            new Error(
+                                `Must connect ${this.chain} signer - unable to get address.`,
+                            ),
+                            RenJSError.PARAMETER_ERROR,
+                        );
                     }
                     throw error;
                 }
@@ -1152,7 +1134,7 @@ export class EthereumBaseChain
             [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: async () => {
                 if (!this.signer) {
                     throw ErrorWithCode.updateError(
-                        new Error(`Must connect signer.`),
+                        new Error(`Must connect ${this.chain} signer.`),
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
@@ -1165,7 +1147,12 @@ export class EthereumBaseChain
                         ErrorWithCode.isErrorWithCode(error) &&
                         error.code === errors.UNSUPPORTED_OPERATION
                     ) {
-                        return undefined;
+                        throw ErrorWithCode.updateError(
+                            new Error(
+                                `Must connect ${this.chain} signer - unable to get code at address.`,
+                            ),
+                            RenJSError.PARAMETER_ERROR,
+                        );
                     }
                     throw error;
                 }
@@ -1186,6 +1173,7 @@ export class EthereumBaseChain
                     this.network.addresses.GatewayRegistry,
                 ).getTransferContract(),
             [EVMParam.EVM_ASSET]: asset,
+            [EVMParam.EVM_CHAIN]: this.chain,
 
             // Available when minting or releasing
             [EVMParam.EVM_AMOUNT]: utils.isDefined(params.amount)

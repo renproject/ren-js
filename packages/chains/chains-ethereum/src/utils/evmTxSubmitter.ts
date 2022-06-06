@@ -238,8 +238,10 @@ export class EVMTxSubmitter
                         return this.progress;
                     }
                     this._tx = await provider.getTransaction(
-                        (existingTransaction.txHash ||
-                            existingTransaction.txidFormatted) as string,
+                        String(
+                            existingTransaction.txHash ||
+                                existingTransaction.txidFormatted,
+                        ),
                     );
                 }
             }
@@ -315,8 +317,7 @@ export class EVMTxSubmitter
     ): Promise<ChainTransactionProgress> => {
         const provider = this._getProvider();
         this._tx = await provider.getTransaction(
-            (chainTransaction.txHash ||
-                chainTransaction.txidFormatted) as string,
+            String(chainTransaction.txHash || chainTransaction.txidFormatted),
         );
         return this.updateProgress({
             status:

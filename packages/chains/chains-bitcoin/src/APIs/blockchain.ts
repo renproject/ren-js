@@ -1,7 +1,6 @@
+import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import qs from "qs";
-
-import { utils } from "@renproject/utils";
 
 import { BitcoinAPI, sortUTXOs, UTXO } from "./API";
 
@@ -165,6 +164,6 @@ export class Blockchain implements BitcoinAPI {
         }
 
         // Check response type.
-        return response as string;
+        return String(response);
     };
 }

@@ -15,7 +15,7 @@ export const txHashToBytes = (txHash: string): Uint8Array => {
  * Convert a Filecoin transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid A Filecoin transaction hash as bytes.
+ * @param bytes A Filecoin transaction hash as bytes.
  * @returns The same Filecoin transaction hash formatted as a CID string.
  */
 export const txHashFromBytes = (bytes: Uint8Array): string => {

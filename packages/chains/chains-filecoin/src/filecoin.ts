@@ -290,7 +290,7 @@ export class Filecoin
         }
 
         // If the payload is a transaction, submit it to onInput and then loop
-        // indefintely.
+        // indefinitely.
         if (fromPayload.type === "transaction") {
             const inputTx = fromPayload.params.tx;
             if ((inputTx as InputChainTransaction).amount === undefined) {
@@ -300,14 +300,12 @@ export class Filecoin
                     try {
                         if (this.filfox) {
                             tx = await this.filfox.fetchMessage(
-                                (inputTx.txHash ||
-                                    inputTx.txidFormatted) as string,
+                                String(inputTx.txHash || inputTx.txidFormatted),
                             );
                         } else {
                             tx = await fetchMessage(
                                 this.client,
-                                (inputTx.txHash ||
-                                    inputTx.txidFormatted) as string,
+                                String(inputTx.txHash || inputTx.txidFormatted),
                                 this.network.addressPrefix,
                             );
                         }
@@ -465,7 +463,7 @@ export class Filecoin
     public transactionConfidence = async (
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
-        const cid = (transaction.txHash || transaction.txidFormatted) as string;
+        const cid = String(transaction.txHash || transaction.txidFormatted);
         let msg;
         try {
             msg = await fetchMessage(

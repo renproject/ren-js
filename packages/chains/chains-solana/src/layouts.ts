@@ -60,7 +60,7 @@ export interface RenVmMsg {
     n_hash: Uint8Array;
 }
 
-export const RenVmMsgLayout: Layout<RenVmMsg> = struct([
+export const RenVMMessageLayout: Layout<RenVmMsg> = struct([
     array(u8(), 32, "p_hash"),
     array(u8(), 32, "amount"),
     array(u8(), 32, "token"),

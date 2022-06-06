@@ -246,7 +246,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         }
 
         const types: ParamType[] = args.map(
-            ({ value, ...params }) => params as ParamType,
+            ({ value: _, ...params }) => params as ParamType,
         );
         const values = args.map((param): unknown => param.value);
 
@@ -306,7 +306,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
                 : x,
         );
         const paramTypes: ParamType[] = params.map(
-            ({ value, ...params }) => params as ParamType,
+            ({ value: _value, ...paramABI }) => paramABI as ParamType,
         );
         const paramValues = params.map((x) => x.value);
 
@@ -774,7 +774,6 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
         );
         if (!contractPayload) {
             const to = await replaceRenParam(payload.params.address, evmParams);
-            console.log(payload.params.address, to);
             return {
                 to,
                 toBytes: utils.fromHex(to),

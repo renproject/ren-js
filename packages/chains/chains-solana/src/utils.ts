@@ -35,7 +35,7 @@ import {
     GatewayRegistryState,
     GatewayRegistryStateKey,
     GatewayStateKey,
-    RenVmMsgLayout,
+    RenVMMessageLayout,
 } from "./layouts";
 
 const ETHEREUM_ADDRESS_BYTES = 20;
@@ -139,46 +139,38 @@ export const constructRenVMMsg = (
     logger: Logger = defaultLogger,
 ): Uint8Array[] => {
     try {
-        const renvmmsg = Buffer.from(new Array(160));
-        const preencode = {
+        const msgParams = {
             p_hash: new Uint8Array(p_hash),
-            amount: new Uint8Array(utils.toNBytes(amount, 32)),
+            amount: utils.toNBytes(amount, 32),
             token: new Uint8Array(token),
             to: new Uint8Array(base58.decode(to)),
             n_hash: new Uint8Array(n_hash),
         };
 
-        logger.debug(
-            "renvmmsg preencode",
-            JSON.stringify({
-                s_hash: token,
-                p_hash,
-                to: base58.decode(to),
-                n_hash,
-                amount: utils.toNBytes(amount, 32),
-            }),
-        );
-
-        const renvmMsgSlice = utils.concat([
-            preencode.p_hash,
-            preencode.amount,
-            preencode.token,
-            preencode.to,
-            preencode.n_hash,
+        const renVMMsgSlice = utils.concat([
+            msgParams.p_hash,
+            msgParams.amount,
+            msgParams.token,
+            msgParams.to,
+            msgParams.n_hash,
         ]);
-        RenVmMsgLayout.encode(preencode, renvmmsg);
-        logger.debug("renvmmsg encoded", renvmmsg);
-        return [new Uint8Array(renvmmsg), renvmMsgSlice];
+        const renVMMessage = Buffer.from(new Array(160));
+        RenVMMessageLayout.encode(msgParams, renVMMessage);
+        logger.debug("renVMMessage encoded", renVMMessage);
+        return [new Uint8Array(renVMMessage), renVMMsgSlice];
     } catch (e) {
-        logger.debug("failed to encoded renvmmsg", e);
+        logger.debug("failed to encoded renVMMessage", e);
         throw e;
     }
 };
 
 /**
  * Generate a Solana signer from a mnemonic.
- * @param mnemonic
- * @returns
+ *
+ * @param mnemonic A BIP-39 mnemonic.
+ * @param derivationPath (optional) The BIP-39 derivation path (defaults to
+ * m/44'/501'/0'/0').
+ * @returns A `@project-serum/sol-wallet-adapter` Wallet.
  */
 export const signerFromMnemonic = (
     mnemonic: string,
@@ -195,6 +187,7 @@ export const signerFromMnemonic = (
     return signerFromPrivateKey(keypair);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isKeypair = (key: any): key is Keypair => {
     return key && (key as Keypair).publicKey && (key as Keypair).secretKey;
 };
@@ -473,7 +466,7 @@ export const getBurnFromTxid = async (
  * Convert a Solana transaction hash from its standard format to the format
  * required by RenVM.
  *
- * @param txidFormatted A Solana transaction hash formatted as a base58 string.
+ * @param txHash A Solana transaction hash formatted as a base58 string.
  * @returns The same Solana transaction hash formatted as a base64 string.
  */
 export const txHashToBytes = (txHash: string): Uint8Array => {
@@ -484,7 +477,7 @@ export const txHashToBytes = (txHash: string): Uint8Array => {
  * Convert a Solana transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid A Solana transaction hash formatted as a base64 string.
+ * @param bytes A Solana transaction hash formatted as a base64 string.
  * @returns The same Solana transaction hash formatted as a base58 string.
  */
 export const txHashFromBytes = (bytes: Uint8Array): string => {

@@ -45,7 +45,7 @@ export const txHashToBytes = (txHash: string): Uint8Array => {
  * Convert an Ethereum transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid An Ethereum transaction hash formatted as bytes.
+ * @param bytes An Ethereum transaction hash formatted as bytes.
  * @returns The same Ethereum transaction hash formatted as a 0x-prefixed hex
  * string.
  */
@@ -336,7 +336,7 @@ const getPastLogs = async <T extends TypedEvent>(
     provider: Provider,
     contractAddress: string,
     eventABI: AbiItem,
-    filter: unknown[],
+    filter: Array<string | null>,
     blockLimit?: number,
 ): Promise<T[]> => {
     let fromBlock = 1;
@@ -352,7 +352,7 @@ const getPastLogs = async <T extends TypedEvent>(
         address: contractAddress,
         fromBlock: fromBlock,
         toBlock: toBlock,
-        topics: [utils.Ox(getEventTopic(eventABI)), ...filter] as string[],
+        topics: [utils.Ox(getEventTopic(eventABI)), ...filter],
     });
 
     return filterLogs<T>(events, eventABI);

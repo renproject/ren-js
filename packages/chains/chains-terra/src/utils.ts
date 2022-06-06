@@ -16,7 +16,7 @@ export const txHashToBytes = (txHash: string): Uint8Array => {
  * Convert a Terra transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid A Terra transaction hash formatted as a base64 string.
+ * @param bytes A Terra transaction hash formatted as a base64 string.
  * @returns The same Terra transaction hash formatted as an unprefixed hex
  * string.
  */

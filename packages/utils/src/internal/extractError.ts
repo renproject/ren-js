@@ -57,7 +57,7 @@ export const extractError = (error: unknown): string => {
             if (error.slice(0, 7) === "Error: ") {
                 error = error.slice(7);
             }
-            return error as string;
+            return String(error);
         }
         return JSON.stringify(error);
     } catch (innerError) {

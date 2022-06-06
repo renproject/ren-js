@@ -1,7 +1,6 @@
 import Wallet from "@project-serum/sol-wallet-adapter";
 import { ChainTransaction } from "@renproject/utils";
 import { Connection } from "@solana/web3.js";
-import BigNumber from "bignumber.js";
 
 export type SolanaProvider = Connection;
 export type SolanaSigner = Wallet;
@@ -18,6 +17,13 @@ export interface SolanaPayloadInterface<Name extends string = string, T = any> {
 
 export type MintToAddress = SolanaPayloadInterface<
     "mintToAddress",
+    {
+        to: string;
+    }
+>;
+
+export type MintToTokenAddress = SolanaPayloadInterface<
+    "mintToTokenAddress",
     {
         to: string;
     }
@@ -46,5 +52,5 @@ export type Transaction = SolanaPayloadInterface<
     }
 >;
 
-export type SolanaOutputPayload = MintToAddress;
+export type SolanaOutputPayload = MintToAddress | MintToTokenAddress;
 export type SolanaInputPayload = BurnFromAddress | BurnNonce | Transaction;

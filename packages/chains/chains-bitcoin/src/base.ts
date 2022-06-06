@@ -248,14 +248,14 @@ export abstract class BitcoinBaseChain
         }
 
         // If the payload is a transaction, submit it to onInput and then loop
-        // indefintely.
+        // indefinitely.
         if (fromPayload.type === "transaction") {
             const inputTx = fromPayload.params.tx;
             if ((inputTx as InputChainTransaction).amount === undefined) {
                 while (true) {
                     try {
                         const tx = await this.api.fetchUTXO(
-                            (inputTx.txHash || inputTx.txidFormatted) as string,
+                            String(inputTx.txHash || inputTx.txidFormatted),
                             inputTx.txindex,
                         );
                         onInput({

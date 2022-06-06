@@ -97,7 +97,12 @@ export interface ChainCommon {
     assets: { [asset: string]: string };
 
     /** Override the chain's provider. */
-    withProvider?: (...args: any[]) => SyncOrPromise<this>;
+    provider?: any;
+    withProvider?: (...providers: any[]) => SyncOrPromise<this>;
+
+    /** Override the chain's signer. */
+    signer?: any;
+    withSigner?: (...signers: any[]) => SyncOrPromise<this>;
 
     /** Return the asset's decimals, or throw for an unsupported asset. */
     assetDecimals: (asset: string) => SyncOrPromise<number>;

@@ -321,7 +321,7 @@ export class Terra
             throw new Error(`${this.name} object not initialized.`);
         }
         return await this.api.fetchConfirmations(
-            (transaction.txHash || transaction.txidFormatted) as string,
+            String(transaction.txHash || transaction.txidFormatted),
         );
     };
 

@@ -220,7 +220,7 @@ export const assertObject = <T extends object>(
                     },
                 });
             } else if (typeof fieldTypes[field] === "string") {
-                assertType(fieldTypes[field] as string, {
+                assertType(String(fieldTypes[field]), {
                     [`${key}["${field}"]`]: value[field],
                 });
             } else {

@@ -29,11 +29,11 @@ import { TransactionEmitter } from "./utils/transactionEmitter";
 /**
  * A Gateway allows moving funds through RenVM. Its defined by the asset being
  * moved, an origin chain and a target chain. For each of these chains, a
- * payload can be specified, allowing for more complex bridings involving
+ * payload can be specified, allowing for more complex bridgings involving
  * contract interactions.
  *
  * A Gateway will be of one of two types - a deposit gateway, requiring users
- * to send funds to a gateway address, or a contract gateway, requring users to
+ * to send funds to a gateway address, or a contract gateway, requiring users to
  * submit a specific transaction. For example, when moving BTC from Bitcoin
  * to Ethereum, the user will have to send BTC to a Bitcoin address (the gateway
  * address). When moving DAI from Ethereum to Polygon, the user will have to
@@ -113,7 +113,7 @@ export class Gateway<
     // be called immediately after the constructor.
 
     private _selector: string | undefined;
-    /** The RenVM contract selecetor. */
+    /** The RenVM contract selector. */
     public get selector(): string {
         return this._defaultGetter("_selector") || this._selector;
     }
@@ -582,9 +582,9 @@ export class Gateway<
                 await this.addTransaction(depositIdentifier, await promise);
             } catch (error: unknown) {
                 await this.removeTransaction(depositIdentifier);
-                const message = `Error processing deposit ${
-                    inputTx.txidFormatted
-                }: ${utils.extractError(error)}`;
+                const message = `Error processing deposit ${String(
+                    inputTx.txHash || inputTx.txidFormatted,
+                )}: ${utils.extractError(error)}`;
                 if (error instanceof Error) {
                     error.message = message;
                 } else {
@@ -599,7 +599,7 @@ export class Gateway<
 
     /**
      * Listen to "transaction" events, registering a callback that will be
-     * called for all previous trannsactions and for any future transaction.
+     * called for all previous transactions and for any future transaction.
      *
      * To remove the listener, call `gateway.eventEmitter.removeListener` or
      * `gateway.eventEmitter.removeAllListeners`.

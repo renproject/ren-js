@@ -67,10 +67,12 @@ export interface TxWaiter<
         }
     >;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     export?(params?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         overrides?: { [key: string]: any };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         txConfig?: any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }): SyncOrPromise<any>;
 
     /**
@@ -98,8 +100,8 @@ export interface TxSubmitter<
     /**
      * Submit the transaction to the chain.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submit(params?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         overrides?: { [key: string]: any };
         txConfig?: TxConfig;
     }): PromiEvent<

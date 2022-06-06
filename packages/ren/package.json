@@ -10,14 +10,15 @@
         "access": "public"
     },
     "keywords": [
-        "renvm",
-        "ren",
-        "bitcoin",
-        "dogecoin",
-        "web3",
-        "ethereum",
-        "solana",
-        "defi"
+        "RenVM",
+        "Ren",
+        "Cross-Chain",
+        "Ethereum",
+        "Bitcoin",
+        "Solana",
+        "Dogecoin",
+        "Web3",
+        "DeFi"
     ],
     "author": "Ren",
     "license": "MIT",

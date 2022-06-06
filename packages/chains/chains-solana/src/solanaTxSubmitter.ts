@@ -114,7 +114,7 @@ export class SolanaTxWaiter
     }
 
     /**
-     * Export the unsigned transasction details.
+     * Export the unsigned transaction details.
      *
      * @returns The Solana message that needs to be signed and submitted,
      * serialized as a base58 string.
@@ -138,9 +138,9 @@ export class SolanaTxWaiter
         );
     };
 
-    public setTransaction = async (
+    public setTransaction = (
         chainTransaction: ChainTransaction,
-    ): Promise<ChainTransactionProgress> => {
+    ): ChainTransactionProgress => {
         return this.updateProgress({
             status: ChainTransactionStatus.Done,
             confirmations: this.progress.target,
@@ -276,8 +276,10 @@ export class SolanaTxWaiter
             let currentConfidenceRatio = -1;
             while (true) {
                 const tx = await this._provider.getConfirmedTransaction(
-                    (this.progress.transaction.txHash ||
-                        this.progress.transaction.txidFormatted) as string,
+                    String(
+                        this.progress.transaction.txHash ||
+                            this.progress.transaction.txidFormatted,
+                    ),
                 );
 
                 const currentSlot = await this._provider.getSlot();

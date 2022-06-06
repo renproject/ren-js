@@ -275,7 +275,7 @@ export class Solana
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
         const tx = await this.provider.getTransaction(
-            (transaction.txHash || transaction.txidFormatted) as string,
+            String(transaction.txHash || transaction.txidFormatted),
             { commitment: "confirmed" },
         );
 
@@ -367,13 +367,18 @@ export class Solana
         toBytes: Uint8Array;
         payload: Uint8Array;
     }> => {
-        const associatedTokenAccount = await this.getAssociatedTokenAccount(
-            asset,
-            contractCall.params.to,
-        );
+        let tokenAccount: PublicKey;
+        if (contractCall.type === "mintToTokenAddress") {
+            tokenAccount = new PublicKey(contractCall.params.to);
+        } else {
+            tokenAccount = await this.getAssociatedTokenAccount(
+                asset,
+                contractCall.params.to,
+            );
+        }
         return {
-            to: associatedTokenAccount.toBase58(),
-            toBytes: new Uint8Array(associatedTokenAccount.toBuffer()),
+            to: tokenAccount.toBase58(),
+            toBytes: new Uint8Array(tokenAccount.toBuffer()),
             payload: new Uint8Array(),
         };
     };
@@ -797,7 +802,7 @@ export class Solana
                 chain: this,
                 target: confirmationTarget,
                 onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt((tx.txHash || tx.txidFormatted)!),
+                    onReceipt(String(tx.txHash || tx.txidFormatted)),
             });
         }
 
@@ -807,7 +812,7 @@ export class Solana
                 chain: this,
                 target: confirmationTarget,
                 onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt((tx.txHash || tx.txidFormatted)!),
+                    onReceipt(String(tx.txHash || tx.txidFormatted)),
             });
         }
 
@@ -856,14 +861,14 @@ export class Solana
                 )
                 .decimalPlaces(0);
 
-            const { toPayload } = getParams();
-            if (!toPayload) {
+            const { toPayload: txToPayload } = getParams();
+            if (!txToPayload) {
                 throw new Error(
                     `Unable to generate ${this.chain} transaction: No ${toChain} payload.`,
                 );
             }
 
-            const recipient = utils.fromUTF8String(toPayload.to);
+            const recipient = utils.fromUTF8String(txToPayload.to);
 
             const source = await getAssociatedTokenAddress(
                 this.signer.publicKey,
@@ -1174,6 +1179,18 @@ export class Solana
         return {
             chain: this.chain,
             type: "mintToAddress",
+            params: {
+                to: address,
+            },
+        };
+    };
+
+    public TokenAddress = (
+        address: string,
+    ): SolanaOutputPayload | SolanaInputPayload => {
+        return {
+            chain: this.chain,
+            type: "mintToTokenAddress",
             params: {
                 to: address,
             },

@@ -7,8 +7,6 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 
-export { Gateway as LockAndMint } from "../gateway";
-
 export const BIP_DENOMINATOR = 10000;
 
 /**

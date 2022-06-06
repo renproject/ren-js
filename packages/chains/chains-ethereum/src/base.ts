@@ -732,10 +732,10 @@ export class EthereumBaseChain
                     .map(onInput);
 
                 // Filter logs that are releases to other chains.
-                const { toChain } = getParams();
+                const { toChain: receiptToChain } = getParams();
                 const filterByRecipientChain = (e: LogBurnToChainEvent) => {
                     const [_recipientAddress, recipientChain] = e.args;
-                    return recipientChain === toChain;
+                    return recipientChain === receiptToChain;
                 };
 
                 const logBurnToChainABI = findABIMethod(
@@ -810,7 +810,7 @@ export class EthereumBaseChain
                 onFirstProgress: async (tx: ChainTransaction) => {
                     onReceipt(
                         await this.provider.getTransactionReceipt(
-                            (tx.txHash || tx.txidFormatted) as string,
+                            String(tx.txHash || tx.txidFormatted),
                         ),
                     );
                 },
@@ -833,7 +833,9 @@ export class EthereumBaseChain
             );
             if (!chainTransaction) {
                 throw new Error(
-                    `Unable to find ${asset} ${inputType} on ${this.chain} with nonce ${contractCall.params.nonce}.`,
+                    `Unable to find ${asset} ${inputType} on ${
+                        this.chain
+                    } with nonce ${String(contractCall.params.nonce)}.`,
                 );
             }
             return new DefaultTxWaiter({
@@ -843,7 +845,7 @@ export class EthereumBaseChain
                 onFirstProgress: async (tx: ChainTransaction) => {
                     onReceipt(
                         await this.provider.getTransactionReceipt(
-                            (tx.txHash || tx.txidFormatted) as string,
+                            String(tx.txHash || tx.txidFormatted),
                         ),
                     );
                 },
@@ -1107,7 +1109,6 @@ export class EthereumBaseChain
             [EVMParam.EVM_TOKEN_DECIMALS]: async () =>
                 await this.assetDecimals(asset),
             [EVMParam.EVM_ACCOUNT]: async () => {
-                console.log("!EVMParam.EVM_ACCOUNT!", this.signer);
                 if (!this.signer) {
                     throw ErrorWithCode.updateError(
                         new Error(`Must connect ${this.chain} signer.`),

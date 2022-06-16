@@ -45,11 +45,11 @@ export const renPolygonMainnet: EthereumConfig = {
         BasicAdapter: "0xAC23817f7E9Ec7EB6B7889BDd2b50e04a44470c5",
     },
 
-    publicProvider: () => `https://rpc-mainnet.maticvigil.com`,
+    publicProvider: () => `https://polygon-rpc.com`,
     explorer: StandardExplorer("https://polygonscan.com"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
-    infura: "https://rpc-mainnet.maticvigil.com",
+    infura: "https://polygon-rpc.com",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
     etherscan: "https://polygonscan.com",
 };

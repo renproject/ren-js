@@ -25,12 +25,12 @@ export const renAvalancheTestnet: EthereumConfig = {
     },
 
     publicProvider: () => `https://api.avax-test.network/ext/bc/C/rpc`,
-    explorer: StandardExplorer("https://cchain.explorer.avax-test.network"),
+    explorer: StandardExplorer("https://testnet.snowtrace.io"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
     infura: "https://api.avax-test.network/ext/bc/C/rpc",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://cchain.explorer.avax-test.network",
+    etherscan: "https://testnet.snowtrace.io",
 };
 
 export const renAvalancheMainnet: EthereumConfig = {
@@ -45,12 +45,12 @@ export const renAvalancheMainnet: EthereumConfig = {
     },
 
     publicProvider: () => `https://api.avax.network/ext/bc/C/rpc`,
-    explorer: StandardExplorer("https://cchain.explorer.avax.network"),
+    explorer: StandardExplorer("https://snowtrace.io"),
 
     /** @deprecated Renamed to publicProvider. Will be removed in 3.0.0. */
     infura: "https://api.avax.network/ext/bc/C/rpc",
     /** @deprecated Renamed to explorer. Will be removed in 3.0.0. */
-    etherscan: "https://cchain.explorer.avax.network",
+    etherscan: "https://snowtrace.io",
 };
 
 export const AvalancheConfigMap = {

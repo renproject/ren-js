@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import BigNumber from "bignumber.js";
-import { EventEmitter } from "events";
 
 import { RenNetwork, RenNetworkDetails, RenNetworkString } from "./networks";
 import {

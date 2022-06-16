@@ -23,7 +23,7 @@ import BigNumber from "bignumber.js";
 import { BurnAndRelease } from "./burnAndRelease";
 import { RenJSConfig } from "./config";
 import { defaultDepositHandler } from "./defaultDepositHandler";
-import { LockAndMint, DepositStatus, LockAndMintDeposit } from "./lockAndMint";
+import { DepositStatus, LockAndMint, LockAndMintDeposit } from "./lockAndMint";
 
 export { BurnAndRelease } from "./burnAndRelease";
 export { LockAndMint, DepositStatus, LockAndMintDeposit } from "./lockAndMint";
@@ -146,8 +146,13 @@ export default class RenJS {
             new SimpleLogger((config && config.logLevel) || LogLevel.Error);
 
         this._config.logger = this._logger;
+        const useV2TransactionFormat =
+            // useV2TransactionFormat defaults to true.
+            !config ||
+            config.useV2TransactionFormat === undefined ||
+            config.useV2TransactionFormat === true;
         const defaultProvider = () =>
-            config && config.useV2TransactionFormat
+            useV2TransactionFormat
                 ? new RenVMProvider(
                       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
                       (providerOrNetwork || RenNetwork.Mainnet) as

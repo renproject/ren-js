@@ -1,15 +1,7 @@
 /* eslint-disable no-console */
 
-import BigNumber from "bignumber.js";
-import BN from "bn.js";
-import chai from "chai";
-import { blue, cyan, green, magenta, red, yellow } from "chalk";
-import { config as loadDotEnv } from "dotenv";
-import { ethers } from "ethers";
-import CryptoAccount from "send-crypto";
-
 import * as Chains from "@renproject/chains";
-import { Arbitrum, Ethereum, Goerli } from "@renproject/chains-ethereum";
+import { Ethereum, Goerli } from "@renproject/chains-ethereum";
 import { renTestnet } from "@renproject/chains-solana/build/main/networks";
 import { makeTestProvider } from "@renproject/chains-solana/build/main/utils";
 import {
@@ -22,6 +14,13 @@ import RenJS from "@renproject/ren";
 import { RenVMProvider } from "@renproject/rpc/build/main/v2";
 import { extractError, SECONDS, sleep } from "@renproject/utils";
 import HDWalletProvider from "@truffle/hdwallet-provider";
+import BigNumber from "bignumber.js";
+import BN from "bn.js";
+import chai from "chai";
+import { blue, cyan, green, magenta, red, yellow } from "chalk";
+import { config as loadDotEnv } from "dotenv";
+import { ethers } from "ethers";
+import CryptoAccount from "send-crypto";
 
 chai.should();
 
@@ -37,12 +36,12 @@ const testPK = Buffer.from(process.env.TESTNET_SOLANA_KEY || "", "hex");
 
 describe("Refactor: mint", () => {
     const longIt = process.env.ALL_TESTS ? it : it.skip;
-    it("mint to contract", async function () {
+    it.only("mint to contract", async function () {
         this.timeout(100000000000);
 
         const network = RenNetwork.Testnet;
-        const from = Chains.Terra();
-        const asset = "LUNA"; // from.asset;
+        const from = Chains.Bitcoin();
+        const asset = "BTC"; // from.asset;
 
         const toChain = new Chains.Solana(
             makeTestProvider(renTestnet, testPK),
@@ -58,8 +57,8 @@ describe("Refactor: mint", () => {
 
         const to = toChain;
 
-        // const ToClass = Arbitrum;
-        // const ethNetwork = Arbitrum.configMap[network];
+        // const ToClass = Ethereum;
+        // const ethNetwork = Ethereum.configMap[network];
 
         const account = new CryptoAccount(Buffer.from(PRIVATE_KEY, "hex"), {
             network: "testnet",
@@ -70,7 +69,9 @@ describe("Refactor: mint", () => {
         });
 
         const logLevel: LogLevel = LogLevel.Log;
-        const renJS = new RenJS(new RenVMProvider(network), { logLevel });
+        const renJS = new RenJS(new RenVMProvider(network), {
+            logLevel,
+        });
 
         // const infuraURL = ethNetwork.publicProvider({
         //     infura: process.env.INFURA_KEY,
@@ -107,7 +108,7 @@ describe("Refactor: mint", () => {
             asset,
             from,
             to,
-            nonce: new BN(1).toArrayLike(Buffer, "be", 32),
+            nonce: new BN(3).toArrayLike(Buffer, "be", 32),
         };
 
         const assetDecimals = await params.from.assetDecimals(asset);

@@ -1,8 +1,4 @@
-import axios from "axios";
-import base58 from "bs58";
-import { defaultAbiCoder } from "ethers/lib/utils";
 import { EventEmitter } from "events";
-import { OrderedMap } from "immutable";
 
 import {
     AbiItem,
@@ -44,6 +40,11 @@ import {
     toBase64,
     toURLBase64,
 } from "@renproject/utils";
+import axios from "axios";
+import base58 from "bs58";
+import { ethers } from "ethers";
+import { defaultAbiCoder } from "ethers/lib/utils";
+import { OrderedMap } from "immutable";
 
 import { RenJSConfig } from "./config";
 
@@ -579,6 +580,8 @@ export class LockAndMint<
                     this.params.asset,
                 );
 
+            const shouldStrip0x = this._state.config.strip0x || false;
+
             const gatewayString =
                 this.params.from.addressToString(gatewayAddress);
             const gatewayDetails = {
@@ -593,9 +596,11 @@ export class LockAndMint<
                 fn: contractFn,
                 fnABI,
                 to:
-                    this.renVM.version(this._state.selector) >= 2
+                    this.params.to.name == "Solana"
+                        ? sendTo
+                        : shouldStrip0x
                         ? strip0x(sendTo)
-                        : Ox(sendTo),
+                        : ethers.utils.getAddress(Ox(sendTo)),
                 tags,
 
                 // See [RenJSConfig.transactionVersion]
@@ -897,6 +902,8 @@ export class LockAndMintDeposit<
                 ? [this.params.tags[0]]
                 : [];
 
+        const shouldStrip0x = config.strip0x || false;
+
         this._state = {
             ...state,
             // gHash
@@ -911,9 +918,11 @@ export class LockAndMintDeposit<
             payload: fromHex(encodedParameters),
             pHash,
             to:
-                renVM.version(state.selector) >= 2
+                this.params.to.name == "Solana"
+                    ? sendTo
+                    : shouldStrip0x
                     ? strip0x(sendTo)
-                    : Ox(sendTo),
+                    : ethers.utils.getAddress(Ox(sendTo)),
             fn: contractFn,
             fnABI,
             tags,

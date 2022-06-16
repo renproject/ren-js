@@ -42,4 +42,9 @@ export interface RenJSConfig {
      * Ensure the V2 RPC is used for all assets
      */
     useV2TransactionFormat?: boolean;
+
+    /**
+     * Don't normalize `to` field.
+     */
+    strip0x?: boolean;
 }

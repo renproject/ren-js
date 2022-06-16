@@ -52,8 +52,8 @@ export const resolveNetwork = (
 export const renMainnet: SolNetworkConfig = {
     name: RenNetwork.Mainnet,
     symbol: "SOL",
-    chain: "mainnet",
-    chainLabel: "Mainnet",
+    chain: "mainnet-beta",
+    chainLabel: "Mainnet Beta",
 
     nativeAsset: {
         name: "Solana",
@@ -73,9 +73,9 @@ export const renMainnet: SolNetworkConfig = {
 export const renTestnet: SolNetworkConfig = {
     name: RenNetwork.Testnet,
     symbol: "SOL",
-    chain: "testnet",
+    chain: "devnet",
     isTestnet: true,
-    chainLabel: "Testnet",
+    chainLabel: "Devnet",
 
     nativeAsset: {
         name: "Solana",
@@ -95,9 +95,9 @@ export const renTestnet: SolNetworkConfig = {
 export const renDevnet: SolNetworkConfig = {
     name: RenNetwork.Devnet,
     symbol: "SOL",
-    chain: "devnet",
+    chain: "testnet",
     isTestnet: true,
-    chainLabel: "Devnet",
+    chainLabel: "Testnet",
 
     nativeAsset: {
         name: "Solana",

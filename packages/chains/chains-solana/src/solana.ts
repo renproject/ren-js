@@ -186,20 +186,14 @@ export class Solana
             : undefined;
     };
 
-    private _getGatewayRegistryData__memoized?: () => Promise<GatewayRegistryState>;
     // Wrapper to expose _getGatewayRegistryData as a class method instead of a
     // property.
-    public getGatewayRegistryData = async (): Promise<GatewayRegistryState> => {
-        this._getGatewayRegistryData__memoized =
-            this._getGatewayRegistryData__memoized ||
-            utils.memoize(async () => {
-                return await getGatewayRegistryState(
-                    this.provider,
-                    this.network.addresses.GatewayRegistry,
-                );
-            });
-        return this._getGatewayRegistryData__memoized();
-    };
+    public getGatewayRegistryData = utils.memoize(() =>
+        getGatewayRegistryState(
+            this.provider,
+            this.network.addresses.GatewayRegistry,
+        ),
+    );
 
     public withProvider = (provider: Connection): this => {
         this.provider = provider;
@@ -428,14 +422,16 @@ export class Solana
             mintGateway,
         );
 
-        const associatedTokenAccount_ = await this.getAssociatedTokenAccount(
-            asset,
-            contractCall.params.to,
-        );
-        if (!associatedTokenAccount_) {
+        const associatedTokenAccount =
+            contractCall.type === "mintToTokenAddress"
+                ? new PublicKey(contractCall.params.to)
+                : await this.getAssociatedTokenAccount(
+                      asset,
+                      contractCall.params.to,
+                  );
+        if (!associatedTokenAccount) {
             throw new Error(`Associated token account not created yet.`);
         }
-        const associatedTokenAccount = associatedTokenAccount_;
 
         const findExistingTransaction = async (): Promise<
             ChainTransaction | undefined
@@ -521,14 +517,6 @@ export class Solana
             });
         }
 
-        // To get to this point, the token account should already exist.
-        // const recipientWalletAddress =
-        //     contractCall &&
-        //     contractCall.contractParams &&
-        //     contractCall.contractParams[0] &&
-        //     contractCall.contractParams[0].value;
-        // await this.createAssociatedTokenAccount(asset, recipientWalletAddress);
-
         const getTransaction = async (): Promise<{
             transaction: Transaction;
         }> => {
@@ -548,6 +536,10 @@ export class Solana
 
             if (!signature) {
                 throw new Error(`Unable to fetch RenVM signature.`);
+            }
+
+            if (!(await this.accountExists(associatedTokenAccount))) {
+                throw new Error(`Must create associated token account.`);
             }
 
             const to = associatedTokenAccount.toBase58();
@@ -968,29 +960,30 @@ export class Solana
         });
     };
 
-    public associatedTokenAccountExists = async (
-        asset: string,
-        address?: string,
-    ): Promise<boolean> => {
-        const associatedTokenAddress = await this.getAssociatedTokenAccount(
-            asset,
-            address,
-        );
-        let setupRequired = false;
+    public accountExists = async (account: PublicKey): Promise<boolean> => {
         try {
             const tokenAccount = await this.provider.getAccountInfo(
-                associatedTokenAddress,
+                account,
                 "processed",
             );
 
             if (!tokenAccount || !tokenAccount.data) {
-                setupRequired = true;
+                return false;
             }
         } catch (e) {
             this._logger.error(e);
-            setupRequired = true;
+            return false;
         }
-        return !setupRequired;
+        return true;
+    };
+
+    public associatedTokenAccountExists = async (
+        asset: string,
+        address?: string,
+    ): Promise<boolean> => {
+        return await this.accountExists(
+            await this.getAssociatedTokenAccount(asset, address),
+        );
     };
 
     public getOutSetup = async (
@@ -1001,16 +994,36 @@ export class Solana
     ): Promise<{
         [key: string]: TxSubmitter | TxWaiter;
     }> => {
+        // Mint to address
         if (
+            contractCall.type === "mintToAddress" &&
             !(await this.associatedTokenAccountExists(
                 asset,
                 contractCall.params.to,
             ))
         ) {
             return {
-                createTokenAccount: this.createAssociatedTokenAccount(asset),
+                createTokenAccount: this.createAssociatedTokenAccount(
+                    asset,
+                    contractCall.params.to,
+                ),
             };
         }
+
+        // Mint to token address
+        if (
+            contractCall.type === "mintToTokenAddress" &&
+            !(await this.accountExists(new PublicKey(contractCall.params.to)))
+        ) {
+            return {
+                createTokenAccount: this.createAssociatedTokenAccount(
+                    asset,
+                    undefined,
+                    contractCall.params.to,
+                ),
+            };
+        }
+
         return {};
     };
 
@@ -1066,6 +1079,7 @@ export class Solana
     public createAssociatedTokenAccount = (
         asset: string,
         address?: string,
+        associatedTokenAccount?: string,
     ): SolanaTxWaiter => {
         const getTransaction = async (): Promise<{
             transaction: Transaction;
@@ -1095,6 +1109,22 @@ export class Solana
             const targetAddress = address
                 ? new PublicKey(address)
                 : this.signer.publicKey;
+
+            if (associatedTokenAccount) {
+                const targetAddressAssociatedTokenAccount =
+                    await this.getAssociatedTokenAccount(
+                        asset,
+                        targetAddress.toString(),
+                    );
+                if (
+                    targetAddressAssociatedTokenAccount.toString() !==
+                    associatedTokenAccount.toString()
+                ) {
+                    throw new Error(
+                        `Must connect account associated with ${associatedTokenAccount}.`,
+                    );
+                }
+            }
 
             const createTxInstruction = await createAssociatedTokenAccount(
                 this.signer.publicKey,

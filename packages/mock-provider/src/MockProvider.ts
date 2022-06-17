@@ -363,22 +363,49 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
 
     private handle_queryConfig = (
         _request: ParamsQueryConfig,
-    ): ResponseQueryConfig => ({
-        network: "dev",
-        maxConfirmations: this.supportedChains.reduce(
-            (acc, chain) => ({ ...acc, [chain.chain]: 100 }),
-            {},
-        ),
-        registries: this.supportedChains.reduce(
-            (acc, chain) => ({ ...acc, [chain.chain]: "" }),
-            {},
-        ),
-        confirmations: this.supportedChains.reduce(
-            (acc, chain) => ({ ...acc, [chain.chain]: 0 }),
-            {},
-        ),
-        whitelist: [],
-    });
+    ): ResponseQueryConfig => {
+        const whitelist: string[] = [];
+        for (const asset of this.supportedAssets.keys()) {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            const originChain = this.supportedAssets.get(asset) as string;
+            for (const fromChain of this.supportedChains.keys()) {
+                for (const toChain of this.supportedChains.keys()) {
+                    if (fromChain === toChain) {
+                        continue;
+                    }
+
+                    let selector: string;
+                    if (fromChain === originChain) {
+                        selector = `${String(asset)}/to${String(toChain)}`;
+                    } else if (toChain === originChain) {
+                        selector = `${String(asset)}/from${String(fromChain)}`;
+                    } else {
+                        selector = `${String(asset)}/from${String(
+                            fromChain,
+                        )}_to${String(toChain)}`;
+                    }
+                    whitelist.push(selector);
+                }
+            }
+        }
+
+        return {
+            network: "dev",
+            maxConfirmations: this.supportedChains.reduce(
+                (acc, chain) => ({ ...acc, [chain.chain]: 100 }),
+                {},
+            ),
+            registries: this.supportedChains.reduce(
+                (acc, chain) => ({ ...acc, [chain.chain]: "" }),
+                {},
+            ),
+            confirmations: this.supportedChains.reduce(
+                (acc, chain) => ({ ...acc, [chain.chain]: 0 }),
+                {},
+            ),
+            whitelist,
+        };
+    };
 
     private handle_queryBlockState = ({
         contract,

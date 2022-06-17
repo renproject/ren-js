@@ -13,6 +13,7 @@ import { defaultAbiCoder, ParamType } from "ethers/lib/utils";
 import {
     findABIMethod,
     getEventTopic,
+    getLockGatewayInstance,
     getMintGatewayInstance,
     LockGatewayABI,
     MintGatewayABI,
@@ -66,13 +67,13 @@ export const txHashToChainTransaction = (
     const txHashBytes = utils.fromHex(txHash);
     return {
         chain,
-        txHash: utils.Ox(txHashBytes),
+        txHash: txHash === "" ? txHash : utils.Ox(txHashBytes),
         txid: utils.toURLBase64(txHashBytes),
         txindex: "0",
         explorerLink,
 
         /** @deprecated Renamed to `txHash`. */
-        txidFormatted: utils.Ox(txHashBytes),
+        txidFormatted: txHash === "" ? txHash : utils.Ox(txHashBytes),
     };
 };
 
@@ -247,25 +248,37 @@ export const findMintBySigHash = async (
     provider: Provider,
     asset: string,
     nHash: Uint8Array,
-    sigHash?: Uint8Array,
+    sigHash: Uint8Array | undefined,
     blockLimit?: number,
 ): Promise<string | undefined> => {
     const gatewayAddress = await getMintGateway(network, provider, asset);
     const gatewayInstance = getMintGatewayInstance(provider, gatewayAddress);
     const logMintABI = findABIMethod(MintGatewayABI, "LogMint");
 
-    const mintEvents = await getPastLogs<LogMintEvent>(
-        provider,
-        gatewayAddress,
-        logMintABI,
-        [null, null, utils.Ox(nHash)],
-        blockLimit,
-    );
-    if (mintEvents.length) {
-        if (mintEvents.length > 1) {
-            console.warn(`Found more than one mint log.`);
+    // Attempt to look up the mint's event log by its nHash, allowing for the
+    // mint's transaction hash to be returned.
+    try {
+        const mintEvents = await getPastLogs<LogMintEvent>(
+            provider,
+            gatewayAddress,
+            logMintABI,
+            [null, null, utils.Ox(nHash)],
+            blockLimit,
+        );
+        if (mintEvents.length) {
+            if (mintEvents.length > 1) {
+                console.warn(`Found more than one mint log.`);
+            }
+            return mintEvents[0].transactionHash;
         }
-        return mintEvents[0].transactionHash;
+    } catch (error) {
+        // If there's no sigHash, the status function call can't be called as a
+        // fallback so the error is thrown.
+        if (!sigHash) {
+            throw error;
+        } else {
+            console.error(error);
+        }
     }
 
     if (sigHash) {
@@ -286,26 +299,51 @@ export const findReleaseBySigHash = async (
     provider: Provider,
     asset: string,
     nHash: Uint8Array,
+    sigHash: Uint8Array | undefined,
     blockLimit?: number,
 ): Promise<string | undefined> => {
     const gatewayAddress = await getLockGateway(network, provider, asset);
+    const gatewayInstance = getLockGatewayInstance(provider, gatewayAddress);
     const logLockABI = findABIMethod(LockGatewayABI, "LogRelease");
 
-    const newReleaseEvents = await getPastLogs<LogBurnEvent>(
-        provider,
-        gatewayAddress,
-        logLockABI,
-        [null, null, utils.Ox(nHash)],
-        blockLimit,
-    );
+    // Attempt to look up the releases's event log by its nHash, allowing for
+    // the releases's transaction hash to be returned.
+    try {
+        const newReleaseEvents = await getPastLogs<LogBurnEvent>(
+            provider,
+            gatewayAddress,
+            logLockABI,
+            [null, null, utils.Ox(nHash)],
+            blockLimit,
+        );
 
-    if (newReleaseEvents.length > 1) {
-        console.warn(`Found more than one release log.`);
+        if (newReleaseEvents.length) {
+            if (newReleaseEvents.length > 1) {
+                console.warn(`Found more than one release log.`);
+            }
+            return newReleaseEvents[0].transactionHash;
+        }
+    } catch (error) {
+        // If there's no sigHash, the status function call can't be called as a
+        // fallback so the error is thrown.
+        if (!sigHash) {
+            throw error;
+        } else {
+            console.error(error);
+        }
     }
 
-    return newReleaseEvents.length
-        ? newReleaseEvents[0].transactionHash
-        : undefined;
+    if (sigHash) {
+        // Check the status in case the mint's event may be too old to be
+        // fetched. If the status is true, the mint succeeded, but no hash
+        // is available - `""` is returned instead.
+        const status = await gatewayInstance.status(utils.Ox(sigHash));
+        if (status) {
+            return "";
+        }
+    }
+
+    return undefined;
 };
 
 export const filterLogs = <T extends TypedEvent>(
@@ -547,3 +585,99 @@ export const resolveEVMNetworkConfig = (
 };
 /** @deprecated Renamed to resolveEVMNetworkConfig. */
 export const resolveEvmNetworkConfig = resolveEVMNetworkConfig;
+
+/**
+ * Resolve an EVM chain's JSON-RPC endpoints, replacing variable keys such as
+ * `${INFURA_API_KEY}` with the value provided in `variables`. If a URL has a
+ * variable key that isn't provided, it is removed from the final list.
+ * If a variable's value is undefined, it is not replaced.
+ *
+ * @param urls An array of JSON-RPC urls.
+ * @param variables An object mapping variable keys to their values.
+ * @param protocol A RegExp matching the required url protocol. Defaults to "https"
+ * @returns An array of JSON-RPC urls with variables resolved to their values.
+ *
+ * @example
+ * resolveRpcEndpoints(
+ *  ["https://test.com/${TEST}", "https://test2.com/${MISSING}", "wss://test3.com"],
+ *  { TEST: "test"},
+ * )
+ * > ["https://test.com/test"]
+ */
+export const resolveRpcEndpoints = (
+    urls: string[],
+    variables?: {
+        INFURA_API_KEY?: string;
+        ALCHEMY_API_KEY?: string;
+    } & { [variableKey: string]: string | undefined },
+    protocol: RegExp | string = "https",
+): string[] => {
+    return (
+        urls
+            .sort((a) =>
+                ((variables || {}).INFURA_API_KEY &&
+                    a.includes("${INFURA_API_KEY}")) ||
+                ((variables || {}).ALCHEMY_API_KEY &&
+                    a.includes("${ALCHEMY_API_KEY}"))
+                    ? -1
+                    : 1,
+            )
+            // Replace variable keys surround by "${...}" with variable values.
+            // If a variable's value is undefined, it is not replaced.
+            .map((url) =>
+                Object.keys(variables || {}).reduce(
+                    (urlAcc, variableKey) =>
+                        urlAcc.replace(
+                            `\${${variableKey}}`,
+                            utils.isDefined((variables || {})[variableKey])
+                                ? String((variables || {})[variableKey])
+                                : `\${${variableKey}}`,
+                        ),
+                    url,
+                ),
+            )
+            // Match only endpoints that don't include any left-over "${"s,
+            // and that have the right protocol.
+            .filter(
+                (url) =>
+                    url.match(/^[^(${)]*$/) &&
+                    url.match(
+                        typeof protocol === "string"
+                            ? "^" + protocol
+                            : protocol,
+                    ),
+            )
+    );
+};
+
+/**
+ *
+ * @param provider An ethers.js provider.
+ * @param network The config of the EVM network that the signer should be
+ * connected to.
+ * @returns The result of the comparison, including details of the expected and
+ * actual networks. If `result` is true, then the signer's network is correct.
+ */
+export const checkProviderNetwork = async (
+    provider: Provider,
+    network: EVMNetworkConfig,
+): Promise<{
+    result: boolean;
+    actualNetworkId: number;
+
+    expectedNetworkId: number;
+    expectedNetworkLabel: string;
+}> => {
+    const expectedNetworkId = new BigNumber(network.config.chainId).toNumber();
+
+    const actualNetworkId = provider
+        ? (await provider.getNetwork()).chainId
+        : expectedNetworkId;
+
+    return {
+        result: actualNetworkId === expectedNetworkId,
+        actualNetworkId,
+        expectedNetworkId,
+        expectedNetworkLabel: network.config.chainName,
+    };
+};

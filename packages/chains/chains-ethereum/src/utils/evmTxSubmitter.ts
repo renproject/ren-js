@@ -11,11 +11,13 @@ import {
     eventEmitter,
     EventEmitterTyped,
     PromiEvent,
+    RenJSError,
     TxSubmitter,
     utils,
 } from "@renproject/utils";
 import {
     Contract,
+    ethers,
     PayableOverrides,
     PopulatedTransaction,
     Signer,
@@ -23,7 +25,7 @@ import {
 import { Logger } from "ethers/lib/utils";
 
 import { AbiItem } from "./abi";
-import { txHashToChainTransaction } from "./generic";
+import { checkProviderNetwork, txHashToChainTransaction } from "./generic";
 import {
     EVMParamValues,
     EVMPayload,
@@ -272,7 +274,10 @@ export class EVMTxSubmitter
                         });
                     }
                 }
-                const tx = await payloadHandler.export({
+
+                // TODO: Check if `signer.sendTransaction` will always work
+                // with `from` defined.
+                const { from, ...tx } = await payloadHandler.export({
                     network: this._network,
                     signer: signer,
                     payload: this._payload,
@@ -280,6 +285,31 @@ export class EVMTxSubmitter
                     overrides: options,
                     getPayloadHandler: this._getPayloadHandler,
                 });
+
+                if (from) {
+                    const recipient = ethers.utils.getAddress(from);
+                    const address = ethers.utils.getAddress(
+                        await signer.getAddress(),
+                    );
+                    if (recipient !== address) {
+                        throw new Error(
+                            `Transaction can only be submitted by ${recipient} - connected address is ${address}.`,
+                        );
+                    }
+                }
+
+                // Check the signer's network.
+                const providerNetworkCheck = await checkProviderNetwork(
+                    signer.provider || provider,
+                    this._network,
+                );
+                if (!providerNetworkCheck.result) {
+                    throw new ErrorWithCode(
+                        `Invalid ${this.chain} signer network: expected ${providerNetworkCheck.expectedNetworkId} (${providerNetworkCheck.expectedNetworkLabel}), got ${providerNetworkCheck.actualNetworkId}.`,
+                        RenJSError.INCORRECT_PROVIDER_NETWORK,
+                    );
+                }
+
                 // `populateTransaction` fills in the missing details - e.g.
                 // gas details. It's commented out because it seems that it's
                 // better to calculate this in the `sendTransaction` step.

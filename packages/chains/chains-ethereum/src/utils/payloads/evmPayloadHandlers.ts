@@ -10,6 +10,7 @@ import {
 import BigNumber from "bignumber.js";
 import {
     Contract,
+    ethers,
     PayableOverrides,
     PopulatedTransaction,
     Signer,
@@ -100,14 +101,31 @@ export type EVMParamValues = {
 const isEVMParam = (value: any): value is EVMParam =>
     Object.values(EVMParam).indexOf(value) >= 0;
 
+/**
+ * The configuration associated with an EVM payload.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface EVMPayloadInterface<Name extends string = string, T = any> {
+export interface EVMPayloadInterface<Name extends string = string, T = any> {
+    /** The name of the payload's chain. */
     chain: string;
+    /** EVM transaction config overrides. */
     txConfig?: PayableOverrides;
+    /** The type of EVM payload. */
     type: Name;
+    /** The parameters specific to the EVM payload type. */
     params: T;
+    /** Set-up transactions required by the payload.  */
     setup?: {
         [name: string]: EVMPayload;
+    };
+
+    payloadConfig?: {
+        /**
+         * Whether the `to` field passed to the RenVM transaction should remain
+         * preserved, for resuming a transaction that was created with a
+         * non-standard address format (no 0x prefix, or no checksum)
+         */
+        preserveAddressFormat?: boolean;
     };
 }
 
@@ -343,6 +361,7 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
         return await contract.populateTransaction[abi.name](
             ...paramValues,
             fixEVMTransactionConfig(
+                payload.txConfig,
                 payload.params.txConfig,
                 overrides.txConfig,
             ),
@@ -838,7 +857,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
                 `Unable to submit empty payload for release to ${payload.params.address}.`,
             );
         }
-        return contractPayloadHandler.export({
+        const exported = await contractPayloadHandler.export({
             network,
             signer,
             payload: contractPayload,
@@ -846,6 +865,17 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
             overrides,
             getPayloadHandler,
         });
+
+        if (!payload.params.anyoneCanSubmit) {
+            return {
+                ...exported,
+                from: ethers.utils.getAddress(
+                    await replaceRenParam(payload.params.address, evmParams),
+                ),
+            };
+        }
+
+        return exported;
     },
 };
 

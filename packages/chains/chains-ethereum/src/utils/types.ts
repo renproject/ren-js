@@ -120,5 +120,4 @@ export type EthSigner = ethers.Signer;
 
 export interface EthereumClassConfig {
     logger?: Logger;
-    truncate0xPrefix?: boolean;
 }

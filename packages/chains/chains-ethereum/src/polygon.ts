@@ -19,15 +19,19 @@ const polygonMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
 
     config: {
         chainId: "0x89",
-        chainName: "Matic(Polygon) Mainnet",
-        nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 },
+        chainName: "Polygon Mainnet",
+        nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
         rpcUrls: [
             "https://polygon-rpc.com",
-            "https://rpc-mainnet.maticvigil.com",
             "https://rpc-mainnet.matic.network",
-            "wss://ws-mainnet.matic.network",
-            "https://rpc-mainnet.matic.quiknode.pro",
             "https://matic-mainnet.chainstacklabs.com",
+            "https://rpc-mainnet.maticvigil.com",
+            "https://rpc-mainnet.matic.quiknode.pro",
+            "https://matic-mainnet-full-rpc.bwarelabs.com",
+            "https://matic-mainnet-archive-rpc.bwarelabs.com",
+            "https://poly-rpc.gateway.pokt.network",
+            "https://rpc.ankr.com/polygon",
+            "https://polygon-mainnet.public.blastapi.io",
         ],
         blockExplorerUrls: ["https://polygonscan.com"],
     },
@@ -48,16 +52,14 @@ const polygonTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
 
     config: {
         chainId: "0x13881",
-        chainName: "Matic(Polygon) Testnet Mumbai",
-        nativeCurrency: { name: "Matic", symbol: "tMATIC", decimals: 18 },
+        chainName: "Mumbai",
+        nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
         rpcUrls: [
-            "https://rpc-mumbai.matic.today",
             "https://matic-mumbai.chainstacklabs.com",
             "https://rpc-mumbai.maticvigil.com",
             "https://matic-testnet-archive-rpc.bwarelabs.com",
-            "wss://ws-mumbai.matic.today",
         ],
-        blockExplorerUrls: ["https://mumbai.polygonscan.com/"],
+        blockExplorerUrls: ["https://mumbai.polygonscan.com"],
     },
 
     logRequestLimit: 1000,

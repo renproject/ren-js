@@ -5,6 +5,7 @@ import { providers } from "ethers";
 
 import { EthProvider } from "../src";
 import { Ethereum } from "../src/ethereum";
+import { resolveRpcEndpoints } from "../src/utils/generic";
 
 chai.should();
 
@@ -71,6 +72,31 @@ describe("Utils", () => {
                 txindex: "0",
             }),
         ).to.be.true;
+    });
+
+    it("resolveRpcEndpoints", () => {
+        expect(
+            resolveRpcEndpoints(
+                [
+                    "https://test.com/${TEST}",
+                    "https://test2.com/${MISSING}",
+                    "wss://test3.com",
+                ],
+                { TEST: "test" },
+            ),
+        ).to.deep.equal(["https://test.com/test"]);
+
+        expect(
+            resolveRpcEndpoints(
+                [
+                    "https://test.com/${TEST}",
+                    "https://test2.com/${MISSING}",
+                    "wss://test3.com/${TEST}",
+                ],
+                { TEST: "test" },
+                "wss",
+            ),
+        ).to.deep.equal(["wss://test3.com/test"]);
     });
 });
 

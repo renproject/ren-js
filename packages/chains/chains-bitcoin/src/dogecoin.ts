@@ -1,4 +1,5 @@
 import { RenNetwork } from "@renproject/utils";
+import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
 
 import { Blockchair, BlockchairNetwork } from "./APIs/blockchair";
 import { SoChain, SoChainNetwork } from "./APIs/sochain";
@@ -61,6 +62,25 @@ export class Dogecoin extends BitcoinBaseChain {
         DOGE: "DOGE",
     };
     public assets = Dogecoin.assets;
+
+    public validateAddress = (address: string): boolean => {
+        try {
+            const currency = {
+                name: "dogecoin",
+                symbol: "doge",
+                addressTypes: { prod: ["1e", "16"], testnet: ["71", "c4"] },
+                segwitHrp: "invalid",
+                validator: BTCValidator,
+            };
+            return currency.validator.isValidAddress(
+                address,
+                currency,
+                this.network.isTestnet ? "testnet" : "prod",
+            );
+        } catch (error) {
+            return false;
+        }
+    };
 
     public constructor({ network }: { network: BitcoinNetworkInput }) {
         super({

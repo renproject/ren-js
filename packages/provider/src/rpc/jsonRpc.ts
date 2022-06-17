@@ -1,12 +1,11 @@
-import axios, { AxiosResponse } from "axios";
-
 import {
+    defaultLogger,
     Logger,
     LogLevel,
-    nullLogger,
     SyncOrPromise,
     utils,
 } from "@renproject/utils";
+import axios, { AxiosResponse } from "axios";
 
 const generatePayload = (method: string, params?: unknown) => ({
     id: 1,
@@ -52,7 +51,7 @@ export class JsonRpcProvider<
      */
     public constructor(
         endpointOrProvider: Provider<Requests, Responses> | string,
-        logger: Logger = nullLogger,
+        logger: Logger = defaultLogger,
     ) {
         this.logger = logger;
 

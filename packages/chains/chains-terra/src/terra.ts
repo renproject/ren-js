@@ -19,11 +19,12 @@ import elliptic from "elliptic";
 
 import { TerraDev } from "./api/terraDev";
 import { isTerraNetworkConfig, TerraNetworkConfig } from "./api/types";
-import { txidFormattedToTxid, txidToTxidFormatted } from "./utils";
+import { txHashFromBytes, txHashToBytes } from "./utils";
 
 export const TerraMainnet: TerraNetworkConfig = {
     selector: "Terra",
     chainId: "columbus-5",
+    addressPrefix: "terra",
 
     nativeAsset: {
         name: "Luna",
@@ -39,6 +40,7 @@ export const TerraMainnet: TerraNetworkConfig = {
 export const TerraTestnet: TerraNetworkConfig = {
     selector: "Terra",
     chainId: "bombay-12",
+    addressPrefix: "terra",
 
     nativeAsset: {
         name: "Luna",
@@ -73,11 +75,7 @@ export type TerraInputPayload =
 export interface TerraOutputPayload {
     chain: string;
     type?: "address";
-    /**
-     * @deprecated Use params.address instead.
-     */
-    address?: string;
-    params?: {
+    params: {
         address: string;
     };
 }
@@ -106,20 +104,20 @@ export class Terra
     };
     public assets = Terra.assets;
 
-    public validateAddress(address: string): boolean {
+    public validateAddress = (address: string): boolean => {
         assertType<string>("string", { address: address });
         return AccAddress.validate(address);
-    }
+    };
 
-    public validateTransaction(
+    public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): boolean {
+            ({ txid: string } | { txHash: string }),
+    ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
-                utils.isDefined(transaction.txidFormatted)) &&
-            (transaction.txidFormatted
-                ? utils.isHex(transaction.txidFormatted, {
+                utils.isDefined(transaction.txHash)) &&
+            (transaction.txHash
+                ? utils.isHex(transaction.txHash, {
                       length: 32,
                       uppercase: true,
                   })
@@ -132,39 +130,47 @@ export class Terra
             (transaction.txindex
                 ? !new BigNumber(transaction.txindex).isNaN()
                 : true) &&
-            (transaction.txidFormatted && transaction.txid
-                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+            (transaction.txHash && transaction.txid
+                ? utils.toURLBase64(this.txHashToBytes(transaction.txHash)) ===
                   transaction.txid
                 : true)
         );
-    }
+    };
 
-    public addressExplorerLink(address: string): string {
+    public addressExplorerLink = (address: string): string => {
         return new URL(`/account/${address}`, /* base */ this.network.explorer)
             .href;
-    }
+    };
 
-    public transactionExplorerLink({
+    public transactionExplorerLink = ({
         txid,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string })): string | undefined {
+        txHash,
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
+        | string
+        | undefined => {
         const hash =
-            txidFormatted || (txid && this.txidToTxidFormatted({ txid }));
+            txHash || (txid && this.txHashFromBytes(utils.fromBase64(txid)));
         return hash
             ? new URL(`/tx/${String(hash)}`, /* base */ this.network.explorer)
                   .href
             : undefined;
-    }
+    };
 
-    public txidFormattedToTxid(formattedTxid: string): string {
-        return txidFormattedToTxid(formattedTxid);
-    }
+    public addressToBytes = (address: string): Uint8Array => {
+        return new Uint8Array(bech32.fromWords(bech32.decode(address).words));
+    };
 
-    public txidToTxidFormatted({ txid }: { txid: string }): string {
-        return txidToTxidFormatted(txid);
-    }
-    public formattedTransactionHash = this.txidToTxidFormatted;
+    public addressFromBytes = (bytes: Uint8Array): string => {
+        return bech32.encode(this.network.addressPrefix, bech32.toWords(bytes));
+    };
+
+    public txHashToBytes = (txHash: string): Uint8Array => {
+        return txHashToBytes(txHash);
+    };
+
+    public txHashFromBytes = (bytes: Uint8Array): string => {
+        return txHashFromBytes(bytes);
+    };
 
     public constructor({
         network,
@@ -187,33 +193,33 @@ export class Terra
         this.api = new TerraDev(this.network);
     }
 
-    public isLockAsset(asset: string): boolean {
+    public isLockAsset = (asset: string): boolean => {
         return this.assets[asset] !== undefined;
-    }
+    };
 
     /**
      * See [[LockChain.isLockAsset]].
      */
-    public isDepositAsset(asset: string): boolean {
+    public isDepositAsset = (asset: string): boolean => {
         return this.isLockAsset(asset);
-    }
+    };
 
-    private _assertAssetIsSupported(asset: string) {
+    private _assertAssetIsSupported = (asset: string) => {
         if (!this.isLockAsset(asset)) {
             throw new Error(`Unsupported asset ${asset}.`);
         }
-    }
+    };
 
     /**
      * See [[LockChain.assetDecimals]].
      */
-    public assetDecimals(asset: string): number {
+    public assetDecimals = (asset: string): number => {
         switch (asset) {
             case Terra.assets.LUNA:
                 return 6;
         }
         throw new Error(`Unsupported asset ${String(asset)}.`);
-    }
+    };
 
     public getBalance = async (
         asset: string,
@@ -231,14 +237,14 @@ export class Terra
     /**
      * See [[LockChain.getDeposits]].
      */
-    public async watchForDeposits(
+    public watchForDeposits = async (
         asset: string,
         fromPayload: TerraInputPayload,
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
         listenerCancelled: () => boolean,
-    ): Promise<void> {
+    ): Promise<void> => {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
@@ -255,9 +261,13 @@ export class Terra
             txs.map((tx) =>
                 onInput({
                     chain: this.chain,
-                    txid: txidFormattedToTxid(tx.hash),
-                    txidFormatted: tx.hash.toUpperCase(),
+                    txid: utils.toURLBase64(txHashToBytes(tx.hash)),
                     txindex: "0",
+                    txHash: tx.hash.toUpperCase(),
+                    explorerLink:
+                        this.transactionExplorerLink({
+                            txHash: tx.hash.toUpperCase(),
+                        }) || "", // TODO
 
                     asset,
                     amount: tx.amount,
@@ -266,29 +276,29 @@ export class Terra
 
             await utils.sleep(15 * utils.sleep.SECONDS);
         }
-    }
+    };
 
     /**
      * See [[LockChain.transactionConfidence]].
      */
-    public async transactionConfidence(
+    public transactionConfidence = async (
         transaction: ChainTransaction,
-    ): Promise<BigNumber> {
+    ): Promise<BigNumber> => {
         if (!this.network) {
             throw new Error(`${this.name} object not initialized.`);
         }
-        return await this.api.fetchConfirmations(transaction.txidFormatted);
-    }
+        return await this.api.fetchConfirmations(transaction.txHash);
+    };
 
     /**
      * See [[LockChain.getGatewayAddress]].
      */
-    public createGatewayAddress(
+    public createGatewayAddress = (
         asset: string,
         fromPayload: TerraInputPayload,
         shardPublicKey: Uint8Array,
         gHash: Uint8Array,
-    ): string {
+    ): string => {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
@@ -321,24 +331,25 @@ export class Terra
         const key = new SimplePublicKey(utils.toBase64(newCompressedPublicKey));
 
         return key.address();
-    }
+    };
 
-    public getOutputPayload(
+    public getOutputPayload = (
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
         toPayload: TerraOutputPayload,
-    ): {
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    } {
+    ):
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined => {
         this._assertAssetIsSupported(asset);
-        const address = toPayload.params
-            ? toPayload.params.address
-            : toPayload.address;
+        const address = toPayload.params.address;
         if (!address) {
-            throw new Error(`No ${this.chain} address specified.`);
+            // throw new Error(`No ${this.chain} address specified.`);
+            return undefined;
         }
         return {
             to: address,
@@ -347,7 +358,7 @@ export class Terra
             ),
             payload: new Uint8Array(),
         };
-    }
+    };
 
     // Methods for initializing mints and burns ////////////////////////////////
 
@@ -357,7 +368,7 @@ export class Terra
      *
      * @category Main
      */
-    public Address(address: string): { chain: string; address: string } {
+    public Address = (address: string): TerraOutputPayload => {
         // Type validation
         assertType<string>("string", { address });
 
@@ -370,9 +381,12 @@ export class Terra
 
         return {
             chain: this.chain,
-            address,
+            type: "address",
+            params: {
+                address,
+            },
         };
-    }
+    };
 
     /**
      * When burning, you can call `Terra.Address("...")` to make the address
@@ -380,11 +394,12 @@ export class Terra
      *
      * @category Main
      */
-    public GatewayAddress(): TerraInputPayload {
+    public GatewayAddress = (): TerraInputPayload => {
         return {
             chain: this.chain,
+            type: "gatewayAddress",
         };
-    }
+    };
 
     /**
      * Import an existing Terra transaction instead of watching for deposits
@@ -392,14 +407,14 @@ export class Terra
      *
      * @example
      * terra.Transaction({
-     *   txidFormatted: "A16B0B3E...",
+     *   txHash: "A16B0B3E...",
      *   txindex: "0",
      * })
      */
-    public Transaction(
+    public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): TerraInputPayload {
+            ({ txid: string } | { txHash: string }),
+    ): TerraInputPayload => {
         return {
             chain: this.chain,
             type: "transaction",
@@ -407,10 +422,11 @@ export class Terra
                 tx: populateChainTransaction({
                     partialTx,
                     chain: this.chain,
-                    txidToTxidFormatted,
-                    txidFormattedToTxid,
+                    txHashToBytes,
+                    txHashFromBytes,
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };
-    }
+    };
 }

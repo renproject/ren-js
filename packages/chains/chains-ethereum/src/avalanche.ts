@@ -19,10 +19,14 @@ const avalancheMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
 
     config: {
         chainId: "0xa86a",
-        chainName: "Avalanche Mainnet",
+        chainName: "Avalanche C-Chain",
         nativeCurrency: { name: "Avalanche", symbol: "AVAX", decimals: 18 },
-        rpcUrls: ["https://api.avax.network/ext/bc/C/rpc"],
-        blockExplorerUrls: ["https://snowtrace.io/"],
+        rpcUrls: [
+            "https://api.avax.network/ext/bc/C/rpc",
+            "https://rpc.ankr.com/avalanche",
+            "https://ava-mainnet.public.blastapi.io/ext/bc/C/rpc",
+        ],
+        blockExplorerUrls: ["https://snowtrace.io"],
     },
 
     logRequestLimit: 2048,
@@ -44,7 +48,7 @@ const avalancheTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
         chainName: "Avalanche Fuji Testnet",
         nativeCurrency: { name: "Avalanche", symbol: "AVAX", decimals: 18 },
         rpcUrls: ["https://api.avax-test.network/ext/bc/C/rpc"],
-        blockExplorerUrls: ["https://testnet.snowtrace.io/"],
+        blockExplorerUrls: ["https://testnet.snowtrace.io"],
     },
 
     logRequestLimit: 2048,

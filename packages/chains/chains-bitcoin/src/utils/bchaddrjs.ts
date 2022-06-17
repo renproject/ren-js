@@ -20,11 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { utils } from "@renproject/utils";
 import { InvalidAddressError } from "bchaddrjs";
+import base58 from "bs58";
 import bs58check from "bs58check";
 import cashaddr, { ValidationError } from "cashaddrjs";
-
-import { utils } from "@renproject/utils";
 
 enum Format {
     Legacy = "legacy",
@@ -187,7 +187,9 @@ const getTypeBits = (type: string) => {
 
 export const decodeBitcoinCashAddress = (address: string): Uint8Array => {
     try {
-        return new Uint8Array(decodeBase58Address(address).hash);
+        // Validate checksum:
+        const _check = decodeBase58Address(address);
+        return new Uint8Array(base58.decode(address));
     } catch (error: unknown) {
         // Ignore error.
     }

@@ -49,15 +49,17 @@ export interface TxWaiter<
         progress: [Progress];
     }>;
 
+    setTransaction(
+        chainTransaction: ChainTransaction,
+    ): SyncOrPromise<ChainTransactionProgress>;
+
     /**
      * Submit the transaction to the chain.
      */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     submit?(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        params?: { overrides?: any[] },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        txConfig?: any,
+        params?: { overrides?: { [key: string]: any }; txConfig?: any },
     ): PromiEvent<
         Progress,
         {
@@ -65,8 +67,13 @@ export interface TxWaiter<
         }
     >;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    export?(params?: { overrides?: any[]; txConfig?: any }): SyncOrPromise<any>;
+    export?(params?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        overrides?: { [key: string]: any };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        txConfig?: any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    }): SyncOrPromise<any>;
 
     /**
      * Wait for the required finality / number of confirmations.
@@ -93,8 +100,11 @@ export interface TxSubmitter<
     /**
      * Submit the transaction to the chain.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    submit(params?: { overrides?: any[]; txConfig?: TxConfig }): PromiEvent<
+    submit(params?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        overrides?: { [key: string]: any };
+        txConfig?: TxConfig;
+    }): PromiEvent<
         Progress,
         {
             progress: [Progress];
@@ -107,7 +117,7 @@ export interface TxSubmitter<
      */
     export(params?: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        overrides?: any[];
+        overrides?: { [key: string]: any };
         txConfig?: TxConfig;
     }): SyncOrPromise<TxExport>;
 }
@@ -143,12 +153,14 @@ export class TxWaiterProxy {
         });
     }
 
-    public _wait(target?: number): PromiEvent<
+    public _wait = (
+        target?: number,
+    ): PromiEvent<
         ChainTransactionProgress,
         {
             progress: [ChainTransactionProgress];
         }
-    > {
+    > => {
         const promiEvent = newPromiEvent<
             ChainTransactionProgress,
             {
@@ -163,12 +175,12 @@ export class TxWaiterProxy {
             .catch(promiEvent.reject);
 
         return promiEvent;
-    }
+    };
 
     /**
      * Proxy handler to call the promise or eventEmitter methods
      */
-    public proxyHandler(target: TxWaiterProxy, name: string): unknown {
+    public proxyHandler = (target: TxWaiterProxy, name: string): unknown => {
         if (name === "transaction") {
             return target._transaction;
         }
@@ -189,7 +201,7 @@ export class TxWaiterProxy {
         }
 
         return target._txWaiter[name];
-    }
+    };
 }
 
 /**
@@ -206,13 +218,16 @@ export class DefaultTxWaiter implements TxWaiter {
     }>;
     private _onFirstProgress?: (tx: ChainTransaction) => SyncOrPromise<void>;
 
-    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+    private updateProgress = (
+        progress: Partial<ChainTransactionProgress>,
+    ): ChainTransactionProgress => {
         this.progress = {
             ...this.progress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
-    }
+        return this.progress;
+    };
 
     /**
      * Requires a submitted chainTransaction, a chain object and the target
@@ -252,15 +267,17 @@ export class DefaultTxWaiter implements TxWaiter {
      * hash isn't available yet. For example, a release transaction submitted
      * by RenVM.
      */
-    public setTransaction(chainTransaction?: ChainTransaction): void {
-        this.updateProgress({
+    public setTransaction = (
+        chainTransaction: ChainTransaction,
+    ): ChainTransactionProgress => {
+        return this.updateProgress({
             transaction: chainTransaction,
             status:
                 chainTransaction && chainTransaction.txid === ""
                     ? ChainTransactionStatus.Done
                     : ChainTransactionStatus.Confirming,
         });
-    }
+    };
 
     public wait = (
         target?: number,

@@ -1,10 +1,5 @@
 import { InputType } from "zlib";
 
-import BigNumber from "bignumber.js";
-import { blake2b } from "blakejs";
-import elliptic from "elliptic";
-import { CID } from "multiformats";
-
 import {
     Address,
     decode as decodeAddress,
@@ -25,11 +20,14 @@ import {
     RenNetworkString,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
+import { blake2b } from "blakejs";
+import elliptic from "elliptic";
 
 import { FilTransaction } from "./utils/deposit";
 import { Filfox } from "./utils/filfox";
 import { fetchDeposits, fetchMessage, getHeight } from "./utils/lotus";
-import { txidFormattedToTxid, txidToTxidFormatted } from "./utils/utils";
+import { txHashFromBytes, txHashToBytes } from "./utils/utils";
 
 interface FilecoinConfig {}
 
@@ -74,7 +72,7 @@ const FilecoinMainnet: FilecoinNetworkConfig = {
     averageConfirmationTime: 30,
 
     addressPrefix: "f",
-    explorer: "https://filfox.info/en/",
+    explorer: "https://filfox.info/en",
 
     rpc: {
         apiAddress: `https://multichain-web-proxy.herokuapp.com/mainnet`,
@@ -95,7 +93,7 @@ const FilecoinTestnet: FilecoinNetworkConfig = {
     averageConfirmationTime: 30,
 
     addressPrefix: "t",
-    explorer: "https://filfox.info/en/",
+    explorer: "https://calibration.filscan.io",
 
     rpc: {
         apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
@@ -118,11 +116,7 @@ export type FilecoinInputPayload =
 export interface FilecoinOutputPayload {
     chain: string;
     type?: "address";
-    /**
-     * @deprecated Use params.address instead.
-     */
-    address?: string;
-    params?: {
+    params: {
         address: string;
     };
 }
@@ -180,21 +174,19 @@ export class Filecoin
         }
     }
 
-    public validateAddress(address: string): boolean {
+    public validateAddress = (address: string): boolean => {
         return validateAddressString(address);
-    }
+    };
 
-    public validateTransaction(
+    public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): boolean {
+            ({ txid: string } | { txHash: string }),
+    ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
-                utils.isDefined(transaction.txidFormatted)) &&
-            (transaction.txidFormatted
-                ? utils.fromBase64(
-                      this.txidFormattedToTxid(transaction.txidFormatted),
-                  ).length === 38
+                utils.isDefined(transaction.txHash)) &&
+            (transaction.txHash
+                ? this.txHashToBytes(transaction.txHash).length === 38
                 : true) &&
             (transaction.txid
                 ? utils.isURLBase64(transaction.txid, {
@@ -204,62 +196,76 @@ export class Filecoin
             (transaction.txindex
                 ? !new BigNumber(transaction.txindex).isNaN()
                 : true) &&
-            (transaction.txidFormatted && transaction.txid
-                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+            (transaction.txHash && transaction.txid
+                ? utils.toURLBase64(this.txHashToBytes(transaction.txHash)) ===
                   transaction.txid
                 : true) &&
             (transaction.txindex === undefined || transaction.txindex === "0")
         );
-    }
+    };
 
-    public addressExplorerLink(address: string): string {
-        // TODO: Check network.
-        return `https://filfox.info/en/address/${address}`;
-    }
+    public addressExplorerLink = (address: string): string => {
+        const explorer = this.network.explorer;
 
-    public transactionExplorerLink({
-        txid,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string })): string | undefined {
-        const url = `https://filfox.info/en/message/`;
-        if (txidFormatted) {
-            return url + txidFormatted;
-        } else if (txid) {
-            return url + this.txidToTxidFormatted({ txid });
+        if (explorer.match(/filscan/)) {
+            return `${explorer}/address/general?address=${address}`;
         }
-        return undefined;
-    }
+
+        return `${explorer}/address/${address}`;
+    };
+
+    public transactionExplorerLink = ({
+        txid,
+        txHash,
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
+        | string
+        | undefined => {
+        const hash =
+            txHash ||
+            (txid && this.txHashFromBytes(utils.fromBase64(txid))) ||
+            undefined;
+        if (!hash) {
+            return undefined;
+        }
+
+        const explorer = this.network.explorer;
+
+        if (explorer.match(/filscan/)) {
+            return `${explorer}/tipset/message-detail?cid=${hash}`;
+        }
+
+        return `${explorer}/message/${hash}`;
+    };
 
     /**
      * See [[LockChain.isLockAsset]].
      */
-    public isLockAsset(asset: string): boolean {
+    public isLockAsset = (asset: string): boolean => {
         return asset === this.network.nativeAsset.symbol;
-    }
+    };
 
-    private _assertAssetIsSupported(asset: string) {
+    private _assertAssetIsSupported = (asset: string) => {
         if (!this.isLockAsset(asset)) {
             throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
-    }
+    };
 
     /**
      * See [[LockChain.assetDecimals]].
      */
-    public assetDecimals(asset: string): number {
+    public assetDecimals = (asset: string): number => {
         this._assertAssetIsSupported(asset);
         return this.network.nativeAsset.decimals;
-    }
+    };
 
-    public async watchForDeposits(
+    public watchForDeposits = async (
         asset: string,
         fromPayload: FilecoinInputPayload,
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
         listenerCancelled: () => boolean,
-    ): Promise<void> {
+    ): Promise<void> => {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
@@ -268,7 +274,7 @@ export class Filecoin
         }
 
         // If the payload is a transaction, submit it to onInput and then loop
-        // indefintely.
+        // indefinitely.
         if (fromPayload.type === "transaction") {
             const inputTx = fromPayload.params.tx;
             if ((inputTx as InputChainTransaction).amount === undefined) {
@@ -277,21 +283,24 @@ export class Filecoin
 
                     try {
                         if (this.filfox) {
-                            tx = await this.filfox.fetchMessage(
-                                inputTx.txidFormatted,
-                            );
+                            tx = await this.filfox.fetchMessage(inputTx.txHash);
                         } else {
                             tx = await fetchMessage(
                                 this.client,
-                                inputTx.txidFormatted,
+                                inputTx.txHash,
                                 this.network.addressPrefix,
                             );
                         }
                         onInput({
                             chain: this.chain,
-                            txid: txidFormattedToTxid(tx.cid),
-                            txidFormatted: tx.cid,
+                            txid: utils.toURLBase64(txHashToBytes(tx.cid)),
+                            txHash: tx.cid,
                             txindex: "0",
+
+                            explorerLink:
+                                this.transactionExplorerLink({
+                                    txHash: tx.cid,
+                                }) || "",
 
                             asset,
                             amount: tx.amount,
@@ -355,9 +364,16 @@ export class Filecoin
                             (deposits || []).map((tx) =>
                                 onInput({
                                     chain: this.chain,
-                                    txid: txidFormattedToTxid(tx.cid),
-                                    txidFormatted: tx.cid,
+                                    txid: utils.toURLBase64(
+                                        txHashToBytes(tx.cid),
+                                    ),
+                                    txHash: tx.cid,
                                     txindex: "0",
+
+                                    explorerLink:
+                                        this.transactionExplorerLink({
+                                            txHash: tx.cid,
+                                        }) || "",
 
                                     asset,
                                     amount: tx.amount,
@@ -392,9 +408,14 @@ export class Filecoin
                     (txs || []).map((tx) =>
                         onInput({
                             chain: this.chain,
-                            txid: txidFormattedToTxid(tx.cid),
-                            txidFormatted: tx.cid,
+                            txid: utils.toURLBase64(txHashToBytes(tx.cid)),
+                            txHash: tx.cid,
                             txindex: "0",
+
+                            explorerLink:
+                                this.transactionExplorerLink({
+                                    txHash: tx.cid,
+                                }) || "",
 
                             asset,
                             amount: tx.amount,
@@ -407,26 +428,25 @@ export class Filecoin
 
             await utils.sleep(15 * utils.sleep.SECONDS);
         }
-    }
+    };
 
     /**
      * See [[LockChain.transactionConfidence]].
      */
-    public async transactionConfidence(
+    public transactionConfidence = async (
         transaction: ChainTransaction,
-    ): Promise<BigNumber> {
-        const cid = transaction.txidFormatted;
+    ): Promise<BigNumber> => {
         let msg;
         try {
             msg = await fetchMessage(
                 this.client,
-                cid,
+                transaction.txHash,
                 this.network.addressPrefix,
             );
         } catch (error: unknown) {
             if (this.filfox) {
                 try {
-                    msg = await this.filfox.fetchMessage(cid);
+                    msg = await this.filfox.fetchMessage(transaction.txHash);
                 } catch (errorInner) {
                     console.error(errorInner);
                 }
@@ -434,34 +454,34 @@ export class Filecoin
             throw error;
         }
         return new BigNumber(msg.confirmations);
-    }
+    };
 
-    public isDepositAsset(asset: string): boolean {
+    public isDepositAsset = (asset: string): boolean => {
         return asset === this.network.nativeAsset.symbol;
-    }
+    };
 
-    public getBalance(
+    public getBalance = (
         asset: string,
         address: string,
         // eslint-disable-next-line @typescript-eslint/require-await
-    ): BigNumber {
+    ): BigNumber => {
         this._assertAssetIsSupported(asset);
         if (!this.validateAddress(address)) {
             throw new Error(`Invalid address ${address}.`);
         }
         // TODO: Implement.
         return new BigNumber(0);
-    }
+    };
 
     /**
      * See [[LockChain.getGatewayAddress]].
      */
-    public createGatewayAddress(
+    public createGatewayAddress = (
         asset: string,
         fromPayload: FilecoinInputPayload,
         shardPublicKey: Uint8Array,
         gHash: Uint8Array,
-    ): string {
+    ): string => {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
@@ -493,20 +513,14 @@ export class Filecoin
             ),
         );
 
-        return this.bytesToAddress(bytes);
-    }
+        return this.addressFromBytes(bytes);
+    };
 
-    /**
-     * See [[LockChain.addressToBytes]].
-     */
-    public addressToBytes(address: string): Uint8Array {
+    public addressToBytes = (address: string): Uint8Array => {
         return new Uint8Array(decodeAddress(address).str);
-    }
+    };
 
-    /**
-     * See [[LockChain.addressToBytes]].
-     */
-    public bytesToAddress(bytes: Uint8Array): string {
+    public addressFromBytes = (bytes: Uint8Array): string => {
         if (bytes.length === 21) {
             bytes = new Uint8Array(bytes.slice(1, 21));
         }
@@ -523,40 +537,40 @@ export class Filecoin
             this.network.addressPrefix,
             addressObject as unknown as Address,
         );
-    }
+    };
 
-    public txidFormattedToTxid(formattedTxid: string): string {
-        return txidFormattedToTxid(formattedTxid);
-    }
+    public txHashToBytes = (txHash: string): Uint8Array => {
+        return txHashToBytes(txHash);
+    };
 
-    public txidToTxidFormatted({ txid }: { txid: string }): string {
-        return txidToTxidFormatted(txid);
-    }
-    public formattedTransactionHash = this.txidToTxidFormatted;
+    public txHashFromBytes = (bytes: Uint8Array): string => {
+        return txHashFromBytes(bytes);
+    };
 
-    public getOutputPayload(
+    public getOutputPayload = (
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
         toPayload: FilecoinOutputPayload,
-    ): {
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    } {
+    ):
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined => {
         this._assertAssetIsSupported(asset);
-        const address = toPayload.params
-            ? toPayload.params.address
-            : toPayload.address;
+        const address = toPayload.params.address;
         if (!address) {
-            throw new Error(`No ${this.chain} address specified.`);
+            // throw new Error(`No ${this.chain} address specified.`);
+            return undefined;
         }
         return {
             to: address,
-            toBytes: new Uint8Array(CID.parse(address).bytes),
+            toBytes: this.addressToBytes(address),
             payload: new Uint8Array(),
         };
-    }
+    };
 
     // Methods for initializing mints and burns ////////////////////////////////
 
@@ -566,7 +580,7 @@ export class Filecoin
      *
      * @category Main
      */
-    public Address(address: string): { chain: string; address: string } {
+    public Address = (address: string): FilecoinOutputPayload => {
         // Type validation
         assertType<string>("string", { address });
 
@@ -579,9 +593,12 @@ export class Filecoin
 
         return {
             chain: this.chain,
-            address,
+            type: "address",
+            params: {
+                address,
+            },
         };
-    }
+    };
 
     /**
      * When burning, you can call `Filecoin.Address("...")` to make the address
@@ -589,11 +606,11 @@ export class Filecoin
      *
      * @category Main
      */
-    public GatewayAddress(): FilecoinInputPayload {
+    public GatewayAddress = (): FilecoinInputPayload => {
         return {
             chain: this.chain,
         };
-    }
+    };
 
     /**
      * Import an existing Filecoin transaction instead of watching for deposits
@@ -601,13 +618,13 @@ export class Filecoin
      *
      * @example
      * filecoin.Transaction({
-     *   txidFormatted: "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
+     *   txHash: "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
      * })
      */
-    public Transaction(
+    public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): FilecoinInputPayload {
+            ({ txid: string } | { txHash: string }),
+    ): FilecoinInputPayload => {
         return {
             chain: this.chain,
             type: "transaction",
@@ -615,11 +632,12 @@ export class Filecoin
                 tx: populateChainTransaction({
                     partialTx,
                     chain: this.chain,
-                    txidToTxidFormatted,
-                    txidFormattedToTxid,
+                    txHashToBytes,
+                    txHashFromBytes,
                     defaultTxindex: "0",
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };
-    }
+    };
 }

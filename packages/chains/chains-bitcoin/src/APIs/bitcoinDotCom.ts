@@ -17,27 +17,27 @@ export class BitcoinDotCom implements BitcoinAPI {
         this.testnet = testnet;
     }
 
-    public endpoint(): string {
+    public endpoint = (): string => {
         return this.testnet
             ? "https://trest.bitcoin.com/v2/"
             : "https://rest.bitcoin.com/v2/";
-    }
+    };
 
-    public endpointV2(): string {
+    public endpointV2 = (): string => {
         return this.testnet
             ? "https://explorer-tbch.api.bitcoin.com/tbch/v1"
             : "https://explorer.api.bitcoin.com/bch/v1";
-    }
+    };
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         const url = `${this.endpointV2()}/blockchain/getBlockCount`;
 
         const height = await utils.GET<number>(url);
 
         return height.toString();
-    }
+    };
 
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.endpointV2()}/tx/${txid}`;
 
         const utxo = await utils.GET<FetchTXResponse>(url);
@@ -54,9 +54,9 @@ export class BitcoinDotCom implements BitcoinAPI {
             },
             8,
         );
-    }
+    };
 
-    public async fetchUTXOs(address: string): Promise<UTXO[]> {
+    public fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const url = `${this.endpointV2()}/addr/${address}/utxo`;
         const utxos = await utils.GET<FetchUTXOSResponse>(url);
         return fixUTXOs(
@@ -71,9 +71,9 @@ export class BitcoinDotCom implements BitcoinAPI {
             })),
             8,
         ).sort(sortUTXOs);
-    }
+    };
 
-    public async fetchTXs(address: string): Promise<UTXO[]> {
+    public fetchTXs = async (address: string): Promise<UTXO[]> => {
         const url = `${this.endpoint().replace(
             /\/$/,
             "",
@@ -100,11 +100,11 @@ export class BitcoinDotCom implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    }
+    };
 
-    public async broadcastTransaction(
+    public broadcastTransaction = async (
         hexEncodedTransaction: string,
-    ): Promise<string> {
+    ): Promise<string> => {
         const url = `${this.endpoint().replace(
             /\/$/,
             "",
@@ -116,7 +116,7 @@ export class BitcoinDotCom implements BitcoinAPI {
             throw new Error((response as unknown as BlockchairError).error);
         }
         return response[0];
-    }
+    };
 }
 
 interface BlockchairError {

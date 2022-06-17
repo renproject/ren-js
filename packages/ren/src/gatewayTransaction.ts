@@ -1,5 +1,3 @@
-import BigNumber from "bignumber.js";
-
 import {
     RenVMCrossChainTransaction,
     RenVMProvider,
@@ -17,6 +15,7 @@ import {
     InputType,
     isContractChain,
     isDepositChain,
+    isEmptySignature,
     OutputType,
     RenJSError,
     TxStatus,
@@ -25,6 +24,7 @@ import {
     TxWaiterProxy,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { TransactionParams } from "./params";
 import { RenVMCrossChainTxSubmitter } from "./renVMTxSubmitter";
@@ -100,7 +100,7 @@ export class GatewayTransaction<
         config?: RenJSConfig,
     ) {
         this.provider = renVM;
-        this.params = params;
+        this.params = { ...params };
         this._config = {
             ...defaultRenJSConfig,
             ...config,
@@ -137,7 +137,7 @@ export class GatewayTransaction<
     }
 
     /** @hidden */
-    public async initialize(): Promise<this> {
+    public initialize: () => Promise<this> = async () => {
         const { inputType, outputType, selector } =
             await getInputAndOutputTypes({
                 asset: this.params.asset,
@@ -148,14 +148,74 @@ export class GatewayTransaction<
         this.outputType = outputType;
         this.selector = selector;
 
-        const { asset, nonce, to } = this.params;
+        const { asset, nonce, to, fromTx } = this.params;
 
-        const payload = await this.toChain.getOutputPayload(
+        let payload = await this.toChain.getOutputPayload(
             asset,
             this.inputType,
             this.outputType,
             to,
         );
+
+        if (fromTx.toRecipient) {
+            try {
+                const fromTxPayload = {
+                    to: fromTx.toRecipient,
+                    toBytes: this.toChain.addressToBytes(fromTx.toRecipient),
+                    payload: fromTx.toPayload
+                        ? utils.fromBase64(fromTx.toPayload)
+                        : new Uint8Array([]),
+                };
+                if (payload) {
+                    if (payload.to !== fromTxPayload.to) {
+                        this._config.logger.warn(
+                            `Expected recipient to be ${fromTxPayload.to}, instead got ${payload.to}.`,
+                        );
+                    }
+                    if (
+                        utils.toBase64(payload.payload) !==
+                        utils.toBase64(fromTxPayload.payload)
+                    ) {
+                        this._config.logger.warn(
+                            `Expected payload to be ${utils.toBase64(
+                                fromTxPayload.payload,
+                            )}, instead got ${utils.toBase64(
+                                payload.payload,
+                            )}.`,
+                        );
+                    }
+                    if (
+                        utils.toBase64(payload.toBytes) !==
+                        utils.toBase64(fromTxPayload.toBytes)
+                    ) {
+                        this._config.logger.warn(
+                            `Expected decoded recipient to be ${utils.toBase64(
+                                fromTxPayload.toBytes,
+                            )}, instead got ${utils.toBase64(
+                                payload.toBytes,
+                            )}.`,
+                        );
+                    }
+                } else {
+                    payload = fromTxPayload;
+                }
+            } catch (error) {
+                if (!payload) {
+                    throw ErrorWithCode.updateError(
+                        error,
+                        RenJSError.PARAMETER_ERROR,
+                        `No target payload provided.`,
+                    );
+                }
+            }
+        }
+
+        if (!payload) {
+            throw new ErrorWithCode(
+                `No target payload provided.`,
+                RenJSError.PARAMETER_ERROR,
+            );
+        }
 
         const sHash = generateSHash(
             `${this.params.asset}/to${this.params.to.chain}`,
@@ -202,30 +262,43 @@ export class GatewayTransaction<
             }
 
             if (
-                isDepositChain(this.toChain) &&
-                (await this.toChain.isDepositAsset(this.params.asset))
+                tx.out &&
+                tx.out.txid &&
+                tx.out.txid.length > 0 &&
+                isEmptySignature(tx.out.sig)
             ) {
-                if (!tx.out || !tx.out.txid || !tx.out.txid.length) {
-                    throw new ErrorWithCode(
-                        `Expected release transaction details in RenVM response.`,
-                        RenJSError.INTERNAL_ERROR,
-                    );
-                }
-
-                // The transaction has already been submitted by RenVM.
+                // The transaction has already been submitted.
                 const txid = utils.toURLBase64(tx.out.txid);
                 const txindex = tx.out.txindex.toFixed();
-                (this.out as DefaultTxWaiter).setTransaction({
+
+                const txHash = this.toChain.txHashFromBytes(
+                    utils.fromBase64(txid),
+                );
+
+                await this.out.setTransaction({
                     chain: this.toChain.chain,
                     txid,
                     txindex,
-                    txidFormatted: this.toChain.txidToTxidFormatted({
-                        txid,
-                        txindex,
-                    }),
+                    txHash,
+                    explorerLink:
+                        this.toChain.transactionExplorerLink({
+                            txHash,
+                            txindex,
+                            txid,
+                        }) || "",
                 });
+            } else if (
+                isDepositChain(this.toChain) &&
+                (await this.toChain.isDepositAsset(this.params.asset))
+            ) {
+                throw new ErrorWithCode(
+                    `Expected release transaction details in RenVM response.`,
+                    RenJSError.INTERNAL_ERROR,
+                );
             }
         };
+
+        const network = await this.provider.getNetwork();
 
         this.renVM = new RenVMCrossChainTxSubmitter(
             this.provider,
@@ -243,6 +316,8 @@ export class GatewayTransaction<
                 ghash: this.gHash,
             },
             onSignatureReady,
+            this._config,
+            network,
         );
         this._hash = this.renVM.tx.hash;
 
@@ -324,16 +399,16 @@ export class GatewayTransaction<
         }
 
         return this;
-    }
+    };
 
     /** PRIVATE METHODS */
 
-    private _defaultGetter(name: string) {
+    private _defaultGetter = (name: string) => {
         if (this[name] === undefined) {
             throw new Error(
                 `Must call 'initialize' before accessing '${name}'.`,
             );
         }
         return this[name];
-    }
+    };
 }

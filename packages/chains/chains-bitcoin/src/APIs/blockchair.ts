@@ -22,11 +22,11 @@ export class Blockchair implements BitcoinAPI {
         this.network = network;
     }
 
-    public endpoint(): string {
+    public endpoint = (): string => {
         return `https://api.blockchair.com/${this.network}`;
-    }
+    };
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         const url = `${this.endpoint()}/stats`;
 
         const response = await utils.GET<{
@@ -34,9 +34,9 @@ export class Blockchair implements BitcoinAPI {
         }>(`${url}`);
 
         return response.data.best_block_height.toString();
-    }
+    };
 
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.endpoint()}/dashboards/transaction/${txid}`;
 
         const response = await utils.GET<TransactionResponse>(`${url}`);
@@ -65,9 +65,9 @@ export class Blockchair implements BitcoinAPI {
                     ? tx.transaction.block_id.toString()
                     : null,
         };
-    }
+    };
 
-    public async fetchUTXOs(address: string): Promise<UTXO[]> {
+    public fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=0,100`;
         const response = await utils.GET<AddressResponse>(url);
 
@@ -91,9 +91,9 @@ export class Blockchair implements BitcoinAPI {
                         : null,
             }))
             .sort(sortUTXOs);
-    }
+    };
 
-    public async fetchTXs(address: string, limit = 25): Promise<UTXO[]> {
+    public fetchTXs = async (address: string, limit = 25): Promise<UTXO[]> => {
         const url = `${this.endpoint()}/dashboards/address/${address}?limit=${limit},0`;
         const response = await utils.GET<AddressResponse>(url);
 
@@ -145,9 +145,9 @@ export class Blockchair implements BitcoinAPI {
         }
 
         return received.sort(sortUTXOs);
-    }
+    };
 
-    public async broadcastTransaction(txHex: string): Promise<string> {
+    public broadcastTransaction = async (txHex: string): Promise<string> => {
         const url = `${this.endpoint()}/push/transaction`;
         const response = await utils.POST<{
             data: { transaction_hash: string };
@@ -158,7 +158,7 @@ export class Blockchair implements BitcoinAPI {
             );
         }
         return response.data.transaction_hash;
-    }
+    };
 }
 
 interface BlockchairError {

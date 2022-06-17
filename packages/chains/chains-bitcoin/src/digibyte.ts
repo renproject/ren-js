@@ -1,4 +1,5 @@
 import { RenNetwork } from "@renproject/utils";
+import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
 
 import { Blockbook } from "./APIs/blockbook";
 import { BitcoinBaseChain } from "./base";
@@ -70,6 +71,26 @@ export class DigiByte extends BitcoinBaseChain {
         DGB: "DGB",
     };
     public assets = DigiByte.assets;
+
+    public validateAddress = (address: string): boolean => {
+        try {
+            const currency = {
+                name: "digibyte",
+                symbol: "dgb",
+                addressTypes: { prod: ["1e", "3f"], testnet: ["7e", "8c"] },
+                validator: BTCValidator,
+                segwitHrp: this.network.isTestnet ? "dgbt" : "dgb",
+            };
+
+            return currency.validator.isValidAddress(
+                address,
+                currency,
+                this.network.isTestnet ? "testnet" : "prod",
+            );
+        } catch (error) {
+            return false;
+        }
+    };
 
     public constructor({ network }: { network: BitcoinNetworkInput }) {
         super({

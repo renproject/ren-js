@@ -1,19 +1,16 @@
-import { ethers } from "ethers";
-
 import { Provider } from "@ethersproject/providers";
 import {
     ExternalProvider,
     JsonRpcFetchFunc,
 } from "@ethersproject/providers/lib/web3-provider";
 import { Logger, RenNetwork, RenNetworkString } from "@renproject/utils";
+import { ethers } from "ethers";
 
 export interface EVMExplorer {
     url: string;
     address: (address: string) => string;
     transaction: (txid: string) => string;
 }
-/** @deprecated Renamed to EvmExplorer. */
-export type EvmExplorer = EVMExplorer;
 
 /**
  * Returns an EVMExplorer with the format `${url}/address/${address}` and
@@ -28,8 +25,6 @@ export const StandardEVMExplorer = (baseUrl: string): EVMExplorer => ({
     transaction: (txHash: string) =>
         `${baseUrl.replace(/\/$/, "")}/tx/${txHash || ""}`,
 });
-/** @deprecated Renamed to StandardEVMExplorer. */
-export const StandardEvmExplorer = StandardEVMExplorer;
 
 // See https://eips.ethereum.org/EIPS/eip-3085
 export interface EIP3085Config {
@@ -83,17 +78,12 @@ export interface EVMNetworkConfig {
     averageConfirmationTime: number;
 
     config: EIP3085Config;
-    /** @deprecated renamed to 'config' */
-    network?: EIP3085Config;
 }
-/** @deprecated Renamed to EVMNetworkConfig. */
-export type EvmNetworkConfig = EVMNetworkConfig;
 
 export const populateEVMNetwork = (
     config: Omit<EVMNetworkConfig, "network">,
 ): EVMNetworkConfig => ({
     ...config,
-    network: config.config,
 });
 
 export type EVMNetworkInput = RenNetwork | RenNetworkString | EVMNetworkConfig;

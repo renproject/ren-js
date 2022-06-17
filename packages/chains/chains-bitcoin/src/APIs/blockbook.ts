@@ -11,23 +11,15 @@ export class Blockbook implements BitcoinAPI {
         this.url = url.replace(/\/$/, "");
     }
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         return (
             await utils.GET<{ bestHeight: number }>(`${this.url}`)
         ).bestHeight.toString();
-    }
+    };
 
-    public async fetchUTXOs(address: string): Promise<UTXO[]> {
+    public fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const url = `${this.url}/utxo/${address}`;
-        const response = await utils.GET<FetchUTXOResult>(
-            url,
-            // {
-            //     // TODO: Remove when certificate is fixed.
-            //     httpsAgent: new https.Agent({
-            //         rejectUnauthorized: false,
-            //     }),
-            // }
-        );
+        const response = await utils.GET<FetchUTXOResult>(url);
 
         const data: FetchUTXOResult =
             typeof response === "string" ? JSON.parse(response) : response;
@@ -58,44 +50,9 @@ export class Blockbook implements BitcoinAPI {
                     ),
             )
         ).sort(sortUTXOs);
-    }
+    };
 
-    // fetchTXs = async (address: string): Promise<Array<{ tx: InputChainTransaction, height: string }>> => {
-    //     const url = `${this.url}/txs/?address=${address}`;
-    //     const response = await utils.GET<FetchTXsResult>(url, {
-    //         // TODO: Remove when certificate is fixed.
-    //         httpsAgent: new https.Agent({
-    //             rejectUnauthorized: false,
-    //         }),
-    //     });
-
-    //     const data: FetchTXsResult =
-    //         typeof response === "string"
-    //             ? JSON.parse(response)
-    //             : response;
-
-    //     const received: Array<{ tx: InputChainTransaction, height: number | null }> = [];
-
-    //     for (const tx of data.txs) {
-    //         for (let i = 0; i < tx.vout.length; i++) {
-    //             const vout = tx.vout[i];
-    //             if (vout.scriptPubKey.addresses.indexOf(address) >= 0) {
-    //                 received.push({
-    //                     txid: tx.txid,
-    //                     amount: fixValue(parseFloat(vout.value), 8).toFixed(),
-    //                     txindex: i.toString(),
-    //                     height: tx.blockheight
-    //                         ? tx.blockheight
-    //                         : null,
-    //                 });
-    //             }
-    //         }
-    //     }
-
-    //     return received.sort(sortUTXOs);
-    // };
-
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `${this.url}/tx/${txid}`;
         const tx = await utils.GET<TxResponse>(url);
         return fixUTXO(
@@ -110,9 +67,9 @@ export class Blockbook implements BitcoinAPI {
             },
             8,
         );
-    }
+    };
 
-    public async broadcastTransaction(txHex: string): Promise<string> {
+    public broadcastTransaction = async (txHex: string): Promise<string> => {
         const url = `${this.url}/tx/send`;
         const response = await utils.POST<{
             error: string | null;
@@ -123,7 +80,7 @@ export class Blockbook implements BitcoinAPI {
             throw new Error(response.error);
         }
         return response.txid;
-    }
+    };
 }
 
 export interface ScriptSig {

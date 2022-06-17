@@ -1,9 +1,8 @@
+/* eslint-disable no-console */
+import { RenNetwork } from "@renproject/utils";
 import { expect } from "chai";
 import { providers } from "ethers";
 import { describe, it } from "mocha";
-
-/* eslint-disable no-console */
-import { RenNetwork } from "@renproject/utils";
 
 import {
     BinanceSmartChain,
@@ -119,45 +118,4 @@ describe("Chain utils", () => {
             });
         }
     }
-});
-
-// TODO: Move to Ethereum tests.
-describe("Ethereum utils", () => {
-    it("addressIsValid", () => {
-        const ethereum = new Ethereum({
-            network: "testnet",
-            provider: new providers.JsonRpcProvider(
-                Ethereum.configMap["testnet"].config.rpcUrls[0],
-            ),
-        });
-
-        expect(
-            ethereum.validateAddress(
-                "0x05a56E2D52c817161883f50c441c3228CFe54d9f",
-            ),
-        ).to.equal(true);
-
-        expect(
-            ethereum.validateAddress(
-                "0x05a56e2d52c817161883f50c441c3228cfe54d9f",
-            ),
-        ).to.equal(true);
-
-        // ENS domain
-        expect(ethereum.validateAddress("vitalik.eth")).to.equal(true);
-
-        // Bad casing
-
-        expect(
-            ethereum.validateAddress(
-                "0x05a56E2D52c817161883f50c441c3228CFe54d9F",
-            ),
-        ).to.equal(false);
-
-        // Too short.
-        expect(ethereum.validateAddress("0x05a56E2D52c81")).to.equal(false);
-
-        // Not an ENS domain
-        expect(ethereum.validateAddress("vitalik.ethos")).to.equal(false);
-    });
 });

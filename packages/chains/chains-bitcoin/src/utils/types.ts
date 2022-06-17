@@ -22,11 +22,7 @@ export type BitcoinInputPayload =
 export interface BitcoinOutputPayload {
     chain: string;
     type?: "address";
-    /**
-     * @deprecated Use params.address instead.
-     */
-    address?: string;
-    params?: {
+    params: {
         address: string;
     };
 }

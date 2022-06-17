@@ -22,11 +22,16 @@ export enum OutputType {
 export type NumericString = string;
 
 export interface ChainTransaction {
+    /** The chain on which the transaction is on. */
     chain: string;
+    /** A base64-formatted transaction hash. */
     txid: UrlBase64String;
+    /** The index of the specific event/message/transfer inside the transaction - "0" if not applicable. */
     txindex: NumericString;
-
-    txidFormatted: string;
+    /** A human-readable form of the txid. */
+    txHash: string;
+    /** A URL to an explorer's page for this transaction. */
+    explorerLink: string;
 }
 
 export interface InputChainTransaction extends ChainTransaction {
@@ -89,7 +94,19 @@ export interface ChainCommon {
     assets: { [asset: string]: string };
 
     /** Override the chain's provider. */
-    withProvider?: (...args: any[]) => SyncOrPromise<this>;
+    provider?: any;
+    withProvider?: (...providers: any[]) => SyncOrPromise<this>;
+
+    /** Override the chain's signer. */
+    signer?: any;
+    withSigner?: (...signers: any[]) => SyncOrPromise<this>;
+    checkSignerNetwork?: () => SyncOrPromise<{
+        result: boolean;
+        actualNetworkId: string | number;
+        expectedNetworkId: string | number;
+        expectedNetworkLabel: string;
+    }>;
+    switchSignerNetwork?: () => SyncOrPromise<void>;
 
     /** Return the asset's decimals, or throw for an unsupported asset. */
     assetDecimals: (asset: string) => SyncOrPromise<number>;
@@ -108,22 +125,21 @@ export interface ChainCommon {
     /** Check if the transaction's format is valid. */
     validateTransaction(
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): boolean;
 
     /** Return a URL to the address's page on an explorer. */
     addressExplorerLink: (address: string) => string | undefined;
 
-    txidToTxidFormatted(transaction: { txid: string; txindex: string }): string;
-    /** @deprecated Renamed to txidToTxidFormatted. */
-    formattedTransactionHash: ChainCommon["txidToTxidFormatted"];
-
-    txidFormattedToTxid(formattedTxid: string): string;
+    addressToBytes: (address: string) => Uint8Array;
+    addressFromBytes: (bytes: Uint8Array) => string;
+    txHashToBytes: (txHash: string) => Uint8Array;
+    txHashFromBytes: (bytes: Uint8Array) => string;
 
     /** Return a URL to the transaction's page on an explorer. */
     transactionExplorerLink: (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined;
 
     // /** Return a TxWaiter instance for the provided chain transaction. */
@@ -179,11 +195,14 @@ export interface DepositChain<
         inputType: InputType,
         outputType: OutputType,
         toPayload: ToPayload,
-    ) => SyncOrPromise<{
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    }>;
+    ) => SyncOrPromise<
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined
+    >;
 }
 
 export const isDepositChain = (chain: any): chain is DepositChain =>
@@ -214,11 +233,13 @@ export interface ContractChain<
         contractCall: FromContractCall,
         getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                toBytes: Uint8Array;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      toBytes: Uint8Array;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
     ) => SyncOrPromise<{
@@ -253,13 +274,15 @@ export interface ContractChain<
         outputType: OutputType,
         asset: string,
         contractCall: FromContractCall,
-        params: () => {
+        getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                toBytes: Uint8Array;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      toBytes: Uint8Array;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
         confirmationTarget: number,
@@ -295,11 +318,14 @@ export interface ContractChain<
         inputType: InputType,
         outputType: OutputType,
         contractCall: ToContractCall,
-    ) => SyncOrPromise<{
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    }>;
+    ) => SyncOrPromise<
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined
+    >;
 }
 
 export const isContractChain = (chain: any): chain is ContractChain =>

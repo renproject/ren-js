@@ -4,13 +4,13 @@ import {
     InputChainTransaction,
     InputType,
     OutputType,
+    utils,
 } from "@renproject/utils";
 import { Connection } from "@solana/web3.js";
-import { BN } from "bn.js";
 import { expect } from "chai";
 
 import { Solana } from "../src/index";
-import { RenVmMsgLayout } from "../src/layouts";
+import { RenVMMessageLayout } from "../src/layouts";
 import { renDevnet, renTestnet } from "../src/networks";
 import { signerFromPrivateKey } from "../src/utils";
 
@@ -21,17 +21,19 @@ const testPK = Buffer.from(
 
 describe("Solana", () => {
     describe("Layouts", () => {
-        it("should encode a renvm message", () => {
-            const obuff = Buffer.from(new Array(RenVmMsgLayout.span));
-            RenVmMsgLayout.encode(
+        it("should encode a RenVM message", () => {
+            const outputBuffer = Buffer.from(
+                new Array(RenVMMessageLayout.span),
+            );
+            RenVMMessageLayout.encode(
                 {
                     p_hash: new Uint8Array([0]),
-                    amount: new BN(0).toArrayLike(Buffer, "be"),
+                    amount: utils.toNBytes(0, 32),
                     token: new Uint8Array([0]),
                     to: new Uint8Array([0]),
                     n_hash: new Uint8Array([0]),
                 },
-                obuff,
+                outputBuffer,
             );
         });
     });
@@ -106,10 +108,10 @@ describe("Solana", () => {
 
         //     const btc = new Bitcoin();
         //     const asset = btc.asset;
-        //     const renjs = new RenJS(RenNetwork.Testnet, {
+        //     const renJS = new RenJS(RenNetwork.Testnet, {
         //         loadCompletedDeposits: true,
         //     });
-        //     const mint = await renjs.lockAndMint({
+        //     const mint = await renJS.lockAndMint({
         //         to: solana,
         //         from: btc,
         //         asset,

@@ -1,25 +1,23 @@
 import { CID } from "multiformats";
 
-import { utils } from "@renproject/utils";
-
 /**
  * Convert a Filecoin transaction hash from its standard format to the format
  * required by RenVM.
  *
- * @param txidFormatted A Filecoin transaction hash formatted as a CID string.
- * @returns The same Filecoin transaction hash formatted as a base64 string.
+ * @param txHash A Filecoin transaction hash formatted as a CID string.
+ * @returns The same Filecoin transaction hash as bytes.
  */
-export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(new Uint8Array(CID.parse(txidFormatted).bytes));
-}
+export const txHashToBytes = (txHash: string): Uint8Array => {
+    return new Uint8Array(CID.parse(txHash).bytes);
+};
 
 /**
  * Convert a Filecoin transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid A Filecoin transaction hash formatted as a base64 string.
+ * @param bytes A Filecoin transaction hash as bytes.
  * @returns The same Filecoin transaction hash formatted as a CID string.
  */
-export function txidToTxidFormatted(txid: string): string {
-    return CID.decode(utils.fromBase64(txid)).toString();
-}
+export const txHashFromBytes = (bytes: Uint8Array): string => {
+    return CID.decode(bytes).toString();
+};

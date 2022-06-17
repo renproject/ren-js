@@ -1,6 +1,6 @@
 {
     "name": "@renproject/utils",
-    "version": "3.0.0-alpha.28",
+    "version": "3.2.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,14 +43,13 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@noble/hashes": "1.0.0",
-        "@types/bn.js": "^5.1.0",
+        "@noble/hashes": "1.1.1",
         "@types/events": "3.0.0",
-        "axios": "^0.26.1",
+        "axios": "^0.27.2",
         "base64-js": "^1.5.1",
         "bignumber.js": "^9.0.2",
         "events": "^3.3.0",
-        "immutable": "^4.0.0"
+        "immutable": "^4.1.0"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

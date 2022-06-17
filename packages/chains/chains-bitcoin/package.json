@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-bitcoin",
-    "version": "3.0.0-alpha.28",
+    "version": "3.2.0",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -43,8 +43,8 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@noble/hashes": "1.0.0",
-        "@renproject/utils": "^3.0.0-alpha.28",
+        "@noble/hashes": "1.1.1",
+        "@renproject/utils": "^3.2.0",
         "@types/bchaddrjs": "^0.4.0",
         "@types/bs58": "^4.0.1",
         "@types/bs58check": "2.1.0",
@@ -55,7 +55,7 @@
         "bs58": "^5.0.0",
         "bs58check": "^2.1.2",
         "cashaddrjs": "^0.4.4",
-        "qs": "^6.10.3",
+        "qs": "^6.10.5",
         "wallet-address-validator": "^0.2.4"
     },
     "nyc": {

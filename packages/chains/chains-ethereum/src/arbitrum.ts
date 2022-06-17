@@ -20,17 +20,14 @@ const arbitrumMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
     config: {
         chainId: "0xa4b1",
         chainName: "Arbitrum One",
-        nativeCurrency: { name: "Ether", symbol: "AETH", decimals: 18 },
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
         rpcUrls: [
             "https://arb1.arbitrum.io/rpc",
-            "https://arbitrum-mainnet.infura.io/v3/${INFURA_API_KEY}",
+            "https://rpc.ankr.com/arbitrum",
             "https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
-            "wss://arb1.arbitrum.io/ws",
+            // "https://arbitrum-mainnet.infura.io/v3/${INFURA_API_KEY}",
         ],
-        blockExplorerUrls: [
-            "https://arbiscan.io",
-            "https://explorer.arbitrum.io",
-        ],
+        blockExplorerUrls: ["https://arbiscan.io"],
     },
 
     logRequestLimit: 20000,
@@ -53,20 +50,14 @@ const arbitrumTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
 
     config: {
         chainId: "0x66eeb",
-        chainName: "Arbitrum Testnet Rinkeby",
+        chainName: "Arbitrum Rinkeby",
         nativeCurrency: {
             name: "Arbitrum Rinkeby Ether",
             symbol: "ARETH",
             decimals: 18,
         },
-        rpcUrls: [
-            "https://rinkeby.arbitrum.io/rpc",
-            "wss://rinkeby.arbitrum.io/ws",
-        ],
-        blockExplorerUrls: [
-            "https://testnet.arbiscan.io/",
-            "https://rinkeby-explorer.arbitrum.io",
-        ],
+        rpcUrls: ["https://rinkeby.arbitrum.io/rpc"],
+        blockExplorerUrls: ["https://testnet.arbiscan.io"],
     },
 
     logRequestLimit: 20000,

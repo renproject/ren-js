@@ -19,14 +19,18 @@ const goerliConfig: EVMNetworkConfig = populateEVMNetwork({
 
     config: {
         chainId: "0x5",
-        chainName: "Ethereum Testnet Görli",
-        nativeCurrency: { name: "Görli Ether", symbol: "GOR", decimals: 18 },
+        chainName: "Görli",
+        nativeCurrency: {
+            name: "Görli Ether",
+            symbol: "GOR",
+            decimals: 18,
+        },
         rpcUrls: [
             "https://rpc.goerli.mudit.blog/",
-            "https://rpc.slock.it/goerli",
-            "https://goerli.prylabs.net/",
+            "https://goerli.infura.io/v3/${INFURA_API_KEY}",
+            "wss://goerli.infura.io/v3/${INFURA_API_KEY}",
         ],
-        blockExplorerUrls: ["https://goerli.infura.io"],
+        blockExplorerUrls: ["https://goerli.etherscan.io"],
     },
 
     addresses: {

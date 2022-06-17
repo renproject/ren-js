@@ -2,8 +2,6 @@ import { ripemd160 as createRipemd160 } from "@noble/hashes/ripemd160";
 import { assertType, utils } from "@renproject/utils";
 import { bech32 } from "bech32";
 import base58 from "bs58";
-import { validate } from "wallet-address-validator";
-import BTCValidator from "wallet-address-validator/src/bitcoin_validator";
 
 import {
     BitcoinNetworkConfig,
@@ -28,26 +26,6 @@ export const addressToBytes = (address: string): Uint8Array => {
             throw new Error(`Unrecognized address format "${address}".`);
         }
     }
-};
-
-export const validateAddress = (
-    address: string,
-    asset: string,
-    network: string,
-): boolean => {
-    if (asset === "DGB") {
-        const currency = {
-            name: "digibyte",
-            symbol: "dgb",
-            addressTypes: { prod: ["1e", "3f"], testnet: ["7e", "8c"] },
-            validator: BTCValidator,
-            segwitHrp: network === "prod" ? "dgb" : "dgbt",
-        };
-
-        return currency.validator.isValidAddress(address, currency, network);
-    }
-
-    return validate(address, asset, network);
 };
 
 export const StandardBitcoinExplorer = (
@@ -116,22 +94,24 @@ export const hash160 = (...msg: Uint8Array[]): Uint8Array => {
  * Convert a Bitcoin transaction hash from its standard format to the format
  * required by RenVM.
  *
- * @param txidFormatted A Bitcoin transaction hash formatted as an unprefixed
+ * @param txHash A Bitcoin transaction hash formatted as an unprefixed
  * hex string.
- * @returns The same Bitcoin transaction hash formatted as a base64 string.
+ * @returns The bytes representing the same txHash.
  */
-export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(utils.fromHex(txidFormatted).reverse());
-}
+export const txHashToBytes = (txHash: string): Uint8Array => {
+    return utils.fromHex(txHash).reverse();
+};
 
 /**
  * Convert a Bitcoin transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid A Bitcoin transaction hash formatted as a base64 string.
+ * @param bytes Bytes representing a Bitcoin hash.
  * @returns The same Bitcoin transaction hash formatted as an unprefixed hex
  * string.
  */
-export function txidToTxidFormatted(txid: string): string {
-    return utils.toHex(utils.fromBase64(txid).reverse());
-}
+export const txHashFromBytes = (bytes: Uint8Array): string => {
+    // Create new Uint8Array before reversing to avoid modifying the input
+    // array.
+    return utils.toHex(new Uint8Array(bytes).reverse());
+};

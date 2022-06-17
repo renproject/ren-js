@@ -1,6 +1,5 @@
-import BigNumber from "bignumber.js";
-
 import { utils } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 // Numeric fields are represented as strings in case any Bitcoin chain has
 // a txindex, an amount or a height that can't be represented by a 64-bit float.
@@ -130,31 +129,31 @@ export class CombinedAPI implements BitcoinAPI {
      * @param config.priority Optionally set the priority of the API, where
      * a lower priority means it will be selected before other APIs.
      */
-    public withAPI(
+    public withAPI = (
         api: BitcoinAPI | APIWithPriority,
         { priority = 0 } = {},
-    ): this {
+    ): this => {
         this.apis.push(withPriority(api, priority));
         return this;
-    }
+    };
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         return this.forEachAPI(
             // Filter APIs with `fetchHeight`.
             (api) => api.fetchHeight !== undefined,
             // Call `fetchHeight` on the API.
             (api) => notNull(api.fetchHeight).bind(api)(),
         );
-    }
+    };
 
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         return this.forEachAPI(
             // Filter APIs with `fetchUTXO`.
             (api) => api.fetchUTXO !== undefined,
             // Call `fetchUTXO` on the API.
             (api) => notNull(api.fetchUTXO).bind(api)(txid, txindex),
         );
-    }
+    };
 
     public fetchUTXOs = async (
         address: string,
@@ -178,14 +177,14 @@ export class CombinedAPI implements BitcoinAPI {
             (api) => notNull(api.fetchTXs).bind(api)(address, confirmations),
         );
 
-    public async broadcastTransaction(hex: string): Promise<string> {
+    public broadcastTransaction = async (hex: string): Promise<string> => {
         return this.forEachAPI(
             // Filter APIs with `broadcastTransaction`.
             (api) => api.broadcastTransaction !== undefined,
             // Call `broadcastTransaction` on the API.
             (api) => notNull(api.broadcastTransaction).bind(api)(hex),
         );
-    }
+    };
 
     private forEachAPI = async <T>(
         filter: (api: BitcoinAPI) => boolean,

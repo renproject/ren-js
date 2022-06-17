@@ -1,21 +1,15 @@
+/* eslint-disable no-console */
+
 import { Buffer } from "buffer";
 
 import { EthProvider, EVMNetworkConfig } from "@renproject/chains-ethereum/src";
-import { Connection } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
-import { ethers, providers, Wallet } from "ethers";
-import {
-    GatewayRegistryABI,
-    getERC20Instance,
-    getGatewayRegistryInstance,
-    getMintGatewayInstance,
-} from "packages/chains/chains-ethereum/src/contracts";
+import { ethers, Wallet } from "ethers";
 import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
-import { renTestnet } from "packages/chains/chains-solana/src/networks";
 import { signerFromPrivateKey } from "packages/chains/chains-solana/src/utils";
 import { ChainCommon, RenNetwork, utils } from "packages/utils/src";
 import SendCrypto from "send-crypto";
@@ -86,88 +80,7 @@ export const getEVMProvider = <EVM>(
         }
     }
 
-    const registry = getGatewayRegistryInstance(
-        undefined as any, // no provider
-        Polygon.configMap["testnet"].addresses.GatewayRegistry,
-    );
-    const mockGateway = getMintGatewayInstance(
-        undefined,
-        "0x1111111111111111111111111111111111111111",
-    );
-    const mockRenAsset = getERC20Instance(
-        undefined,
-        "0x2222222222222222222222222222222222222222",
-    );
-
-    let provider;
-    // if (ChainClass.name === "Polygon") {
-    //     provider = new ethers.providers.Web3Provider({
-    //         request: async ({ method, params }) => {
-    //             switch (method) {
-    //                 case "eth_chainId":
-    //                     return 80001;
-    //                 case "eth_blockNumber":
-    //                     return 1;
-    //                 case "eth_getLogs":
-    //                     return [];
-    //                 case "eth_call":
-    //                     const { to, data } = params[0];
-    //                     switch (to.toLowerCase()) {
-    //                         case registry.address.toLowerCase(): {
-    //                             const fn = registry.interface.getFunction(
-    //                                 data.slice(0, 10),
-    //                             );
-    //                             switch (fn.name) {
-    //                                 case "getRenAssetBySymbol":
-    //                                     return utils.toNBytes(
-    //                                         utils.fromHex(mockRenAsset.address),
-    //                                         32,
-    //                                     );
-    //                                 case "getMintGatewayBySymbol":
-    //                                     return utils.toNBytes(
-    //                                         utils.fromHex(mockGateway.address),
-    //                                         32,
-    //                                     );
-    //                             }
-    //                             throw new Error(
-    //                                 `Method not implemented on mock GatewayRegistry: ${fn.name}`,
-    //                             );
-    //                         }
-
-    //                         case mockGateway.address: {
-    //                             const fn = mockGateway.interface.getFunction(
-    //                                 data.slice(0, 10),
-    //                             );
-    //                             switch (fn.name) {
-    //                                 case "status":
-    //                                     return utils.toNBytes(0, 32);
-    //                             }
-    //                             throw new Error(
-    //                                 `Method not implemented on mock Gateway: ${fn.name}`,
-    //                             );
-    //                         }
-
-    //                         case mockRenAsset.address: {
-    //                             const fn = mockRenAsset.interface.getFunction(
-    //                                 data.slice(0, 10),
-    //                             );
-    //                             switch (fn.name) {
-    //                                 case "decimals":
-    //                                     return utils.Ox(utils.toNBytes(18, 32));
-    //                             }
-    //                             throw new Error(
-    //                                 `Method not implemented on mock RenAsset: ${fn.name}`,
-    //                             );
-    //                         }
-    //                     }
-    //                     throw new Error(`Contract not implemented: ${to}`);
-    //             }
-    //             throw new Error(`Not implemented: ${method}`);
-    //         },
-    //     });
-    // } else {
-    provider = new ethers.providers.JsonRpcProvider(rpcUrl);
-    // }
+    const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
     const signer = Wallet.fromMnemonic(
         MNEMONIC,
         `m/44'/60'/0'/0/${index}`,
@@ -185,6 +98,8 @@ export const initializeChain = <T extends ChainCommon>(
         new (...params): T;
     },
     network = RenNetwork.Testnet,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    config?: any,
 ): T => {
     switch (Chain.chain) {
         // Bitcoin chains
@@ -221,16 +136,17 @@ export const initializeChain = <T extends ChainCommon>(
             return new (Chain as unknown as typeof Ethereum)({
                 network,
                 ...getEVMProvider(Chain as unknown as typeof Ethereum, network),
+                config,
             }) as ChainCommon as T;
 
         // Solana
         case Solana.chain:
             return new (Chain as unknown as typeof Solana)({
                 network,
-                provider: new Connection(renTestnet.endpoint),
                 signer: signerFromPrivateKey(
                     Buffer.from(process.env.TESTNET_SOLANA_KEY, "hex"),
                 ),
+                config,
             }) as ChainCommon as T;
     }
     throw new Error(`No test initializer for ${Chain.chain}.`);
@@ -254,7 +170,7 @@ export const printChain = (chain: string, { pad } = { pad: true }): string => {
             : chain === "Avalanche"
             ? chalk.hex("#e84142")
             : chain === "Goerli"
-            ? chalk.keyword("paleturquoise")
+            ? chalk.hex("#afeeee")
             : chain === "Bitcoin"
             ? chalk.hex("#f7931a")
             : chalk.cyan;
@@ -279,7 +195,7 @@ export const sendFunds = async (
     asset: string,
     recipient: string,
     amount: BigNumber,
-) => {
+): Promise<void> => {
     const account = new SendCrypto(
         Buffer.from(utils.fromHex(process.env.TESTNET_PRIVATE_KEY)),
         {

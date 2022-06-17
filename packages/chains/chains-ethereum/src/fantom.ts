@@ -21,7 +21,16 @@ const fantomMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
         chainId: "0xfa",
         chainName: "Fantom Opera",
         nativeCurrency: { name: "Fantom", symbol: "FTM", decimals: 18 },
-        rpcUrls: ["https://rpc.ftm.tools"],
+        rpcUrls: [
+            "https://rpc.ftm.tools",
+            "https://fantom-mainnet.gateway.pokt.network/v1/lb/62759259ea1b320039c9e7ac",
+            "https://rpc.ankr.com/fantom",
+            "https://rpc.fantom.network",
+            "https://rpc2.fantom.network",
+            "https://rpc3.fantom.network",
+            "https://rpcapi.fantom.network",
+            "https://fantom-mainnet.public.blastapi.io",
+        ],
         blockExplorerUrls: ["https://ftmscan.com"],
     },
 
@@ -42,7 +51,7 @@ const fantomTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
         chainName: "Fantom Testnet",
         nativeCurrency: { name: "Fantom", symbol: "FTM", decimals: 18 },
         rpcUrls: ["https://rpc.testnet.fantom.network"],
-        blockExplorerUrls: ["https://testnet.ftmscan.com/"],
+        blockExplorerUrls: ["https://testnet.ftmscan.com"],
     },
 
     addresses: {

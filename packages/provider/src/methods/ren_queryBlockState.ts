@@ -1,11 +1,10 @@
-import BigNumber from "bignumber.js";
-
 import {
     Marshalled,
     PackPrimitive,
     PackTypeDefinition,
     TypedPackValue,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 // ParamsQueryBlockState defines the parameters of the MethodQueryBlockState.
 export interface ParamsQueryBlockState {
@@ -25,6 +24,7 @@ export interface ResponseQueryBlockState {
                 dustAmount: Marshalled<PackPrimitive.U256>;
                 fees: {
                     chains: Array<{
+                        burnAndMintFee: Marshalled<PackPrimitive.U64>;
                         burnFee: Marshalled<PackPrimitive.U64>;
                         chain: Marshalled<PackPrimitive.Str>;
                         mintFee: Marshalled<PackPrimitive.U64>;

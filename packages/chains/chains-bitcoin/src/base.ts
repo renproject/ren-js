@@ -1,6 +1,3 @@
-import BigNumber from "bignumber.js";
-import base58 from "bs58";
-
 import {
     assertType,
     ChainTransaction,
@@ -13,6 +10,9 @@ import {
     RenJSError,
     utils,
 } from "@renproject/utils";
+import BigNumber from "bignumber.js";
+import base58 from "bs58";
+import { validate } from "wallet-address-validator";
 
 import { APIWithPriority, BitcoinAPI, CombinedAPI } from "./APIs/API";
 import { createAddressArray } from "./script/index";
@@ -27,9 +27,8 @@ import {
 import {
     addressToBytes,
     hash160,
-    txidFormattedToTxid,
-    txidToTxidFormatted,
-    validateAddress,
+    txHashFromBytes,
+    txHashToBytes,
 } from "./utils/utils";
 
 /**
@@ -67,56 +66,58 @@ export abstract class BitcoinBaseChain
         }
     }
 
-    public withAPI(
+    public withAPI = (
         api: BitcoinAPI | APIWithPriority,
         { priority = 0 } = {},
-    ): this {
+    ): this => {
         this.api.withAPI(api, { priority });
         return this;
-    }
+    };
 
-    public getOutputPayload(
+    public getOutputPayload = (
         asset: string,
         _inputType: InputType,
         _outputType: OutputType,
         toPayload: BitcoinOutputPayload,
-    ): {
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    } {
+    ):
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined => {
         this._assertAssetIsSupported(asset);
-        const address = toPayload.params
-            ? toPayload.params.address
-            : toPayload.address;
+        const address = toPayload.params.address;
         if (!address) {
-            throw new Error(`No ${this.chain} address specified.`);
+            // throw new Error(`No ${this.chain} address specified.`);
+            return undefined;
         }
         return {
             to: address,
-            toBytes: this.decodeAddress(address),
+            toBytes: this.addressToBytes(address),
             payload: new Uint8Array(),
         };
-    }
+    };
 
-    public addressExplorerLink(address: string): string | undefined {
+    public addressExplorerLink = (address: string): string | undefined => {
         return this.network.explorer.address(address);
-    }
+    };
 
-    public transactionExplorerLink({
+    public transactionExplorerLink = ({
         txid,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string })): string | undefined {
-        if (txidFormatted) {
-            return this.network.explorer.transaction(txidFormatted);
+        txHash,
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
+        | string
+        | undefined => {
+        if (txHash) {
+            return this.network.explorer.transaction(txHash);
         } else if (txid) {
             return this.network.explorer.transaction(
-                this.txidToTxidFormatted({ txid }),
+                this.txHashFromBytes(utils.fromBase64(txid)),
             );
         }
         return undefined;
-    }
+    };
 
     public getBalance = async (
         asset: string,
@@ -131,40 +132,43 @@ export abstract class BitcoinBaseChain
         return new BigNumber(0);
     };
 
-    public encodeAddress(bytes: Uint8Array): string {
-        return base58.encode(bytes);
-    }
+    public validateAddress = (address: string): boolean => {
+        try {
+            return validate(
+                address,
+                this.network.nativeAsset.symbol,
+                this.network.isTestnet ? "testnet" : "prod",
+            );
+        } catch (error) {
+            return false;
+        }
+    };
 
-    public decodeAddress(address: string): Uint8Array {
+    public addressToBytes = (address: string): Uint8Array => {
         return addressToBytes(address);
-    }
+    };
 
-    public validateAddress(address: string): boolean {
-        return validateAddress(
-            address,
-            this.network.nativeAsset.symbol,
-            this.network.isTestnet ? "testnet" : "prod",
-        );
-    }
+    public addressFromBytes = (bytes: Uint8Array): string => {
+        return base58.encode(bytes);
+    };
 
-    public txidFormattedToTxid(formattedTxid: string): string {
-        return txidFormattedToTxid(formattedTxid);
-    }
+    public txHashToBytes = (txHash: string): Uint8Array => {
+        return txHashToBytes(txHash);
+    };
 
-    public txidToTxidFormatted({ txid }: { txid: string }): string {
-        return txidToTxidFormatted(txid);
-    }
-    public formattedTransactionHash = this.txidToTxidFormatted;
+    public txHashFromBytes = (bytes: Uint8Array): string => {
+        return txHashFromBytes(bytes);
+    };
 
-    public validateTransaction(
+    public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): boolean {
+            ({ txid: string } | { txHash: string }),
+    ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
-                utils.isDefined(transaction.txidFormatted)) &&
-            (transaction.txidFormatted
-                ? utils.isHex(transaction.txidFormatted, {
+                utils.isDefined(transaction.txHash)) &&
+            (transaction.txHash
+                ? utils.isHex(transaction.txHash, {
                       length: 32,
                   })
                 : true) &&
@@ -176,47 +180,47 @@ export abstract class BitcoinBaseChain
             (transaction.txindex
                 ? !new BigNumber(transaction.txindex).isNaN()
                 : true) &&
-            (transaction.txidFormatted && transaction.txid
-                ? this.txidFormattedToTxid(transaction.txidFormatted) ===
+            (transaction.txHash && transaction.txid
+                ? utils.toURLBase64(txHashToBytes(transaction.txHash)) ===
                   transaction.txid
                 : true)
         );
-    }
+    };
 
     /**
      * See [[LockChain.isLockAsset]].
      */
-    public isLockAsset(asset: string): boolean {
+    public isLockAsset = (asset: string): boolean => {
         return asset === this.network.nativeAsset.symbol;
-    }
+    };
 
-    public isDepositAsset(asset: string): boolean {
+    public isDepositAsset = (asset: string): boolean => {
         this._assertAssetIsSupported(asset);
         return true;
-    }
+    };
 
-    private _assertAssetIsSupported(asset: string) {
+    private _assertAssetIsSupported = (asset: string) => {
         if (!this.isLockAsset(asset)) {
             throw new Error(`Asset ${asset} not supported on ${this.chain}.`);
         }
-    }
+    };
 
     /**
      * See [[LockChain.assetDecimals]].
      */
-    public assetDecimals(asset: string): number {
+    public assetDecimals = (asset: string): number => {
         this._assertAssetIsSupported(asset);
         return 8;
-    }
+    };
 
-    public async watchForDeposits(
+    public watchForDeposits = async (
         asset: string,
         fromPayload: BitcoinInputPayload,
         address: string,
         onInput: (input: InputChainTransaction) => void,
         _removeInput: (input: InputChainTransaction) => void,
         listenerCancelled: () => boolean,
-    ): Promise<void> {
+    ): Promise<void> => {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
@@ -225,14 +229,14 @@ export abstract class BitcoinBaseChain
         }
 
         // If the payload is a transaction, submit it to onInput and then loop
-        // indefintely.
+        // indefinitely.
         if (fromPayload.type === "transaction") {
             const inputTx = fromPayload.params.tx;
             if ((inputTx as InputChainTransaction).amount === undefined) {
                 while (true) {
                     try {
                         const tx = await this.api.fetchUTXO(
-                            inputTx.txidFormatted,
+                            inputTx.txHash,
                             inputTx.txindex,
                         );
                         onInput({
@@ -240,8 +244,12 @@ export abstract class BitcoinBaseChain
                             txid: utils.toURLBase64(
                                 utils.fromHex(tx.txid).reverse(),
                             ),
-                            txidFormatted: tx.txid,
+                            txHash: tx.txid,
                             txindex: tx.txindex,
+                            explorerLink:
+                                this.transactionExplorerLink({
+                                    txHash: tx.txid,
+                                }) || "",
 
                             asset,
                             amount: tx.amount,
@@ -267,8 +275,12 @@ export abstract class BitcoinBaseChain
                 onInput({
                     chain: this.chain,
                     txid: utils.toURLBase64(utils.fromHex(tx.txid).reverse()),
-                    txidFormatted: tx.txid,
+                    txHash: tx.txid,
                     txindex: tx.txindex,
+                    explorerLink:
+                        this.transactionExplorerLink({
+                            txHash: tx.txid,
+                        }) || "",
 
                     asset,
                     amount: tx.amount,
@@ -290,8 +302,12 @@ export abstract class BitcoinBaseChain
                         txid: utils.toURLBase64(
                             utils.fromHex(tx.txid).reverse(),
                         ),
-                        txidFormatted: tx.txid,
+                        txHash: tx.txid,
                         txindex: tx.txindex,
+                        explorerLink:
+                            this.transactionExplorerLink({
+                                txHash: tx.txid,
+                            }) || "",
 
                         asset,
                         amount: tx.amount,
@@ -302,7 +318,7 @@ export abstract class BitcoinBaseChain
             }
             await utils.sleep(15 * utils.sleep.SECONDS);
         }
-    }
+    };
 
     /**
      * See [[LockChain.transactionConfidence]].
@@ -311,7 +327,7 @@ export abstract class BitcoinBaseChain
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
         const { height } = await this.api.fetchUTXO(
-            this.txidToTxidFormatted(transaction),
+            transaction.txHash,
             transaction.txindex,
         );
         if (!height) {
@@ -325,26 +341,26 @@ export abstract class BitcoinBaseChain
     /**
      * See [[LockChain.getGatewayAddress]].
      */
-    public createGatewayAddress(
+    public createGatewayAddress = (
         asset: string,
         fromPayload: BitcoinInputPayload,
         shardPublicKey: Uint8Array,
         gHash: Uint8Array,
-    ): Promise<string> | string {
+    ): Promise<string> | string => {
         this._assertAssetIsSupported(asset);
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
             );
         }
-        return this.encodeAddress(
+        return this.addressFromBytes(
             createAddressArray(
                 hash160(shardPublicKey),
                 gHash,
                 this.network.p2shPrefix,
             ),
         );
-    }
+    };
 
     // Methods for initializing mints and burns ////////////////////////////////
 
@@ -354,7 +370,7 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    public Address(address: string): BitcoinOutputPayload {
+    public Address = (address: string): BitcoinOutputPayload => {
         // Type validation
         assertType<string>("string", { address });
 
@@ -372,7 +388,7 @@ export abstract class BitcoinBaseChain
                 address,
             },
         };
-    }
+    };
 
     /**
      * When burning, you can call `Bitcoin.Address("...")` to make the address
@@ -380,12 +396,12 @@ export abstract class BitcoinBaseChain
      *
      * @category Main
      */
-    public GatewayAddress(): BitcoinInputPayload {
+    public GatewayAddress = (): BitcoinInputPayload => {
         return {
             chain: this.chain,
             type: "gatewayAddress",
         };
-    }
+    };
 
     /**
      * Import an existing Bitcoin transaction instead of watching for deposits
@@ -393,16 +409,16 @@ export abstract class BitcoinBaseChain
      *
      * @example
      * bitcoin.Transaction({
-     *   txidFormatted: "a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d",
+     *   txHash: "a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d",
      *   txindex: "0"
      * })
      */
-    public Transaction(
+    public Transaction = (
         partialTx: Partial<ChainTransaction> & { txindex: string } & (
                 | { txid: string }
-                | { txidFormatted: string }
+                | { txHash: string }
             ),
-    ): BitcoinInputPayload {
+    ): BitcoinInputPayload => {
         return {
             chain: this.chain,
             type: "transaction",
@@ -410,18 +426,19 @@ export abstract class BitcoinBaseChain
                 tx: populateChainTransaction({
                     partialTx,
                     chain: this.chain,
-                    txidToTxidFormatted,
-                    txidFormattedToTxid,
+                    txHashToBytes,
+                    txHashFromBytes,
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
         };
-    }
+    };
 
-    public toSats(value: BigNumber | string | number): string {
+    public toSats = (value: BigNumber | string | number): string => {
         return new BigNumber(value).shiftedBy(8).decimalPlaces(0).toFixed();
-    }
+    };
 
-    public fromSats(value: BigNumber | string | number): string {
+    public fromSats = (value: BigNumber | string | number): string => {
         return new BigNumber(value).shiftedBy(-8).toFixed();
-    }
+    };
 }

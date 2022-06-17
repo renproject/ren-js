@@ -1,13 +1,12 @@
 /* eslint-disable no-console */
 
+import FilecoinClient from "@glif/filecoin-rpc-client";
+import { utils } from "@renproject/utils";
 import chai, { expect } from "chai";
 import { config as loadDotEnv } from "dotenv";
 
-import FilecoinClient from "@glif/filecoin-rpc-client";
-
 import { Filecoin } from "../src";
 import { fetchDeposits, getHeight } from "../src/utils/lotus";
-import { txidFormattedToTxid } from "../src/utils/utils";
 
 chai.should();
 
@@ -41,27 +40,63 @@ describe("Filecoin", () => {
 
         expect(
             filecoin.validateTransaction({
-                txidFormatted:
-                    "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
+                txHash: "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
             }),
         ).to.be.true;
 
         expect(
             filecoin.validateTransaction({
-                txidFormatted:
-                    "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
+                txHash: "bafy2bzaceaoo4msi45t3pbhfov3guu5l34ektpjhuftyddy2rvhf2o5ajijle",
                 txid: "AXGg5AIgHO4ySOdnt4TldXZqU6vfCKm9J6FngY8ajU5dO6BKErI",
                 txindex: "0",
             }),
         ).to.be.true;
     });
+
+    it("validateAddress", () => {
+        const testnet = new Filecoin({ network: "testnet" });
+
+        expect(
+            testnet.validateAddress(
+                "t14wczuvodunv3xzexobzywpbj6qpr6jwdrbkrmbq",
+            ),
+        ).to.be.true;
+
+        expect(
+            utils.Ox(
+                testnet.addressToBytes(
+                    "t14wczuvodunv3xzexobzywpbj6qpr6jwdrbkrmbq",
+                ),
+            ),
+        ).to.equal("0x01e5859a55c3a36bbbe49770738b3c29f41f1f26c3");
+
+        // expect(
+        //     testnet.validateAddress(""),
+        // ).to.be.true;
+
+        // expect(
+        //     testnet.validateAddress(""),
+        // ).to.be.false;
+
+        // const mainnet = new Filecoin({ network: "mainnet" });
+
+        // expect(
+        //     mainnet.validateAddress(""),
+        // ).to.be.true;
+
+        // expect(
+        //     mainnet.validateAddress(""),
+        // ).to.be.true;
+
+        // expect(
+        //     mainnet.validateAddress(""),
+        // ).to.be.false;
+    });
 });
 
 // Slow test.
 describe.skip("Filecoin", () => {
-    it("lotus", async function () {
-        this.timeout(100000000000);
-
+    it("lotus", async () => {
         const client = new FilecoinClient({
             apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
         });
@@ -77,5 +112,5 @@ describe.skip("Filecoin", () => {
                 height,
             ),
         );
-    });
+    }).timeout(100000000000);
 });

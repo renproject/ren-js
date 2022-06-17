@@ -29,11 +29,11 @@ import { TransactionEmitter } from "./utils/transactionEmitter";
 /**
  * A Gateway allows moving funds through RenVM. Its defined by the asset being
  * moved, an origin chain and a target chain. For each of these chains, a
- * payload can be specified, allowing for more complex bridings involving
+ * payload can be specified, allowing for more complex bridgings involving
  * contract interactions.
  *
  * A Gateway will be of one of two types - a deposit gateway, requiring users
- * to send funds to a gateway address, or a contract gateway, requring users to
+ * to send funds to a gateway address, or a contract gateway, requiring users to
  * submit a specific transaction. For example, when moving BTC from Bitcoin
  * to Ethereum, the user will have to send BTC to a Bitcoin address (the gateway
  * address). When moving DAI from Ethereum to Polygon, the user will have to
@@ -113,7 +113,7 @@ export class Gateway<
     // be called immediately after the constructor.
 
     private _selector: string | undefined;
-    /** The RenVM contract selecetor. */
+    /** The RenVM contract selector. */
     public get selector(): string {
         return this._defaultGetter("_selector") || this._selector;
     }
@@ -167,7 +167,7 @@ export class Gateway<
         params: GatewayParams<FromPayload, ToPayload>,
         config: RenJSConfig = {},
     ) {
-        this.params = params;
+        this.params = { ...params };
         this.fromChain = fromChain;
         this.toChain = toChain;
         this.provider = renVM;
@@ -194,7 +194,7 @@ export class Gateway<
      * @hidden - Called automatically when calling [[RenJS.gateway]]. It has
      * been split from the constructor because it is asynchronous.
      */
-    public async initialize(): Promise<Gateway<FromPayload, ToPayload>> {
+    public initialize = async (): Promise<Gateway<FromPayload, ToPayload>> => {
         const { to, asset, from } = this.params;
 
         const { inputType, outputType, selector } =
@@ -258,17 +258,30 @@ export class Gateway<
             ),
         ]);
 
-        if (
-            this.outputType === OutputType.Release &&
-            payload.payload.length > 0
-        ) {
-            throw new Error(`Burning with a payload is not currently enabled.`);
+        // Check if the selector is whitelisted - ie currently enabled in RenVM.
+        // Run this later because the underlying queryConfig is cached by
+        // `selectShard`.
+        if (!(await this.provider.selectorWhitelisted(selector))) {
+            throw new Error(
+                `Unable to bridge ${asset} from ${from.chain} to ${to.chain}: Selector ${selector} not whitelisted.`,
+            );
+        }
+
+        if (payload) {
+            if (
+                this.outputType === OutputType.Release &&
+                payload.payload.length > 0
+            ) {
+                throw new Error(
+                    `Burning with a payload is not currently enabled.`,
+                );
+            }
+
+            this._pHash = generatePHash(payload.payload);
         }
 
         this.params.shard = shard;
         this._inConfirmationTarget = confirmationTarget;
-
-        this._pHash = generatePHash(payload.payload);
 
         // const sHash = utils.Ox(generateSHash(this.selector));
 
@@ -285,6 +298,10 @@ export class Gateway<
                     throw new Error(
                         `Cannot mint ${asset} to non-contract chain ${this.toChain.chain}.`,
                     );
+                }
+
+                if (!payload) {
+                    throw new Error(`No target payload set.`);
                 }
 
                 if (!this.params.shard) {
@@ -394,13 +411,13 @@ export class Gateway<
             }
 
             // Will fetch deposits as long as there's at least one subscription.
-            this._watchForDeposits().catch(console.error);
+            this._watchForDeposits().catch(this.config.logger.error);
         }
 
         if (isContractChain(this.fromChain)) {
             const processInput = (input: InputChainTransaction) => {
                 // TODO: Add to queue instead so that it can be retried on error.
-                this.processDeposit(input).catch(console.error);
+                this.processDeposit(input).catch(this.config.logger.error);
             };
 
             // TODO
@@ -420,6 +437,23 @@ export class Gateway<
                 processInput,
                 removeInput,
             );
+
+            if (this.fromChain.getInSetup) {
+                this.inSetup = {
+                    ...this.inSetup,
+                    ...(await this.fromChain.getInSetup(
+                        asset,
+                        this.inputType,
+                        this.outputType,
+                        from,
+                        () => ({
+                            toChain: to.chain,
+                            toPayload: payload,
+                            gatewayAddress: this.gatewayAddress,
+                        }),
+                    )),
+                };
+            }
         }
 
         this._fees = await estimateTransactionFee(
@@ -429,25 +463,8 @@ export class Gateway<
             this.toChain,
         );
 
-        if (isContractChain(this.fromChain) && this.fromChain.getInSetup) {
-            this.inSetup = {
-                ...this.inSetup,
-                ...(await this.fromChain.getInSetup(
-                    asset,
-                    this.inputType,
-                    this.outputType,
-                    from,
-                    () => ({
-                        toChain: to.chain,
-                        toPayload: payload,
-                        gatewayAddress: this.gatewayAddress,
-                    }),
-                )),
-            };
-        }
-
         return this;
-    }
+    };
 
     private addTransaction = async (
         identifier: string,
@@ -478,7 +495,7 @@ export class Gateway<
      * const gatewayTransaction = await gateway
      *   .processDeposit({
      *      chain: "Ethereum",
-     *      txidFormatted: "0xef90...",
+     *      txHash: "0xef90...",
      *      txid: "752...",
      *      txindex: "0",
      *      amount: "1",
@@ -486,17 +503,19 @@ export class Gateway<
      * ```
      * @category Main
      */
-    public async processDeposit(
+    public processDeposit = async (
         inputTx: InputChainTransaction,
-    ): Promise<GatewayTransaction<ToPayload>> {
-        const depositIdentifier = inputTx.txid + "_" + String(inputTx.txindex);
+    ): Promise<GatewayTransaction<ToPayload>> => {
+        const depositIdentifier = `${String(inputTx.txid)}_${String(
+            inputTx.txindex,
+        )}`;
         const existingTransaction = this.transactions.get(depositIdentifier);
 
         // If the transaction hasn't been seen before.
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!existingTransaction) {
             const createGatewayTransaction = async () => {
-                if (!this.pHash) {
+                if (!utils.isDefined(this.inConfirmationTarget)) {
                     throw new Error(
                         "Gateway address must be generated before calling 'processDeposit'.",
                     );
@@ -564,7 +583,7 @@ export class Gateway<
             } catch (error: unknown) {
                 await this.removeTransaction(depositIdentifier);
                 const message = `Error processing deposit ${
-                    inputTx.txidFormatted
+                    inputTx.txHash
                 }: ${utils.extractError(error)}`;
                 if (error instanceof Error) {
                     error.message = message;
@@ -574,13 +593,13 @@ export class Gateway<
                 throw error;
             }
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return (await existingTransaction)!;
-    }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return (await existingTransaction) as GatewayTransaction<ToPayload>;
+    };
 
     /**
      * Listen to "transaction" events, registering a callback that will be
-     * called for all previous trannsactions and for any future transaction.
+     * called for all previous transactions and for any future transaction.
      *
      * To remove the listener, call `gateway.eventEmitter.removeListener` or
      * `gateway.eventEmitter.removeAllListeners`.
@@ -597,21 +616,21 @@ export class Gateway<
 
     /** PRIVATE METHODS */
 
-    private _defaultGetter(name: string) {
+    private _defaultGetter = (name: string) => {
         if (this[name] === undefined) {
             throw new Error(
                 `Must call 'initialize' before accessing '${name}'.`,
             );
         }
         return this[name];
-    }
+    };
 
     /**
      * Internal method that fetches deposits to the gateway address. If there
      * are no listeners to the "transaction" event, then it pauses fetching
      * deposits.
      */
-    private async _watchForDeposits(): Promise<void> {
+    private _watchForDeposits = async (): Promise<void> => {
         if (
             !this.gatewayAddress ||
             !isDepositChain(this.fromChain) ||
@@ -640,7 +659,9 @@ export class Gateway<
             const onDeposit = (deposit: InputChainTransaction): void => {
                 try {
                     // TODO: Handle error.
-                    this.processDeposit(deposit).catch(console.error);
+                    this.processDeposit(deposit).catch(
+                        this.config.logger.error,
+                    );
                 } catch (error: unknown) {
                     this.config.logger.error(error);
                 }
@@ -665,5 +686,5 @@ export class Gateway<
 
             await utils.sleep(this.config.networkDelay);
         }
-    }
+    };
 }

@@ -16,9 +16,7 @@ export interface Logger {
     error(message?: unknown, ...optionalParams: unknown[]): void;
     warn(message?: unknown, ...optionalParams: unknown[]): void;
     info(message?: unknown, ...optionalParams: unknown[]): void;
-    log(message?: unknown, ...optionalParams: unknown[]): void;
     debug(message?: unknown, ...optionalParams: unknown[]): void;
-    trace(message?: unknown, ...optionalParams: unknown[]): void;
 
     // Return the logging level, as a number from 0 (trace) to 5 (silent).
     getLevel?(): LogLevel | number;
@@ -27,20 +25,19 @@ export interface Logger {
 const doNothing = (): void => {};
 
 /**
- * nullLogger is a helper utility to avoid having to check whether a logger is
- * defined.
+ * The defaultLogger forwards info, warn and error logs to the console, and
+ * ignores debug logs.
  *
  * @example
  * ```
- * const logger = params.logger || nullLogger;
+ * const logger = params.logger || defaultLogger;
  * logger.debug("Test.");
  * ```
  */
-export const nullLogger: Logger = {
-    trace: doNothing,
+export const defaultLogger: Logger = {
     debug: doNothing,
-    log: doNothing,
-    info: doNothing,
-    warn: doNothing,
-    error: doNothing,
+    // eslint-disable-next-line no-console
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
 };

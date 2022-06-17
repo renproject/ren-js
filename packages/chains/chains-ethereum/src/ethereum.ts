@@ -45,7 +45,7 @@ const ethereumTestnet: EVMNetworkConfig = populateEVMNetwork({
 
     config: {
         chainId: "0x2a",
-        chainName: "Ethereum Testnet Kovan",
+        chainName: "Kovan",
         nativeCurrency: { name: "Kovan Ether", symbol: "KOV", decimals: 18 },
         rpcUrls: [
             "https://kovan.poa.network",

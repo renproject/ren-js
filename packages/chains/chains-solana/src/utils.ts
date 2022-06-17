@@ -4,9 +4,9 @@ import Wallet from "@project-serum/sol-wallet-adapter";
 import {
     assert,
     ChainTransaction,
+    defaultLogger,
     InputChainTransaction,
     Logger,
-    nullLogger,
     utils,
 } from "@renproject/utils";
 import * as Layout from "@solana/buffer-layout";
@@ -27,11 +27,15 @@ import { derivePath } from "ed25519-hd-key";
 import tweetnacl from "tweetnacl";
 
 import {
+    BurnLog,
     BurnLogLayout,
+    BurnLogLayoutV0,
+    GatewayLayout,
     GatewayRegistryLayout,
     GatewayRegistryState,
     GatewayRegistryStateKey,
-    RenVmMsgLayout,
+    GatewayStateKey,
+    RenVMMessageLayout,
 } from "./layouts";
 
 const ETHEREUM_ADDRESS_BYTES = 20;
@@ -116,12 +120,12 @@ export const createInstructionWithEthAddress2 = (
  * transaction to be finalized, so we return after 20 seconds.
  */
 export const finalizeTransaction = async (
-    connection: Connection,
+    provider: Connection,
     signature: TransactionSignature,
 ): Promise<void> => {
     // Wait up to 20 seconds for the transaction to be finalized.
     await Promise.race([
-        connection.confirmTransaction(signature, "finalized"),
+        provider.confirmTransaction(signature, "finalized"),
         20 * utils.sleep.SECONDS,
     ]);
 };
@@ -132,49 +136,41 @@ export const constructRenVMMsg = (
     token: Uint8Array,
     to: string,
     n_hash: Uint8Array,
-    logger: Logger = nullLogger,
+    logger: Logger = defaultLogger,
 ): Uint8Array[] => {
     try {
-        const renvmmsg = Buffer.from(new Array(160));
-        const preencode = {
+        const msgParams = {
             p_hash: new Uint8Array(p_hash),
-            amount: new Uint8Array(utils.toNBytes(amount, 32)),
+            amount: utils.toNBytes(amount, 32),
             token: new Uint8Array(token),
             to: new Uint8Array(base58.decode(to)),
             n_hash: new Uint8Array(n_hash),
         };
 
-        logger.debug(
-            "renvmmsg preencode",
-            JSON.stringify({
-                s_hash: token,
-                p_hash,
-                to: base58.decode(to),
-                n_hash,
-                amount: utils.toNBytes(amount, 32),
-            }),
-        );
-
-        const renvmMsgSlice = utils.concat([
-            preencode.p_hash,
-            preencode.amount,
-            preencode.token,
-            preencode.to,
-            preencode.n_hash,
+        const renVMMsgSlice = utils.concat([
+            msgParams.p_hash,
+            msgParams.amount,
+            msgParams.token,
+            msgParams.to,
+            msgParams.n_hash,
         ]);
-        RenVmMsgLayout.encode(preencode, renvmmsg);
-        logger.debug("renvmmsg encoded", renvmmsg);
-        return [new Uint8Array(renvmmsg), renvmMsgSlice];
+        const renVMMessage = Buffer.from(new Array(160));
+        RenVMMessageLayout.encode(msgParams, renVMMessage);
+        logger.debug("renVMMessage encoded", renVMMessage);
+        return [new Uint8Array(renVMMessage), renVMMsgSlice];
     } catch (e) {
-        logger.debug("failed to encoded renvmmsg", e);
+        logger.debug("failed to encoded renVMMessage", e);
         throw e;
     }
 };
 
 /**
  * Generate a Solana signer from a mnemonic.
- * @param mnemonic
- * @returns
+ *
+ * @param mnemonic A BIP-39 mnemonic.
+ * @param derivationPath (optional) The BIP-39 derivation path (defaults to
+ * m/44'/501'/0'/0').
+ * @returns A `@project-serum/sol-wallet-adapter` Wallet.
  */
 export const signerFromMnemonic = (
     mnemonic: string,
@@ -191,6 +187,7 @@ export const signerFromMnemonic = (
     return signerFromPrivateKey(keypair);
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isKeypair = (key: any): key is Keypair => {
     return key && (key as Keypair).publicKey && (key as Keypair).secretKey;
 };
@@ -221,8 +218,6 @@ export const signerFromPrivateKey = (
         },
     } as Wallet;
 };
-/** @deprecated Renamed to 'signerFromPrivateKey'. */
-export const makeTestSigner = signerFromPrivateKey;
 
 export const getGatewayRegistryState = async (
     provider: Connection,
@@ -263,15 +258,81 @@ export const resolveTokenGatewayContract = (
 export const txHashToChainTransaction = (
     chain: string,
     txHash: string,
+    explorerLink: string,
 ): ChainTransaction => ({
     chain: chain,
-    txidFormatted: txHash,
-    txid: txidFormattedToTxid(txHash),
+    txHash,
+    txid: utils.toURLBase64(txHashToBytes(txHash)),
     txindex: "0",
+    explorerLink,
 });
 
 /**
- * Fetch the submission details of a previous burn from a burn nonce.
+ * Fetch the burn ID from a transaction.
+ * TODO: Improve detecting which account is the burn ID - on mainnet it is the
+ * fourth and on devnet it's the third?
+ */
+export const getBurnPublicKey = async (
+    provider: Connection,
+    txHash: string,
+): Promise<[PublicKey, PublicKey]> => {
+    const tx = await provider.getTransaction(txHash, {
+        commitment: "confirmed",
+    });
+    if (!tx) {
+        throw new Error(`Unable to find transaction ${txHash}`);
+    }
+
+    return [
+        tx.transaction.message.accountKeys[3],
+        tx.transaction.message.accountKeys[4],
+    ];
+};
+
+/**
+ * Fetch a burn's nonce from its burn ID / public key.
+ */
+export const getNonceFromBurnId = async (
+    provider: Connection,
+    mintGateway: PublicKey,
+    burnId: PublicKey,
+    burnIdAlt: PublicKey,
+): Promise<number> => {
+    const mintGatewayStateAddress = (
+        await PublicKey.findProgramAddress(
+            [utils.fromUTF8String(GatewayStateKey)],
+            mintGateway,
+        )
+    )[0];
+
+    // Fetch gateway state.
+    const encodedGatewayState = await provider.getAccountInfo(
+        mintGatewayStateAddress,
+    );
+    if (!encodedGatewayState) {
+        throw new Error("incorrect gateway program address");
+    }
+    const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
+
+    // Calculate
+    const maximum = new BigNumber(gatewayState.burn_count.toString())
+        .plus(1)
+        .toNumber();
+
+    for (let i = 0; i <= maximum; i++) {
+        const leNonce = utils.toNBytes(i, 8, "le");
+        const burnIdI: PublicKey = (
+            await PublicKey.findProgramAddress([leNonce], mintGateway)
+        )[0];
+        if (burnIdI.equals(burnId) || burnIdI.equals(burnIdAlt)) {
+            return i;
+        }
+    }
+    throw new Error(`Burn with ID ${burnId.toBase58()} not found.`);
+};
+
+/**
+ * Fetch a burn's details from the burn's nonce.
  */
 export const getBurnFromNonce = async (
     provider: Connection,
@@ -279,6 +340,11 @@ export const getBurnFromNonce = async (
     asset: string,
     mintGateway: PublicKey,
     burnNonce: Uint8Array | number | string,
+    txHashIn?: string,
+    transactionExplorerLink?: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ) => string | undefined,
 ): Promise<InputChainTransaction | undefined> => {
     let leNonce: Uint8Array;
     if (typeof burnNonce == "number") {
@@ -291,15 +357,27 @@ export const getBurnFromNonce = async (
 
     const burnId = await PublicKey.findProgramAddress([leNonce], mintGateway);
 
-    const burnInfo = await provider.getAccountInfo(burnId[0]);
+    const burnInfo = await provider.getAccountInfo(burnId[0], "processed");
     if (!burnInfo) {
         return undefined;
     }
 
-    const burnData = BurnLogLayout.decode(burnInfo.data);
-    const transactions = await provider.getConfirmedSignaturesForAddress2(
-        burnId[0],
-    );
+    let burnData: BurnLog;
+    try {
+        burnData = BurnLogLayout.decode(burnInfo.data);
+    } catch (error) {
+        burnData = BurnLogLayoutV0.decode(burnInfo.data);
+    }
+
+    let txHash = txHashIn;
+    if (!txHash) {
+        const transactions = await provider.getConfirmedSignaturesForAddress2(
+            burnId[0],
+            undefined,
+            "confirmed",
+        );
+        txHash = transactions.length > 0 ? transactions[0].signature : "";
+    }
 
     // Concatenate four u64s into a u256 value.
     const burnAmount = utils.fromBytes(
@@ -314,48 +392,90 @@ export const getBurnFromNonce = async (
     // Convert borsh `Number` to built-in number
     const recipientLength = parseInt(burnData.recipient_len.toString());
 
-    const txidFormatted =
-        transactions.length > 0 ? transactions[0].signature : "";
-    const txid = txidFormatted
-        ? utils.toURLBase64(new Uint8Array(base58.decode(txidFormatted)))
+    const truncatedRecipient = burnData.recipient.slice(0, recipientLength);
+    let toRecipient;
+    try {
+        toRecipient = utils.toUTF8String(truncatedRecipient);
+    } catch (error) {
+        toRecipient = base58.encode(truncatedRecipient);
+    }
+
+    const txid = txHash
+        ? utils.toURLBase64(new Uint8Array(base58.decode(txHash)))
         : "";
+
     return {
         // Tx Details
         chain: chain,
         txid,
         txindex: "0",
-        txidFormatted,
+        txHash,
         // Input details
         asset,
         amount: burnAmount.toFixed(),
-        nonce: utils.fromBytes(leNonce, "le").toFixed(),
-        toRecipient: base58.encode(
-            burnData.recipient.slice(0, recipientLength),
+        nonce: utils.toURLBase64(
+            utils.toNBytes(utils.fromBytes(leNonce, "le"), 32),
         ),
+        toRecipient,
+
+        explorerLink:
+            (transactionExplorerLink && transactionExplorerLink({ txHash })) ||
+            "", // TODO
     };
+};
+
+/**
+ * Fetch a burn's details from the signature of the transaction in which the burn
+ * was made.
+ */
+export const getBurnFromTxid = async (
+    provider: Connection,
+    chain: string,
+    asset: string,
+    mintGateway: PublicKey,
+    txHash: string,
+    nonce: number | undefined,
+    transactionExplorerLink?: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ) => string | undefined,
+): Promise<InputChainTransaction | undefined> => {
+    const [burnId, burnIdAlt] = await getBurnPublicKey(provider, txHash);
+    nonce = utils.isDefined(nonce)
+        ? nonce
+        : await getNonceFromBurnId(provider, mintGateway, burnId, burnIdAlt);
+    return getBurnFromNonce(
+        provider,
+        chain,
+        asset,
+        mintGateway,
+        nonce,
+        txHash,
+        transactionExplorerLink,
+    );
 };
 
 /**
  * Convert a Solana transaction hash from its standard format to the format
  * required by RenVM.
  *
- * @param txidFormatted A Solana transaction hash formatted as a base58 string.
+ * @param txHash A Solana transaction hash formatted as a base58 string.
  * @returns The same Solana transaction hash formatted as a base64 string.
  */
-export function txidFormattedToTxid(txidFormatted: string): string {
-    return utils.toURLBase64(new Uint8Array(base58.decode(txidFormatted)));
-}
+export const txHashToBytes = (txHash: string): Uint8Array => {
+    return base58.decode(txHash);
+};
 
 /**
  * Convert a Solana transaction hash from the format required by RenVM to its
  * standard format.
  *
- * @param txid A Solana transaction hash formatted as a base64 string.
+ * @param bytes A Solana transaction hash formatted as a base64 string.
  * @returns The same Solana transaction hash formatted as a base58 string.
  */
-export function txidToTxidFormatted(txid: string): string {
-    return base58.encode(utils.fromBase64(txid));
-}
+export const txHashFromBytes = (bytes: Uint8Array): string => {
+    return base58.encode(bytes);
+};
 
 export const isBase58 = utils.doesntError(
     (

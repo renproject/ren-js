@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { AbiCoder } from "ethers/lib/utils";
 import { Ethereum } from "packages/chains/chains-ethereum/src";
 import { BinanceSmartChain } from "packages/chains/chains/src";
@@ -71,10 +73,10 @@ const main = async () => {
                 await tx.out.wait();
 
                 // All transactions return a `ChainTransaction` object in the
-                // progress, with a `txid` field (base64) and a `txidFormatted`
+                // progress, with a `txid` field (base64) and a `txHash`
                 // field (chain-dependent)
                 const outTx = tx.out.progress.transaction;
-                console.debug("Done:", outTx.txidFormatted);
+                console.debug("Done:", outTx.txHash);
 
                 resolve();
             })().catch(reject);

@@ -1,5 +1,3 @@
-import BigNumber from "bignumber.js";
-
 import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
@@ -7,8 +5,7 @@ import {
     isDepositChain,
     RenJSError,
 } from "@renproject/utils";
-
-export { Gateway as LockAndMint } from "../gateway";
+import BigNumber from "bignumber.js";
 
 export const BIP_DENOMINATOR = 10000;
 
@@ -116,8 +113,7 @@ export const estimateTransactionFee = async (
         ? gasLimit
               .times(gasCap)
               .shiftedBy(-assetGasDivisors[asset] || 0)
-              .plus(dustAmount)
-              .plus(1)
+              .plus(isBurnAndRelease ? dustAmount.plus(1) : 0)
         : new BigNumber(0);
 
     const mintFee =
@@ -132,6 +128,7 @@ export const estimateTransactionFee = async (
         mintAndBurnFees && mintAndBurnFees.burnAndMintFee
             ? mintAndBurnFees.burnAndMintFee.toNumber()
             : 15;
+
     const variableFee: number = isLockAndMint
         ? mintFee
         : isBurnAndRelease
@@ -140,9 +137,13 @@ export const estimateTransactionFee = async (
 
     const minimumAmount = minimumBeforeFees
         .plus(fixedFee)
-        .times(variableFee + BIP_DENOMINATOR)
-        .dividedBy(BIP_DENOMINATOR)
-        .decimalPlaces(0);
+        .plus(
+            minimumBeforeFees
+                .plus(fixedFee)
+                .times(variableFee)
+                .dividedBy(BIP_DENOMINATOR)
+                .decimalPlaces(0, BigNumber.ROUND_DOWN),
+        );
 
     const estimateOutput = (
         input:
@@ -177,7 +178,7 @@ export const estimateTransactionFee = async (
                     .minus(fixedFee)
                     .times(BIP_DENOMINATOR - variableFee)
                     .dividedBy(BIP_DENOMINATOR)
-                    .decimalPlaces(0),
+                    .decimalPlaces(0, BigNumber.ROUND_DOWN),
                 0,
             ).shiftedBy(convertUnit ? -nativeDecimals : 0);
         } else if (isBurnAndRelease) {
@@ -186,7 +187,7 @@ export const estimateTransactionFee = async (
                     .times(BIP_DENOMINATOR - variableFee)
                     .dividedBy(BIP_DENOMINATOR)
                     .minus(fixedFee)
-                    .decimalPlaces(0),
+                    .decimalPlaces(0, BigNumber.ROUND_DOWN),
                 0,
             ).shiftedBy(convertUnit ? -nativeDecimals : 0);
         } else {
@@ -196,7 +197,7 @@ export const estimateTransactionFee = async (
                 amountBN
                     .times(BIP_DENOMINATOR - variableFee)
                     .dividedBy(BIP_DENOMINATOR)
-                    .decimalPlaces(0),
+                    .decimalPlaces(0, BigNumber.ROUND_DOWN),
                 0,
             ).shiftedBy(convertUnit ? -nativeDecimals : 0);
         }

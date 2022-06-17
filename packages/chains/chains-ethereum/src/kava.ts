@@ -14,16 +14,19 @@ import {
 const kavaMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Kava",
 
-    nativeAsset: { name: "Kava", symbol: "KAVA", decimals: 6 },
+    nativeAsset: { name: "Kava", symbol: "KAVA", decimals: 18 },
     averageConfirmationTime: 1,
     logRequestLimit: 10000,
 
     config: {
-        chainId: "0xfa",
-        chainName: "Kava Opera",
-        nativeCurrency: { name: "Kava", symbol: "KAVA", decimals: 6 },
-        rpcUrls: ["https://evm.evm-alpha.kava.io"],
-        blockExplorerUrls: [""],
+        chainId: "0x8ad",
+        chainName: "Kava EVM Testnet",
+        nativeCurrency: { name: "Kava", symbol: "KAVA", decimals: 18 },
+        rpcUrls: [
+            "https://evm.evm-alpha.kava.io",
+            "wss://evm-ws.evm-alpha.kava.io",
+        ],
+        blockExplorerUrls: ["https://explorer.evm-alpha.kava.io"],
     },
 
     addresses: {
@@ -35,7 +38,7 @@ const kavaMainnetConfig: EVMNetworkConfig = populateEVMNetwork({
 const kavaTestnetConfig: EVMNetworkConfig = populateEVMNetwork({
     selector: "Kava",
 
-    nativeAsset: { name: "Testnet Kava", symbol: "KAVA", decimals: 6 },
+    nativeAsset: { name: "Testnet Kava", symbol: "KAVA", decimals: 18 },
     averageConfirmationTime: 1,
     logRequestLimit: 10000,
 

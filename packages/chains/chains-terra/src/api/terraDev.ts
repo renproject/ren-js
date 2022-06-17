@@ -1,6 +1,5 @@
-import BigNumber from "bignumber.js";
-
 import { utils } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { TerraAPI, TerraNetworkConfig, TerraTransaction } from "./types";
 
@@ -191,19 +190,19 @@ export class TerraDev implements TerraAPI {
         this.chainId = terraNetwork.chainId;
     }
 
-    public async getHeight(): Promise<BigNumber> {
+    public getHeight = async (): Promise<BigNumber> => {
         const url = `${this.apiUrl}/blocks/latest`;
         const response = await utils.GET<{
             block: { header: { height: string } };
         }>(url);
         return new BigNumber(response.block.header.height);
-    }
+    };
 
-    public async fetchDeposits(
+    public fetchDeposits = async (
         address: string,
         memo: string | undefined = undefined,
         // page = 0,
-    ): Promise<TerraTransaction[]> {
+    ): Promise<TerraTransaction[]> => {
         // Paginated version:
         // `${this.fcdUrl}/v1/txs?account=${address}&page=${
         //     page + 1
@@ -232,9 +231,9 @@ export class TerraDev implements TerraAPI {
             .map(extractDepositsFromTx(chainHeight))
             .reduce(concat, [])
             .filter((msg) => msg.to === address);
-    }
+    };
 
-    public async fetchConfirmations(hash: string): Promise<BigNumber> {
+    public fetchConfirmations = async (hash: string): Promise<BigNumber> => {
         const url = `${this.apiUrl}/v1/tx/${hash}`;
         const tx = await utils.GET<MessageResponse>(url);
 
@@ -250,5 +249,5 @@ export class TerraDev implements TerraAPI {
         const chainHeight = await this.getHeight();
 
         return chainHeight.minus(tx.height);
-    }
+    };
 }

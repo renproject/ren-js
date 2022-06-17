@@ -111,11 +111,11 @@ export const padUint8Array = (array: Uint8Array, n: number): Uint8Array => {
 /**
  * Convert a number to a Uint8Array of length `n`.
  */
-export function toNBytes(
+export const toNBytes = (
     input: BigNumber | Uint8Array | string | number,
     n: number,
     endian: "be" | "le" = "be",
-): Uint8Array {
+): Uint8Array => {
     let bytes;
     if (input instanceof Uint8Array) {
         bytes = input;
@@ -133,17 +133,17 @@ export function toNBytes(
     }
 
     return bytes;
-}
+};
 
-export function fromBytes(
+export const fromBytes = (
     input: Uint8Array,
     endian: "be" | "le" = "be",
-): BigNumber {
+): BigNumber => {
     return new BigNumber(
         toHex(endian === "be" ? input : new Uint8Array(input).reverse()),
         16,
     );
-}
+};
 
 /**
  * Cache the result of an asynchronous function, with a default expiry of 5

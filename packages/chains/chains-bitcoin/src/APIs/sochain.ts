@@ -1,6 +1,5 @@
-import BigNumber from "bignumber.js";
-
 import { utils } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { BitcoinAPI, fixUTXO, fixUTXOs, sortUTXOs, UTXO } from "./API";
 
@@ -24,15 +23,15 @@ export class SoChain implements BitcoinAPI {
         this.network = network;
     }
 
-    public async fetchHeight(): Promise<string> {
+    public fetchHeight = async (): Promise<string> => {
         return (
             await utils.GET<{ data: { blocks: number } }>(
                 `https://sochain.com/api/v2/get_info/${this.network}`,
             )
         ).data.blocks.toString();
-    }
+    };
 
-    public async fetchUTXO(txid: string, txindex: string): Promise<UTXO> {
+    public fetchUTXO = async (txid: string, txindex: string): Promise<UTXO> => {
         const url = `https://sochain.com/api/v2/get_tx/${this.network}/${txid}`;
         const response = await utils.GET<{
             readonly data: SoChainTX;
@@ -54,9 +53,9 @@ export class SoChain implements BitcoinAPI {
             },
             8,
         );
-    }
+    };
 
-    public async fetchUTXOs(address: string): Promise<UTXO[]> {
+    public fetchUTXOs = async (address: string): Promise<UTXO[]> => {
         const url = `https://sochain.com/api/v2/get_tx_unspent/${
             this.network
         }/${address}/${0}`;
@@ -78,9 +77,9 @@ export class SoChain implements BitcoinAPI {
             })),
             8,
         ).sort(sortUTXOs);
-    }
+    };
 
-    public async fetchTXs(address: string): Promise<UTXO[]> {
+    public fetchTXs = async (address: string): Promise<UTXO[]> => {
         const url = `https://sochain.com/api/v2/get_tx_received/${
             this.network
         }/${address}/${0}`;
@@ -103,9 +102,9 @@ export class SoChain implements BitcoinAPI {
             })),
             8,
         ).sort(sortUTXOs);
-    }
+    };
 
-    public async broadcastTransaction(txHex: string): Promise<string> {
+    public broadcastTransaction = async (txHex: string): Promise<string> => {
         const response = await utils.POST<{
             status: "success";
             data: {
@@ -116,7 +115,7 @@ export class SoChain implements BitcoinAPI {
             tx_hex: txHex,
         });
         return response.data.txid;
-    }
+    };
 }
 
 export interface SoChainUTXO {

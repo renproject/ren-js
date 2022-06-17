@@ -1,8 +1,8 @@
 import {
     assertType,
+    defaultLogger,
     ErrorWithCode,
     Logger,
-    nullLogger,
     pack,
     RenJSError,
     RenNetwork,
@@ -126,7 +126,7 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
             | RenNetworkString
             | string
             | Provider<RPCParams, RPCResponses>,
-        logger: Logger = nullLogger,
+        logger: Logger = defaultLogger,
     ) {
         super(
             // Check if the first parameter is a provider to forward calls to.
@@ -138,7 +138,7 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
     }
 
     public getNetwork = async (): Promise<string> => {
-        const renVMConfig = await this.sendMessage(RPCMethod.QueryConfig, {});
+        const renVMConfig = await this.queryConfig();
         return renVMConfig.network;
     };
 
@@ -242,32 +242,25 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
             )
         ).txs.map((tx) => unmarshalRenVMTransaction(tx));
 
-    private _queryBlockState__memoized?: (
-        contract: string,
-        retry?: number,
-    ) => Promise<BlockState>;
-    public queryBlockState = async (
-        contract: string,
-        retry?: number,
-    ): Promise<BlockState> => {
-        this._queryBlockState__memoized =
-            this._queryBlockState__memoized ||
-            utils.memoize(
-                async (
-                    contract_: string,
-                    retry_?: number,
-                ): Promise<BlockState> => {
-                    const { state } =
-                        await this.sendMessage<RPCMethod.QueryBlockState>(
-                            RPCMethod.QueryBlockState,
-                            { contract: contract_ },
-                            retry_,
-                        );
-                    return pack.unmarshal.unmarshalTypedPackValue(state);
-                },
+    public queryConfig = utils.memoize(
+        async (retry?: number) =>
+            await this.sendMessage<RPCMethod.QueryConfig>(
+                RPCMethod.QueryConfig,
+                {},
+                retry,
+            ),
+    );
+
+    public queryBlockState = utils.memoize(
+        async (contract: string, retry?: number): Promise<BlockState> => {
+            const { state } = await this.sendMessage<RPCMethod.QueryBlockState>(
+                RPCMethod.QueryBlockState,
+                { contract },
+                retry,
             );
-        return this._queryBlockState__memoized(contract, retry);
-    };
+            return pack.unmarshal.unmarshalTypedPackValue(state);
+        },
+    );
 
     public submitGateway = async (
         gateway: string,
@@ -417,7 +410,12 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
     public getConfirmationTarget = async (
         chainName: string,
     ): Promise<number> => {
-        const renVMConfig = await this.sendMessage(RPCMethod.QueryConfig, {});
+        const renVMConfig = await this.queryConfig();
         return parseInt(renVMConfig.confirmations[chainName], 10);
+    };
+
+    public selectorWhitelisted = async (selector: string): Promise<boolean> => {
+        const renVMConfig = await this.queryConfig();
+        return renVMConfig.whitelist.includes(selector);
     };
 }

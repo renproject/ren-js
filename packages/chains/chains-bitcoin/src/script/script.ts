@@ -16,29 +16,29 @@ export class Script {
         this.script = new Uint8Array();
     }
 
-    public addOp(op: Opcode): this {
+    public addOp = (op: Opcode): this => {
         this.script = new Uint8Array([...this.script, op]);
         return this;
-    }
+    };
 
-    public addData(data: Uint8Array): this {
+    public addData = (data: Uint8Array): this => {
         this.script = new Uint8Array([...this.script, data.length, ...data]);
         return this;
-    }
+    };
 
-    public bytes(): Uint8Array {
+    public bytes = (): Uint8Array => {
         return this.script;
-    }
+    };
 
-    public toScriptHashOut(): Uint8Array {
+    public toScriptHashOut = (): Uint8Array => {
         return new Script()
             .addOp(Script.OP.OP_HASH160)
             .addData(hash160(this.bytes()))
             .addOp(Script.OP.OP_EQUAL)
             .bytes();
-    }
+    };
 
-    public toAddress(prefix: Uint8Array | Uint8Array): Uint8Array {
+    public toAddress = (prefix: Uint8Array | Uint8Array): Uint8Array => {
         // Hash
         const hash = hash160(this.bytes());
 
@@ -52,5 +52,5 @@ export class Script {
         ]);
 
         return hashWithChecksum;
-    }
+    };
 }

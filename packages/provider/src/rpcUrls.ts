@@ -5,3 +5,9 @@ export const renRpcUrls = {
     [RenNetwork.Testnet]: "https://rpc-testnet.renproject.io",
     [RenNetwork.Devnet]: "https://lightnode-devnet.herokuapp.com/",
 };
+
+export const renExplorerUrls = {
+    [RenNetwork.Mainnet]: "https://explorer.renproject.io",
+    [RenNetwork.Testnet]: "https://explorer-testnet.renproject.io",
+    [RenNetwork.Devnet]: "",
+};

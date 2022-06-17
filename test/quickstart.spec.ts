@@ -33,22 +33,22 @@
 //     });
 
 //     // `gateway.fees` exposes values and helpers for calculating fees.
-//     console.log(gateway.fees);
+//     console.info(gateway.fees);
 
-//     console.log(`Deposit ${gateway.params.asset} to ${gateway.gatewayAddress}`);
+//     console.info(`Deposit ${gateway.params.asset} to ${gateway.gatewayAddress}`);
 
 //     // NOTE: Event has been renamed from "deposit" to "transaction".
 //     gateway.on("transaction", (tx) => {
 //         (async () => {
 //             // GatewayTransaction parameters are serializable. To re-create
 //             // the transaction, call `renJS.gatewayTransaction`.
-//             console.log(tx.params);
+//             console.info(tx.params);
 
 //             // Wait for remaining confirmations for input transaction.
 //             await tx.in.wait();
 
 //             // RenVM transaction also follows the submit/wait pattern.
-//             await tx.renVM.submit().on("progress", console.log);
+//             await tx.renVM.submit().on("progress", console.info);
 //             await tx.renVM.wait();
 
 //             // `submit` accepts a `txConfig` parameter for overriding
@@ -61,14 +61,14 @@
 //             await tx.out.wait();
 
 //             // All transactions return a `ChainTransaction` object in the
-//             // progress, with a `txid` field (base64) and a `txidFormatted`
+//             // progress, with a `txid` field (base64) and a `txHash`
 //             // field (chain-dependent).
 //             const outTx = tx.out.progress.transaction;
-//             console.log("Done:", outTx.txidFormatted);
+//             console.info("Done:", outTx.txHash);
 
 //             // All chain classes expose a common set of helper functions (see
 //             // `Chain` class.)
-//             console.log(tx.toChain.transactionExplorerLink(outTx));
+//             console.info(tx.toChain.transactionExplorerLink(outTx));
 //         })().catch(console.error);
 //     });
 // };

@@ -1,12 +1,13 @@
-import base58 from "bs58";
-
 import {
     ChainTransaction,
     ChainTransactionProgress,
     ChainTransactionStatus,
+    defaultLogger,
     eventEmitter,
     EventEmitterTyped,
+    Logger,
     PromiEvent,
+    SyncOrPromise,
     TxSubmitter,
     utils,
 } from "@renproject/utils";
@@ -15,20 +16,32 @@ import {
     sendAndConfirmRawTransaction,
     Transaction,
 } from "@solana/web3.js";
+import base58 from "bs58";
 
 import { SolanaSigner } from "./types/types";
-import { txidFormattedToTxid } from "./utils";
+import { txHashToBytes } from "./utils";
 
 export class SolanaTxWaiter
     implements TxSubmitter<ChainTransactionProgress, {}, string>
 {
-    private _getTransaction: () => Promise<Transaction>;
+    private _getTransaction: () => Promise<{
+        transaction: Transaction;
+        nonce?: number;
+    }>;
     private _provider: Connection;
     private _getSigner: () => SolanaSigner | undefined;
-    private _onReceipt?: (signature: string) => void;
+    private _onReceipt?: (
+        signature: string,
+        nonce?: number,
+    ) => SyncOrPromise<void>;
     private _findExistingTransaction?: () => Promise<
         ChainTransaction | undefined
     >;
+    private _transactionExplorerLink?: (
+        params: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ) => string | undefined;
+    private _logger: Logger;
 
     public chain: string;
     public progress: ChainTransactionProgress;
@@ -36,13 +49,16 @@ export class SolanaTxWaiter
         progress: [ChainTransactionProgress];
     }>;
 
-    private updateProgress(progress: Partial<ChainTransactionProgress>) {
+    private updateProgress = (
+        progress: Partial<ChainTransactionProgress>,
+    ): ChainTransactionProgress => {
         this.progress = {
             ...this.progress,
             ...progress,
         };
         this.eventEmitter.emit("progress", this.progress);
-    }
+        return this.progress;
+    };
 
     /**
      * Requires a submitted chainTransaction, a chain object and the target
@@ -56,14 +72,24 @@ export class SolanaTxWaiter
         getTransaction,
         onReceipt,
         findExistingTransaction,
+        transactionExplorerLink,
+        logger,
     }: {
         chain: string;
         target: number;
         provider: Connection;
         getSigner: () => SolanaSigner | undefined;
-        getTransaction: () => Promise<Transaction>;
-        onReceipt?: (signature: string) => void;
+        getTransaction: () => Promise<{
+            transaction: Transaction;
+            nonce?: number;
+        }>;
+        onReceipt?: (signature: string, nonce?: number) => SyncOrPromise<void>;
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
+        transactionExplorerLink?: (
+            params: Partial<ChainTransaction> &
+                ({ txid: string } | { txHash: string }),
+        ) => string | undefined;
+        logger?: Logger;
     }) {
         this._getTransaction = getTransaction;
         this.chain = chain;
@@ -71,6 +97,8 @@ export class SolanaTxWaiter
         this._getSigner = getSigner;
         this._onReceipt = onReceipt;
         this._findExistingTransaction = findExistingTransaction;
+        this._transactionExplorerLink = transactionExplorerLink;
+        this._logger = logger || defaultLogger;
 
         this.eventEmitter = eventEmitter();
 
@@ -82,7 +110,7 @@ export class SolanaTxWaiter
     }
 
     /**
-     * Export the unsigned transasction details.
+     * Export the unsigned transaction details.
      *
      * @returns The Solana message that needs to be signed and submitted,
      * serialized as a base58 string.
@@ -100,9 +128,22 @@ export class SolanaTxWaiter
      *     signed.serialize(),
      * );
      */
-    public async export(): Promise<string> {
-        return base58.encode((await this._getTransaction()).serializeMessage());
-    }
+    public export = async (): Promise<string> => {
+        return base58.encode(
+            (await this._getTransaction()).transaction.serializeMessage(),
+        );
+    };
+
+    public setTransaction = (
+        chainTransaction: ChainTransaction,
+    ): ChainTransactionProgress => {
+        return this.updateProgress({
+            status: ChainTransactionStatus.Done,
+            confirmations: this.progress.target,
+            target: this.progress.target,
+            transaction: chainTransaction,
+        });
+    };
 
     public submit = (): PromiEvent<
         ChainTransactionProgress,
@@ -133,11 +174,11 @@ export class SolanaTxWaiter
                 }
             }
 
-            const tx = await this._getTransaction();
+            const { transaction, nonce } = await this._getTransaction();
 
             // sendAndConfirmRawTransaction already calls simulate.
             const simulationResult = await utils.tryNTimes(
-                async () => this._provider.simulateTransaction(tx),
+                async () => this._provider.simulateTransaction(transaction),
                 5,
             );
             if (simulationResult.value.err) {
@@ -152,7 +193,7 @@ export class SolanaTxWaiter
                 throw new Error(`Must connect ${this.chain} signer.`);
             }
 
-            const signed = await signer.signTransaction(tx);
+            const signed = await signer.signTransaction(transaction);
             if (!signed.signature) {
                 throw new Error("failed to sign");
             }
@@ -165,16 +206,26 @@ export class SolanaTxWaiter
             );
 
             if (this._onReceipt) {
-                this._onReceipt(confirmedSignature);
+                try {
+                    await this._onReceipt(confirmedSignature, nonce);
+                } catch (error) {
+                    this._logger.error(error);
+                }
             }
 
             this.updateProgress({
                 status: ChainTransactionStatus.Confirming,
                 transaction: {
                     chain: this.progress.chain,
-                    txidFormatted: confirmedSignature,
-                    txid: txidFormattedToTxid(confirmedSignature),
+                    txHash: confirmedSignature,
+                    txid: utils.toURLBase64(txHashToBytes(confirmedSignature)),
                     txindex: "0",
+                    explorerLink:
+                        (this._transactionExplorerLink &&
+                            this._transactionExplorerLink({
+                                txHash: confirmedSignature,
+                            })) ||
+                        "",
                 },
             });
 
@@ -218,7 +269,7 @@ export class SolanaTxWaiter
             let currentConfidenceRatio = -1;
             while (true) {
                 const tx = await this._provider.getConfirmedTransaction(
-                    this.progress.transaction.txidFormatted,
+                    String(this.progress.transaction.txHash),
                 );
 
                 const currentSlot = await this._provider.getSlot();

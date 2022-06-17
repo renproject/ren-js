@@ -9,12 +9,12 @@ export class Filfox {
         this.filfoxApi = filfoxApi;
     }
 
-    public async fetchDeposits(
+    public fetchDeposits = async (
         address: string,
         // paramsFilterBase64: string | undefined = undefined,
         page = 0,
         size = 100,
-    ): Promise<{ deposits: FilTransaction[]; totalCount: number }> {
+    ): Promise<{ deposits: FilTransaction[]; totalCount: number }> => {
         const heightURL = `${this.filfoxApi}tipset/recent?count=1`;
 
         const heightResponse = await utils.GET<FilscanHeight | FilscanError>(
@@ -69,9 +69,9 @@ export class Filfox {
             // ),
             totalCount,
         };
-    }
+    };
 
-    public async fetchMessage(cid: string): Promise<FilTransaction> {
+    public fetchMessage = async (cid: string): Promise<FilTransaction> => {
         const messagesURL = `${this.filfoxApi}message/${cid}`;
 
         const message = await utils.GET<FilscanMessage>(messagesURL, {
@@ -92,7 +92,7 @@ export class Filfox {
             confirmations: message.confirmations,
             nonce: message.nonce,
         };
-    }
+    };
 }
 
 interface FilscanSuccess {

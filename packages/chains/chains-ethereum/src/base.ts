@@ -1,14 +1,18 @@
-import { Provider, Web3Provider } from "@ethersproject/providers";
+import {
+    JsonRpcProvider,
+    Provider,
+    Web3Provider,
+} from "@ethersproject/providers";
 import {
     assertType,
     ChainTransaction,
     ContractChain,
+    defaultLogger,
     DefaultTxWaiter,
     ErrorWithCode,
     InputChainTransaction,
     InputType,
     Logger,
-    nullLogger,
     OutputType,
     populateChainTransaction,
     RenJSError,
@@ -44,29 +48,31 @@ import {
     getRenAsset,
 } from "./utils/gatewayRegistry";
 import {
+    checkProviderNetwork,
     filterLogs,
+    findInputByNonce,
     findMintBySigHash,
     findReleaseBySigHash,
     mapBurnLogToInputChainTransaction,
     mapBurnToChainLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
-    txidFormattedToTxid,
-    txidToTxidFormatted,
+    txHashFromBytes,
+    txHashToBytes,
+    txHashToChainTransaction,
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
+import { accountPayloadHandler } from "./utils/payloads/evmAddressPayload";
+import { approvalPayloadHandler } from "./utils/payloads/evmApprovalPayload";
+import { contractPayloadHandler } from "./utils/payloads/evmContractPayload";
 import {
-    accountPayloadHandler,
-    approvalPayloadHandler,
-    contractPayloadHandler,
     EVMParam,
     EVMParamValues,
-    EVMPayload,
-    EVMTxPayload,
+    EVMPayloadInterface,
     PayloadHandler,
-    txPayloadHandler,
-} from "./utils/payloads/evmPayloadHandlers";
+} from "./utils/payloads/evmParams";
+import { EVMTxPayload, txPayloadHandler } from "./utils/payloads/evmTxPayload";
 import {
     EthereumClassConfig,
     EthProvider,
@@ -77,7 +83,7 @@ import {
 } from "./utils/types";
 
 export class EthereumBaseChain
-    implements ContractChain<EVMPayload, EVMPayload>
+    implements ContractChain<EVMPayloadInterface, EVMPayloadInterface>
 {
     public static chain = "Ethereum";
     public chain: string;
@@ -97,6 +103,7 @@ export class EthereumBaseChain
     public explorer: EVMExplorer;
 
     private _logger: Logger;
+    private _config: EthereumClassConfig | undefined;
 
     public constructor({
         network,
@@ -114,7 +121,8 @@ export class EthereumBaseChain
         this.explorer = StandardEVMExplorer(
             this.network.config.blockExplorerUrls[0],
         );
-        this._logger = (config && config.logger) || nullLogger;
+        this._logger = (config && config.logger) || defaultLogger;
+        this._config = config;
 
         // Ignore not configured error.
         this.provider = undefined as never;
@@ -124,86 +132,70 @@ export class EthereumBaseChain
         }
     }
 
-    private _getMintAsset__memoized?: (asset: string) => Promise<string>;
-    public async getMintAsset(asset_: string): Promise<string> {
-        this._getMintAsset__memoized =
-            this._getMintAsset__memoized ||
-            utils.memoize(
-                async (asset: string): Promise<string> =>
-                    await getRenAsset(this.network, this.provider, asset),
-            );
-        return this._getMintAsset__memoized(asset_);
-    }
+    public getMintAsset = utils.memoize(
+        async (asset: string): Promise<string> =>
+            await getRenAsset(this.network, this.provider, asset),
+    );
 
-    private _getMintGateway__memoized?: (asset: string) => Promise<string>;
-    public async getMintGateway(asset_: string): Promise<string> {
-        this._getMintGateway__memoized =
-            this._getMintGateway__memoized ||
-            utils.memoize(
-                async (asset: string): Promise<string> =>
-                    await getMintGateway(this.network, this.provider, asset),
-            );
-        return this._getMintGateway__memoized(asset_);
-    }
+    public getMintGateway = utils.memoize(
+        async (asset: string): Promise<string> =>
+            await getMintGateway(this.network, this.provider, asset),
+    );
 
-    private _getLockAsset__memoized?: (asset: string) => Promise<string>;
-    public async getLockAsset(asset_: string): Promise<string> {
-        this._getLockAsset__memoized =
-            this._getLockAsset__memoized ||
-            utils.memoize(
-                async (asset: string): Promise<string> =>
-                    await getLockAsset(this.network, this.provider, asset),
-            );
-        return this._getLockAsset__memoized(asset_);
-    }
+    public getLockAsset = utils.memoize(
+        async (asset: string): Promise<string> =>
+            await getLockAsset(this.network, this.provider, asset),
+    );
 
-    private _getLockGateway__memoized?: (asset: string) => Promise<string>;
-    public async getLockGateway(asset_: string): Promise<string> {
-        this._getLockGateway__memoized =
-            this._getLockGateway__memoized ||
-            utils.memoize(
-                async (asset: string): Promise<string> =>
-                    await getLockGateway(this.network, this.provider, asset),
-            );
-        return this._getLockGateway__memoized(asset_);
-    }
+    public getLockGateway = utils.memoize(
+        async (asset: string): Promise<string> =>
+            await getLockGateway(this.network, this.provider, asset),
+    );
 
     public validateAddress = validateAddress;
     public validateTransaction = validateTransaction;
-    public addressExplorerLink(address: string): string {
+    public addressExplorerLink = (address: string): string => {
         return this.explorer.address(address);
-    }
+    };
 
-    public txidFormattedToTxid(formattedTxid: string): string {
-        return txidFormattedToTxid(formattedTxid);
-    }
+    public addressToBytes = (address: string): Uint8Array => {
+        return utils.fromHex(address);
+    };
 
-    public txidToTxidFormatted({ txid }: { txid: string }): string {
-        return txidToTxidFormatted(txid);
-    }
-    public formattedTransactionHash = this.txidToTxidFormatted;
+    public addressFromBytes = (bytes: Uint8Array): string => {
+        return ethers.utils.getAddress(utils.Ox(bytes));
+    };
 
-    public transactionExplorerLink({
+    public txHashToBytes = (txHash: string): Uint8Array => {
+        return txHashToBytes(txHash);
+    };
+
+    public txHashFromBytes = (bytes: Uint8Array): string => {
+        return txHashFromBytes(bytes);
+    };
+
+    public transactionExplorerLink = ({
         txid,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txidFormatted: string })): string | undefined {
-        if (txidFormatted) {
-            return this.explorer.transaction(txidFormatted);
+        txHash,
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
+        | string
+        | undefined => {
+        if (txHash) {
+            return this.explorer.transaction(txHash);
         } else if (txid) {
             return this.explorer.transaction(
-                this.txidToTxidFormatted({ txid }),
+                this.txHashFromBytes(utils.fromBase64(txid)),
             );
         }
         return undefined;
-    }
+    };
 
-    public withProvider(web3Provider: EthProvider): this {
+    public withProvider = (web3Provider: EthProvider): this => {
         this.provider = Provider.isProvider(web3Provider)
             ? web3Provider
             : typeof web3Provider === "string"
             ? new ethers.providers.JsonRpcProvider(web3Provider)
-            : // TODO: Set chain ID instead of "any"?
+            : // TODO: Set chainId instead of "any"?
               new ethers.providers.Web3Provider(web3Provider, "any");
         if (!this.signer) {
             try {
@@ -221,9 +213,9 @@ export class EthereumBaseChain
             }
         }
         return this;
-    }
+    };
 
-    public withSigner(signer: EthSigner): this {
+    public withSigner = (signer: EthSigner): this => {
         this.signer = signer;
         try {
             this.signer.connect(this.provider);
@@ -233,32 +225,91 @@ export class EthereumBaseChain
             // `cannot alter JSON-RPC Signer connection`.
         }
         return this;
-    }
+    };
 
-    public async checkProviderNetwork(): Promise<void> {
-        const actualChainID = (await this.provider.getNetwork()).chainId;
-        const expectedChainID = new BigNumber(
-            this.network.config.chainId,
-        ).toNumber();
-        const wrongNetwork = actualChainID !== expectedChainID;
-        if (wrongNetwork) {
-            throw new Error(
-                `${this.chain} provider connected to wrong network: expected ${expectedChainID}, got ${actualChainID}.`,
-            );
+    public checkProviderNetwork = async (
+        provider?: Provider,
+    ): Promise<{
+        result: boolean;
+        actualNetworkId: number;
+
+        expectedNetworkId: number;
+        expectedNetworkLabel: string;
+    }> => {
+        return checkProviderNetwork(provider || this.provider, this.network);
+    };
+    public checkProviderNetworkCached = utils.memoize(
+        this.checkProviderNetwork,
+        {
+            expiry: 10 * utils.sleep.SECONDS,
+        },
+    );
+
+    public checkSignerNetwork = async (): Promise<{
+        result: boolean;
+        actualNetworkId: number;
+
+        expectedNetworkId: number;
+        expectedNetworkLabel: string;
+    }> => {
+        if (!this.signer) {
+            throw new Error(`Must connect ${this.chain} signer.`);
         }
-    }
+        return checkProviderNetwork(
+            // If the signer as no provider, fall back to the provider field.
+            this.signer.provider || this.provider,
+            this.network,
+        );
+    };
 
-    public async getOutputPayload(
+    public switchSignerNetwork = async (): Promise<void> => {
+        if (!this.signer) {
+            throw new Error(`Must connect ${this.chain} signer.`);
+        }
+        if (
+            !this.signer.provider ||
+            !(this.signer.provider as JsonRpcProvider).send
+        ) {
+            throw new Error(`Signer doesn't support switching network.`);
+        }
+        // await (this.signer.provider as JsonRpcProvider).send(
+        //     "wallet_switchEthereumChain",
+        //     [
+        //         {
+        //             chainId: this.network.config.chainId,
+        //         },
+        //     ],
+        // );
+        await (this.signer.provider as JsonRpcProvider).send(
+            "wallet_addEthereumChain",
+            [this.network.config],
+        );
+    };
+
+    public getOutputPayload = async (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
-        contractCall: EVMPayload,
-    ): Promise<{
-        to: string;
-        toBytes: Uint8Array;
-        payload: Uint8Array;
-    }> {
-        await this.checkProviderNetwork();
+        contractCall: EVMPayloadInterface,
+    ): Promise<
+        | {
+              to: string;
+              toBytes: Uint8Array;
+              payload: Uint8Array;
+          }
+        | undefined
+    > => {
+        const providerNetworkCheck = await this.checkProviderNetworkCached();
+        if (!providerNetworkCheck.result) {
+            throw new ErrorWithCode(
+                `Invalid ${this.chain} provider network: expected ${providerNetworkCheck.expectedNetworkId} (${providerNetworkCheck.expectedNetworkLabel}), got ${providerNetworkCheck.actualNetworkId}.`,
+                RenJSError.INCORRECT_PROVIDER_NETWORK,
+            );
+        }
+
+        if (contractCall.type === undefined) {
+            return undefined;
+        }
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler.getPayload) {
             throw ErrorWithCode.updateError(
@@ -269,7 +320,7 @@ export class EthereumBaseChain
             );
         }
 
-        return await handler.getPayload({
+        const { to, toBytes, payload } = await handler.getPayload({
             network: this.network,
             signer: this.signer,
             payload: contractCall,
@@ -282,43 +333,49 @@ export class EthereumBaseChain
             ),
             getPayloadHandler: this.getPayloadHandler,
         });
-    }
+
+        return {
+            to:
+                contractCall.payloadConfig &&
+                contractCall.payloadConfig.preserveAddressFormat
+                    ? to
+                    : ethers.utils.getAddress(to),
+            toBytes,
+            payload,
+        };
+    };
 
     // Supported assets
 
     /** Return true if the asset originates from the chain. */
 
-    private _isLockAsset__memoized?: (assetSymbol: string) => Promise<boolean>;
     // Wrapper to expose _isLockAsset as a class method instead of a property
-    public async isLockAsset(assetSymbol_: string): Promise<boolean> {
-        this._isLockAsset__memoized =
-            this._isLockAsset__memoized ||
-            utils.memoize(async (assetSymbol: string): Promise<boolean> => {
-                // Check if it in the list of hard-coded assets.
-                if (
-                    Object.keys(this.assets).includes(assetSymbol) ||
-                    assetSymbol === this.network.nativeAsset.symbol
-                ) {
+    public isLockAsset = utils.memoize(
+        async (assetSymbol: string): Promise<boolean> => {
+            // Check if it in the list of hard-coded assets.
+            if (
+                Object.keys(this.assets).includes(assetSymbol) ||
+                assetSymbol === this.network.nativeAsset.symbol
+            ) {
+                return true;
+            }
+
+            // Check if the asset has an associated lock-gateway.
+            try {
+                if (await this.getLockAsset(assetSymbol)) {
                     return true;
                 }
-
-                // Check if the asset has an associated lock-gateway.
-                try {
-                    if (await this.getLockAsset(assetSymbol)) {
-                        return true;
-                    }
-                } catch (error: unknown) {
-                    return false;
-                }
-
+            } catch (error: unknown) {
                 return false;
-            });
-        return this._isLockAsset__memoized(assetSymbol_);
-    }
+            }
 
-    public isDepositAsset(assetSymbol: string): boolean {
+            return false;
+        },
+    );
+
+    public isDepositAsset = (assetSymbol: string): boolean => {
         return assetSymbol === this.network.nativeAsset.symbol;
-    }
+    };
 
     /**
      * `assetIsSupported` should return true if the asset is native to the
@@ -328,33 +385,36 @@ export class EthereumBaseChain
      * ethereum.assetIsSupported = asset => asset === "ETH";
      * ```
      */
-    private _isMintAsset__memoized?: (asset_: string) => Promise<boolean>;
-    public async isMintAsset(asset_: string): Promise<boolean> {
-        this._isMintAsset__memoized =
-            this._isMintAsset__memoized ||
-            utils.memoize(async (asset: string): Promise<boolean> => {
-                // Check that there's a gateway contract for the asset.
-                try {
-                    return (await this.getMintAsset(asset)) !== undefined;
-                } catch (error: unknown) {
-                    // Check that the error isn't caused by being on the wrong network.
-                    await this.checkProviderNetwork();
-                    if (
-                        error instanceof Error &&
-                        /(Empty address returned)|(not supported)/.exec(
-                            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                            String((error || {}).message),
-                        )
-                    ) {
-                        // Ignore
-                    } else {
-                        console.warn(error);
-                    }
-                    return false;
+    public isMintAsset = utils.memoize(
+        async (asset: string): Promise<boolean> => {
+            // Check that there's a gateway contract for the asset.
+            try {
+                return (await this.getMintAsset(asset)) !== undefined;
+            } catch (error: unknown) {
+                // Check that the error isn't caused by being on the wrong network.
+                const providerNetworkCheck =
+                    await this.checkProviderNetworkCached();
+                if (!providerNetworkCheck.result) {
+                    throw new ErrorWithCode(
+                        `Invalid ${this.chain} provider network: expected ${providerNetworkCheck.expectedNetworkId} (${providerNetworkCheck.expectedNetworkLabel}), got ${providerNetworkCheck.actualNetworkId}.`,
+                        RenJSError.INCORRECT_PROVIDER_NETWORK,
+                    );
                 }
-            });
-        return this._isMintAsset__memoized(asset_);
-    }
+                if (
+                    error instanceof Error &&
+                    /(Empty address returned)|(not supported)/.exec(
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+                        String((error || {}).message),
+                    )
+                ) {
+                    // Ignore
+                } else {
+                    console.warn(error);
+                }
+                return false;
+            }
+        },
+    );
 
     /**
      * `assetDecimals` should return the number of decimals of the asset.
@@ -362,62 +422,56 @@ export class EthereumBaseChain
      * If the asset is not supported, an error should be thrown.
      *
      */
-    private _assetDecimals__memoized?: (asset_: string) => Promise<number>;
-    public async assetDecimals(asset_: string): Promise<number> {
-        this._assetDecimals__memoized =
-            this._assetDecimals__memoized ||
-            utils.memoize(
-                async (asset: string): Promise<number> => {
-                    // TODO: get lock asset decimals
+    public assetDecimals = utils.memoize(
+        async (asset: string): Promise<number> => {
+            // TODO: get lock asset decimals
 
-                    if (asset === this.network.nativeAsset.symbol) {
-                        return this.network.nativeAsset.decimals;
-                    }
+            if (asset === this.network.nativeAsset.symbol) {
+                return this.network.nativeAsset.decimals;
+            }
 
-                    let tokenAddress: string;
-                    if (await this.isLockAsset(asset)) {
-                        tokenAddress = await this.getLockAsset(asset);
-                    } else if (await this.isMintAsset(asset)) {
-                        tokenAddress = await this.getMintAsset(asset);
-                    } else {
-                        throw new Error(
-                            `Asset '${asset}' not supported on ${this.chain}.`,
-                        );
-                    }
+            let tokenAddress: string;
+            if (await this.isLockAsset(asset)) {
+                tokenAddress = await this.getLockAsset(asset);
+            } else if (await this.isMintAsset(asset)) {
+                tokenAddress = await this.getMintAsset(asset);
+            } else {
+                throw new Error(
+                    `Asset '${asset}' not supported on ${this.chain}.`,
+                );
+            }
 
-                    const decimalsABI: AbiItem = {
-                        constant: true,
-                        inputs: [],
-                        name: "decimals",
-                        outputs: [
-                            {
-                                internalType: "uint256",
-                                name: "",
-                                type: "uint256",
-                            },
-                        ],
-                        payable: false,
-                        stateMutability: "view",
-                        type: "function",
-                    };
+            const decimalsABI: AbiItem = {
+                constant: true,
+                inputs: [],
+                name: "decimals",
+                outputs: [
+                    {
+                        internalType: "uint256",
+                        name: "",
+                        type: "uint256",
+                    },
+                ],
+                payable: false,
+                stateMutability: "view",
+                type: "function",
+            };
 
-                    const tokenContract = new ethers.Contract(
-                        tokenAddress,
-                        [decimalsABI],
-                        this.provider,
-                    );
-
-                    const decimalsRaw = await tokenContract.decimals();
-                    return new BigNumber(decimalsRaw.toString()).toNumber();
-                },
-                { expiry: false },
+            const tokenContract = new ethers.Contract(
+                tokenAddress,
+                [decimalsABI],
+                this.provider,
             );
-        return this._assetDecimals__memoized(asset_);
-    }
 
-    public async transactionConfidence(
+            const decimalsRaw = await tokenContract.decimals();
+            return new BigNumber(decimalsRaw.toString()).toNumber();
+        },
+        { expiry: false },
+    );
+
+    public transactionConfidence = async (
         transaction: ChainTransaction,
-    ): Promise<BigNumber> {
+    ): Promise<BigNumber> => {
         if (transaction.txid === "") {
             throw new Error(
                 `Unable to fetch transaction confidence, transaction hash not set.`,
@@ -427,16 +481,14 @@ export class EthereumBaseChain
             (await this.provider.getBlockNumber()).toString(),
         );
         const receipt = await this.provider.getTransactionReceipt(
-            this.txidToTxidFormatted(transaction),
+            transaction.txHash,
         );
         if (receipt === null) {
             throw ErrorWithCode.updateError(
                 new Error(
-                    `${String(
-                        transaction.chain,
-                    )} transaction not found: ${String(
-                        transaction.txidFormatted,
-                    )}`,
+                    `${String(transaction.chain)} transaction not found: ${
+                        transaction.txHash
+                    }`,
                 ),
                 RenJSError.TRANSACTION_NOT_FOUND,
             );
@@ -449,16 +501,16 @@ export class EthereumBaseChain
         } else {
             return new BigNumber(0);
         }
-    }
+    };
 
-    public async getBalance(
+    public getBalance = async (
         asset: string,
         address?: string,
-    ): Promise<BigNumber> {
+    ): Promise<BigNumber> => {
         if (!address) {
             if (!this.signer) {
                 throw new Error(
-                    `Must connect ${this.chain} signer or provider address.`,
+                    `Must connect ${this.chain} signer or provide address.`,
                 );
             }
             address = address || (await this.signer.getAddress());
@@ -510,13 +562,13 @@ export class EthereumBaseChain
         const balanceRaw = await await tokenContract.balanceOf(address);
 
         return new BigNumber(balanceRaw.toString());
-    }
+    };
 
-    public async getOutputTx(
+    public getOutputTx = async (
         inputType: InputType,
         outputType: OutputType,
         asset: string,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             pHash: Uint8Array;
             nHash: Uint8Array;
@@ -525,32 +577,46 @@ export class EthereumBaseChain
             signature?: Uint8Array;
         },
         confirmationTarget: number,
-    ): Promise<TxSubmitter | TxWaiter> {
-        await this.checkProviderNetwork();
+    ): Promise<TxSubmitter | TxWaiter> => {
+        const providerNetworkCheck = await this.checkProviderNetworkCached();
+        if (!providerNetworkCheck.result) {
+            throw new ErrorWithCode(
+                `Invalid ${this.chain} provider network: expected ${providerNetworkCheck.expectedNetworkId} (${providerNetworkCheck.expectedNetworkLabel}), got ${providerNetworkCheck.actualNetworkId}.`,
+                RenJSError.INCORRECT_PROVIDER_NETWORK,
+            );
+        }
 
         const findExistingTransaction = async (): Promise<
             ChainTransaction | undefined
         > => {
             const { nHash, sigHash } = getParams();
-            if (outputType === OutputType.Release) {
-                return await findReleaseBySigHash(
-                    this.network,
-                    this.provider,
-                    asset,
-                    nHash,
-                    this.network.logRequestLimit,
-                );
-            } else {
-                return await findMintBySigHash(
-                    this.network,
-                    this.provider,
-                    asset,
-                    nHash,
-                    sigHash,
-                    this.network.logRequestLimit,
-                );
-            }
-            return undefined;
+            const txHash: string | undefined =
+                outputType === OutputType.Release
+                    ? await findReleaseBySigHash(
+                          this.network,
+                          this.provider,
+                          asset,
+                          nHash,
+                          sigHash,
+                          this.network.logRequestLimit,
+                      )
+                    : await findMintBySigHash(
+                          this.network,
+                          this.provider,
+                          asset,
+                          nHash,
+                          sigHash,
+                          this.network.logRequestLimit,
+                      );
+            return utils.isDefined(txHash)
+                ? txHashToChainTransaction(
+                      this.chain,
+                      txHash,
+                      (this.transactionExplorerLink &&
+                          this.transactionExplorerLink({ txHash })) ||
+                          "",
+                  )
+                : undefined;
         };
 
         const existingTransaction = await findExistingTransaction();
@@ -591,14 +657,8 @@ export class EthereumBaseChain
             });
         }
 
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-
         return new EVMTxSubmitter({
+            getProvider: () => this.provider,
             getSigner: () => this.signer,
             network: this.network,
             chain: this.chain,
@@ -614,30 +674,39 @@ export class EthereumBaseChain
                     getParams(),
                 ),
             findExistingTransaction,
+            transactionExplorerLink: this.transactionExplorerLink,
         });
-    }
+    };
 
     /**
      * Read a burn reference from an Ethereum transaction - or submit a
      * transaction first if the transaction details have been provided.
      */
-    public async getInputTx(
+    public getInputTx = async (
         inputType: InputType,
         outputType: OutputType,
         asset: string,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
         confirmationTarget: number,
         onInput: (input: InputChainTransaction) => void,
-    ): Promise<TxSubmitter | TxWaiter> {
-        await this.checkProviderNetwork();
+    ): Promise<TxSubmitter | TxWaiter> => {
+        const providerNetworkCheck = await this.checkProviderNetworkCached();
+        if (!providerNetworkCheck.result) {
+            throw new ErrorWithCode(
+                `Invalid ${this.chain} provider network: expected ${providerNetworkCheck.expectedNetworkId} (${providerNetworkCheck.expectedNetworkLabel}), got ${providerNetworkCheck.actualNetworkId}.`,
+                RenJSError.INCORRECT_PROVIDER_NETWORK,
+            );
+        }
 
         // if (!transaction && burnNonce) {
         //     const nonceBytes = burnNonce instanceof Uint8Array
@@ -677,15 +746,22 @@ export class EthereumBaseChain
                 const logBurnABI = findABIMethod(MintGatewayABI, "LogBurn");
                 filterLogs<LogBurnEvent>(receipt.logs, logBurnABI)
                     .map((e) =>
-                        mapBurnLogToInputChainTransaction(this.chain, asset, e),
+                        mapBurnLogToInputChainTransaction(
+                            this.chain,
+                            asset,
+                            e,
+                            this.transactionExplorerLink({
+                                txHash: e.transactionHash,
+                            }) || "",
+                        ),
                     )
                     .map(onInput);
 
                 // Filter logs that are releases to other chains.
-                const { toChain } = getParams();
+                const { toChain: receiptToChain } = getParams();
                 const filterByRecipientChain = (e: LogBurnToChainEvent) => {
                     const [_recipientAddress, recipientChain] = e.args;
-                    return recipientChain === toChain;
+                    return recipientChain === receiptToChain;
                 };
 
                 const logBurnToChainABI = findABIMethod(
@@ -699,6 +775,9 @@ export class EthereumBaseChain
                             this.chain,
                             asset,
                             e,
+                            this.transactionExplorerLink({
+                                txHash: e.transactionHash,
+                            }) || "",
                         ),
                     )
                     .map(onInput);
@@ -711,7 +790,14 @@ export class EthereumBaseChain
                     receipt.logs,
                     logLockABI,
                 ).map((e) =>
-                    mapLockLogToInputChainTransaction(this.chain, asset, e),
+                    mapLockLogToInputChainTransaction(
+                        this.chain,
+                        asset,
+                        e,
+                        this.transactionExplorerLink({
+                            txHash: e.transactionHash,
+                        }) || "",
+                    ),
                 );
                 lockEvents.map(onInput);
 
@@ -723,7 +809,14 @@ export class EthereumBaseChain
                     receipt.logs,
                     logTransferredABI,
                 ).map((e) =>
-                    mapTransferLogToInputChainTransaction(this.chain, asset, e),
+                    mapTransferLogToInputChainTransaction(
+                        this.chain,
+                        asset,
+                        e,
+                        this.transactionExplorerLink({
+                            txHash: e.transactionHash,
+                        }) || "",
+                    ),
                 );
                 transferEvents.map(onInput);
 
@@ -742,22 +835,54 @@ export class EthereumBaseChain
                 chainTransaction: contractCall.params.tx,
                 onFirstProgress: async (tx: ChainTransaction) => {
                     onReceipt(
-                        await this.provider.getTransactionReceipt(
-                            tx.txidFormatted,
-                        ),
+                        await this.provider.getTransactionReceipt(tx.txHash),
                     );
                 },
             });
         }
 
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
+        if (contractCall.type === "nonce") {
+            const nonce = utils.toNBytes(
+                new BigNumber(contractCall.params.nonce),
+                32,
+            );
+            const chainTransaction = await findInputByNonce(
+                this.chain,
+                inputType,
+                this.network,
+                this.provider,
+                asset,
+                nonce,
+                this.transactionExplorerLink,
+            );
+            if (!chainTransaction) {
+                throw new Error(
+                    `Unable to find ${asset} ${inputType} on ${
+                        this.chain
+                    } with nonce ${String(contractCall.params.nonce)}.`,
+                );
+            }
+            return new DefaultTxWaiter({
+                chain: this,
+                target: confirmationTarget,
+                chainTransaction,
+                onFirstProgress: async (tx: ChainTransaction) => {
+                    onReceipt(
+                        await this.provider.getTransactionReceipt(tx.txHash),
+                    );
+                },
+            });
+        }
+
+        const { toChain, toPayload } = getParams();
+        if (!toPayload) {
+            throw new Error(
+                `Unable to generate ${this.chain} transaction: No ${toChain} payload.`,
             );
         }
 
         return new EVMTxSubmitter({
+            getProvider: () => this.provider,
             getSigner: () => this.signer,
             network: this.network,
             chain: this.chain,
@@ -773,34 +898,36 @@ export class EthereumBaseChain
                     getParams(),
                 ),
             onReceipt: onReceipt,
+            transactionExplorerLink: this.transactionExplorerLink,
         });
-    }
+    };
 
-    public async getInSetup(
+    public getInSetup = async (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             toChain: string;
-            toPayload: {
-                to: string;
-                toBytes: Uint8Array;
-                payload: Uint8Array;
-            };
+            toPayload:
+                | {
+                      to: string;
+                      toBytes: Uint8Array;
+                      payload: Uint8Array;
+                  }
+                | undefined;
             gatewayAddress?: string;
         },
-    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> {
+    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> => {
+        if (!contractCall.type) {
+            return {};
+        }
+
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
         }
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
+
         const calls = await handler.getSetup({
             network: this.network,
             signer: this.signer,
@@ -826,6 +953,7 @@ export class EthereumBaseChain
                 });
             } else {
                 txSubmitted[callKey] = new EVMTxSubmitter({
+                    getProvider: () => this.provider,
                     getSigner: () => this.signer,
                     network: this.network,
                     chain: this.chain,
@@ -840,17 +968,18 @@ export class EthereumBaseChain
                             inputType,
                             getParams(),
                         ),
+                    transactionExplorerLink: this.transactionExplorerLink,
                 });
             }
         }
         return txSubmitted;
-    }
+    };
 
-    public async getOutSetup(
+    public getOutSetup = async (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             pHash: Uint8Array;
             nHash: Uint8Array;
@@ -858,17 +987,16 @@ export class EthereumBaseChain
             sigHash?: Uint8Array;
             signature?: Uint8Array;
         },
-    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> {
+    ): Promise<{ [key: string]: EVMTxSubmitter | TxWaiter }> => {
+        if (!contractCall.type) {
+            return {};
+        }
+
         const handler = this.getPayloadHandler(contractCall.type);
         if (!handler || !handler.getSetup) {
             return {};
         }
-        if (!this.signer) {
-            throw ErrorWithCode.updateError(
-                new Error(`Must connect signer.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
+
         const calls = await handler.getSetup({
             network: this.network,
             signer: this.signer,
@@ -894,6 +1022,7 @@ export class EthereumBaseChain
                 });
             } else {
                 txSubmitted[callKey] = new EVMTxSubmitter({
+                    getProvider: () => this.provider,
                     getSigner: () => this.signer,
                     network: this.network,
                     chain: this.chain,
@@ -908,22 +1037,24 @@ export class EthereumBaseChain
                             outputType,
                             getParams(),
                         ),
+                    transactionExplorerLink: this.transactionExplorerLink,
                 });
             }
         }
         return txSubmitted;
-    }
+    };
 
-    private getPayloadHandler = (payloadType: string): PayloadHandler => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getPayloadHandler = (payloadType: string): PayloadHandler<any> => {
         switch (payloadType) {
             case "approval":
-                return approvalPayloadHandler as PayloadHandler<EVMPayload>;
+                return approvalPayloadHandler;
             case "contract":
-                return contractPayloadHandler as PayloadHandler<EVMPayload>;
+                return contractPayloadHandler;
             case "address":
-                return accountPayloadHandler as PayloadHandler<EVMPayload>;
+                return accountPayloadHandler;
             case "transaction":
-                return txPayloadHandler as PayloadHandler<EVMPayload>;
+                return txPayloadHandler;
         }
 
         // TODO: Allow adding custom payload handlers.
@@ -931,12 +1062,12 @@ export class EthereumBaseChain
         throw new Error(`Unknown payload type ${payloadType}`);
     };
 
-    public createGatewayAddress(
+    public createGatewayAddress = (
         _asset: string,
-        fromPayload: EVMPayload,
+        fromPayload: EVMPayloadInterface,
         shardPublicKey: Uint8Array,
         gHash: Uint8Array,
-    ): Promise<string> | string {
+    ): Promise<string> | string => {
         if (fromPayload.chain !== this.chain) {
             throw new Error(
                 `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
@@ -962,9 +1093,9 @@ export class EthereumBaseChain
         return computeAddress(
             utils.fromHex(derivedPublicKey.getPublic(false, "hex")),
         );
-    }
+    };
 
-    private getEVMParams(
+    private getEVMParams = (
         asset: string,
         inputType: InputType,
         outputType: OutputType,
@@ -985,7 +1116,7 @@ export class EthereumBaseChain
             sigHash?: Uint8Array;
             signature?: Uint8Array;
         },
-    ): EVMParamValues {
+    ): EVMParamValues => {
         return {
             // Always available
             [EVMParam.EVM_INPUT_TYPE]: inputType,
@@ -1006,7 +1137,7 @@ export class EthereumBaseChain
             [EVMParam.EVM_ACCOUNT]: async () => {
                 if (!this.signer) {
                     throw ErrorWithCode.updateError(
-                        new Error(`Must connect signer.`),
+                        new Error(`Must connect ${this.chain} signer.`),
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
@@ -1017,7 +1148,12 @@ export class EthereumBaseChain
                         ErrorWithCode.isErrorWithCode(error) &&
                         error.code === errors.UNSUPPORTED_OPERATION
                     ) {
-                        return undefined;
+                        throw ErrorWithCode.updateError(
+                            new Error(
+                                `Must connect ${this.chain} signer - unable to get address.`,
+                            ),
+                            RenJSError.PARAMETER_ERROR,
+                        );
                     }
                     throw error;
                 }
@@ -1025,7 +1161,7 @@ export class EthereumBaseChain
             [EVMParam.EVM_ACCOUNT_IS_CONTRACT]: async () => {
                 if (!this.signer) {
                     throw ErrorWithCode.updateError(
-                        new Error(`Must connect signer.`),
+                        new Error(`Must connect ${this.chain} signer.`),
                         RenJSError.PARAMETER_ERROR,
                     );
                 }
@@ -1038,7 +1174,12 @@ export class EthereumBaseChain
                         ErrorWithCode.isErrorWithCode(error) &&
                         error.code === errors.UNSUPPORTED_OPERATION
                     ) {
-                        return undefined;
+                        throw ErrorWithCode.updateError(
+                            new Error(
+                                `Must connect ${this.chain} signer - unable to get code at address.`,
+                            ),
+                            RenJSError.PARAMETER_ERROR,
+                        );
                     }
                     throw error;
                 }
@@ -1059,10 +1200,11 @@ export class EthereumBaseChain
                     this.network.addresses.GatewayRegistry,
                 ).getTransferContract(),
             [EVMParam.EVM_ASSET]: asset,
+            [EVMParam.EVM_CHAIN]: this.chain,
 
             // Available when minting or releasing
             [EVMParam.EVM_AMOUNT]: utils.isDefined(params.amount)
-                ? params.amount.toString()
+                ? params.amount.toFixed()
                 : undefined, // in wei
             [EVMParam.EVM_NHASH]: params.nHash,
             [EVMParam.EVM_PHASH]: params.pHash,
@@ -1091,35 +1233,32 @@ export class EthereumBaseChain
             [EVMParam.EVM_GATEWAY_DEPOSIT_ADDRESS]: params.gatewayAddress,
             [EVMParam.EVM_GATEWAY_IS_DEPOSIT_ASSET]: this.isDepositAsset(asset),
         };
-    }
+    };
 
     /* ====================================================================== */
 
-    public Account({
+    public Account = ({
         account,
         amount,
-        convertToWei,
         convertUnit,
         anyoneCanSubmit,
+        infiniteApproval,
+        payloadConfig,
     }: {
         account?: string;
         amount?: BigNumber | string | number;
-        /**
-         * @deprecated - renamed to `convertUnit`
-         */
-        convertToWei?: boolean;
         convertUnit?: boolean;
         anyoneCanSubmit?: boolean;
-    } = {}): EVMPayload {
+        infiniteApproval?: boolean;
+        payloadConfig?: EVMPayloadInterface["payloadConfig"];
+    } = {}): EVMPayloadInterface => {
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
             { amount },
         );
         assertType<boolean | undefined>("boolean | undefined", {
-            convertToWei,
             convertUnit,
         });
-        convertUnit = convertToWei || convertUnit;
 
         let fixedAmount;
         if (utils.isDefined(amount)) {
@@ -1142,6 +1281,20 @@ export class EthereumBaseChain
                 );
             }
         }
+
+        if (account && account.slice(0, 5) !== "__EVM") {
+            if (!this.validateAddress(account)) {
+                new ErrorWithCode(
+                    `Invalid ${this.chain} address: ${String(account)}`,
+                    RenJSError.PARAMETER_ERROR,
+                );
+            }
+            if (!(payloadConfig && payloadConfig.preserveAddressFormat)) {
+                // Convert to checksum account.
+                account = ethers.utils.getAddress(account);
+            }
+        }
+
         return {
             chain: this.chain,
             type: "address",
@@ -1150,23 +1303,30 @@ export class EthereumBaseChain
                 amount: fixedAmount ? fixedAmount.toFixed() : undefined,
                 convertUnit,
                 anyoneCanSubmit,
+                infiniteApproval,
             },
+            payloadConfig,
         };
-    }
+    };
 
-    public Address(address: string): EVMPayload {
+    public Address = (
+        address: string,
+        payloadConfig?: EVMPayloadInterface["payloadConfig"],
+    ): EVMPayloadInterface => {
         assertType<string>("string", {
             address,
         });
 
         if (address.slice(0, 5) !== "__EVM") {
             if (!this.validateAddress(address)) {
-                throw ErrorWithCode.updateError(
-                    new Error(
-                        `Invalid ${this.chain} address: ${String(address)}`,
-                    ),
+                new ErrorWithCode(
+                    `Invalid ${this.chain} address: ${String(address)}`,
                     RenJSError.PARAMETER_ERROR,
                 );
+            }
+            if (!(payloadConfig && payloadConfig.preserveAddressFormat)) {
+                // Convert to checksum address.
+                address = ethers.utils.getAddress(address);
             }
         }
 
@@ -1177,21 +1337,42 @@ export class EthereumBaseChain
                 address,
                 anyoneCanSubmit: true,
             },
+            payloadConfig,
         };
-    }
+    };
 
-    public Contract(params: {
+    public Contract = (params: {
         to: string;
         method: string;
         params: EthArg[];
         withRenParams: boolean;
         txConfig?: ethers.PayableOverrides;
-    }): EVMPayload {
+        payloadConfig?: EVMPayloadInterface["payloadConfig"];
+    }): EVMPayloadInterface => {
+        let { to } = params;
+        if (to.slice(0, 5) !== "__EVM") {
+            if (!this.validateAddress(to)) {
+                new ErrorWithCode(
+                    `Invalid ${this.chain} contract address: ${String(to)}`,
+                    RenJSError.PARAMETER_ERROR,
+                );
+            }
+            if (
+                !(
+                    params.payloadConfig &&
+                    params.payloadConfig.preserveAddressFormat
+                )
+            ) {
+                // Convert to checksum address.
+                to = ethers.utils.getAddress(to);
+            }
+        }
+
         return {
             chain: this.chain,
             type: "contract",
             params: {
-                to: params.to,
+                to,
                 method: params.method,
                 params: [
                     ...params.params,
@@ -1223,21 +1404,23 @@ export class EthereumBaseChain
                 ],
                 txConfig: params.txConfig,
             },
+            payloadConfig: params.payloadConfig,
         };
-    }
+    };
 
     /**
      * Import an existing Ethereum transaction.
      *
      * @example
      * ethereum.Transaction({
-     *   txidFormatted: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
+     *   txHash: "0xf7dbf98bcebd7b803917e00e7e3292843a4b7bf66016638811cea4705a32d73e",
      * })
      */
-    public Transaction(
+    public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txidFormatted: string }),
-    ): EVMPayload {
+            ({ txid: string } | { txHash: string }),
+        payloadConfig?: EVMPayloadInterface["payloadConfig"],
+    ): EVMPayloadInterface => {
         return {
             chain: this.chain,
             type: "transaction",
@@ -1245,11 +1428,13 @@ export class EthereumBaseChain
                 tx: populateChainTransaction({
                     partialTx,
                     chain: this.chain,
-                    txidToTxidFormatted,
-                    txidFormattedToTxid,
+                    txHashToBytes,
+                    txHashFromBytes,
                     defaultTxindex: "0",
+                    explorerLink: this.transactionExplorerLink,
                 }),
             },
+            payloadConfig,
         };
-    }
+    };
 }

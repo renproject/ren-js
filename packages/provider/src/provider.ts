@@ -14,7 +14,6 @@ import {
 
 import {
     ParamsSubmitTx,
-    ResponseQueryConfig,
     ResponseQueryTx,
     RPCMethod,
     RPCParams,
@@ -243,52 +242,25 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
             )
         ).txs.map((tx) => unmarshalRenVMTransaction(tx));
 
-    private _queryConfig__memoized?: (
-        retry?: number,
-    ) => Promise<ResponseQueryConfig>;
-    public queryConfig = async (
-        retry?: number,
-    ): Promise<ResponseQueryConfig> => {
-        this._queryConfig__memoized =
-            this._queryConfig__memoized ||
-            utils.memoize(
-                async (retry_?: number): Promise<ResponseQueryConfig> => {
-                    return await this.sendMessage<RPCMethod.QueryConfig>(
-                        RPCMethod.QueryConfig,
-                        {},
-                        retry_,
-                    );
-                },
-            );
-        return this._queryConfig__memoized(retry);
-    };
+    public queryConfig = utils.memoize(
+        async (retry?: number) =>
+            await this.sendMessage<RPCMethod.QueryConfig>(
+                RPCMethod.QueryConfig,
+                {},
+                retry,
+            ),
+    );
 
-    private _queryBlockState__memoized?: (
-        contract: string,
-        retry?: number,
-    ) => Promise<BlockState>;
-    public queryBlockState = async (
-        contract: string,
-        retry?: number,
-    ): Promise<BlockState> => {
-        this._queryBlockState__memoized =
-            this._queryBlockState__memoized ||
-            utils.memoize(
-                async (
-                    contract_: string,
-                    retry_?: number,
-                ): Promise<BlockState> => {
-                    const { state } =
-                        await this.sendMessage<RPCMethod.QueryBlockState>(
-                            RPCMethod.QueryBlockState,
-                            { contract: contract_ },
-                            retry_,
-                        );
-                    return pack.unmarshal.unmarshalTypedPackValue(state);
-                },
+    public queryBlockState = utils.memoize(
+        async (contract: string, retry?: number): Promise<BlockState> => {
+            const { state } = await this.sendMessage<RPCMethod.QueryBlockState>(
+                RPCMethod.QueryBlockState,
+                { contract },
+                retry,
             );
-        return this._queryBlockState__memoized(contract, retry);
-    };
+            return pack.unmarshal.unmarshalTypedPackValue(state);
+        },
+    );
 
     public submitGateway = async (
         gateway: string,

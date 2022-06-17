@@ -53,7 +53,7 @@ describe("Filecoin", () => {
         ).to.be.true;
     });
 
-    it.only("validateAddress", () => {
+    it("validateAddress", () => {
         const testnet = new Filecoin({ network: "testnet" });
 
         expect(

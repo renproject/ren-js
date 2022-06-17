@@ -167,7 +167,7 @@ export class Gateway<
         params: GatewayParams<FromPayload, ToPayload>,
         config: RenJSConfig = {},
     ) {
-        this.params = params;
+        this.params = { ...params };
         this.fromChain = fromChain;
         this.toChain = toChain;
         this.provider = renVM;
@@ -593,8 +593,8 @@ export class Gateway<
                 throw error;
             }
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return (await existingTransaction)!;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        return (await existingTransaction) as GatewayTransaction<ToPayload>;
     };
 
     /**

@@ -128,6 +128,7 @@ export const estimateTransactionFee = async (
         mintAndBurnFees && mintAndBurnFees.burnAndMintFee
             ? mintAndBurnFees.burnAndMintFee.toNumber()
             : 15;
+
     const variableFee: number = isLockAndMint
         ? mintFee
         : isBurnAndRelease

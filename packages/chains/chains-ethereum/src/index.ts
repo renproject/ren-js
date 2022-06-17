@@ -1,5 +1,5 @@
 export * from "./utils/types";
-export { EVMParam } from "./utils/payloads/evmPayloadHandlers";
+export { EVMParam } from "./utils/payloads/evmParams";
 export { EVM_ERROR } from "./utils/errors";
 
 // Chains

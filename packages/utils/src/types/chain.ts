@@ -103,6 +103,13 @@ export interface ChainCommon {
     /** Override the chain's signer. */
     signer?: any;
     withSigner?: (...signers: any[]) => SyncOrPromise<this>;
+    checkSignerNetwork?: () => SyncOrPromise<{
+        result: boolean;
+        actualNetworkId: string | number;
+        expectedNetworkId: string | number;
+        expectedNetworkLabel: string;
+    }>;
+    switchSignerNetwork?: () => SyncOrPromise<void>;
 
     /** Return the asset's decimals, or throw for an unsupported asset. */
     assetDecimals: (asset: string) => SyncOrPromise<number>;

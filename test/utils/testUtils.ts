@@ -1,21 +1,15 @@
+/* eslint-disable no-console */
+
 import { Buffer } from "buffer";
 
 import { EthProvider, EVMNetworkConfig } from "@renproject/chains-ethereum/src";
-import { Connection } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
-import { ethers, providers, Wallet } from "ethers";
-import {
-    GatewayRegistryABI,
-    getERC20Instance,
-    getGatewayRegistryInstance,
-    getMintGatewayInstance,
-} from "packages/chains/chains-ethereum/src/contracts";
+import { ethers, Wallet } from "ethers";
 import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
-import { renTestnet } from "packages/chains/chains-solana/src/networks";
 import { signerFromPrivateKey } from "packages/chains/chains-solana/src/utils";
 import { ChainCommon, RenNetwork, utils } from "packages/utils/src";
 import SendCrypto from "send-crypto";
@@ -69,7 +63,7 @@ export const getEVMProvider = <EVM>(
     index: number = 0,
 ): {
     provider: EthProvider;
-    // signer: EthSigner;
+    signer: EthSigner;
 } => {
     const urls = ChainClass.configMap[network].config.rpcUrls;
     let rpcUrl = urls[0];
@@ -94,7 +88,7 @@ export const getEVMProvider = <EVM>(
 
     return {
         provider,
-        // signer,
+        signer,
     };
 };
 
@@ -104,6 +98,7 @@ export const initializeChain = <T extends ChainCommon>(
         new (...params): T;
     },
     network = RenNetwork.Testnet,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     config?: any,
 ): T => {
     switch (Chain.chain) {
@@ -175,7 +170,7 @@ export const printChain = (chain: string, { pad } = { pad: true }): string => {
             : chain === "Avalanche"
             ? chalk.hex("#e84142")
             : chain === "Goerli"
-            ? chalk.keyword("paleturquoise")
+            ? chalk.hex("#afeeee")
             : chain === "Bitcoin"
             ? chalk.hex("#f7931a")
             : chalk.cyan;
@@ -200,7 +195,7 @@ export const sendFunds = async (
     asset: string,
     recipient: string,
     amount: BigNumber,
-) => {
+): Promise<void> => {
     const account = new SendCrypto(
         Buffer.from(utils.fromHex(process.env.TESTNET_PRIVATE_KEY)),
         {

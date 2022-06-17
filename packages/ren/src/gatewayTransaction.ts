@@ -100,7 +100,7 @@ export class GatewayTransaction<
         config?: RenJSConfig,
     ) {
         this.provider = renVM;
-        this.params = params;
+        this.params = { ...params };
         this._config = {
             ...defaultRenJSConfig,
             ...config,

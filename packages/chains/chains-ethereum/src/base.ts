@@ -63,18 +63,16 @@ import {
     validateAddress,
     validateTransaction,
 } from "./utils/generic";
+import { accountPayloadHandler } from "./utils/payloads/evmAddressPayload";
+import { approvalPayloadHandler } from "./utils/payloads/evmApprovalPayload";
+import { contractPayloadHandler } from "./utils/payloads/evmContractPayload";
 import {
-    accountPayloadHandler,
-    approvalPayloadHandler,
-    contractPayloadHandler,
     EVMParam,
     EVMParamValues,
-    EVMPayload,
     EVMPayloadInterface,
-    EVMTxPayload,
     PayloadHandler,
-    txPayloadHandler,
-} from "./utils/payloads/evmPayloadHandlers";
+} from "./utils/payloads/evmParams";
+import { EVMTxPayload, txPayloadHandler } from "./utils/payloads/evmTxPayload";
 import {
     EthereumClassConfig,
     EthProvider,
@@ -85,7 +83,7 @@ import {
 } from "./utils/types";
 
 export class EthereumBaseChain
-    implements ContractChain<EVMPayload, EVMPayload>
+    implements ContractChain<EVMPayloadInterface, EVMPayloadInterface>
 {
     public static chain = "Ethereum";
     public chain: string;
@@ -305,7 +303,7 @@ export class EthereumBaseChain
         asset: string,
         inputType: InputType,
         outputType: OutputType,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
     ): Promise<
         | {
               to: string;
@@ -585,7 +583,7 @@ export class EthereumBaseChain
         inputType: InputType,
         outputType: OutputType,
         asset: string,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             pHash: Uint8Array;
             nHash: Uint8Array;
@@ -703,7 +701,7 @@ export class EthereumBaseChain
         inputType: InputType,
         outputType: OutputType,
         asset: string,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             toChain: string;
             toPayload:
@@ -927,7 +925,7 @@ export class EthereumBaseChain
         asset: string,
         inputType: InputType,
         outputType: OutputType,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             toChain: string;
             toPayload:
@@ -1000,7 +998,7 @@ export class EthereumBaseChain
         asset: string,
         inputType: InputType,
         outputType: OutputType,
-        contractCall: EVMPayload,
+        contractCall: EVMPayloadInterface,
         getParams: () => {
             pHash: Uint8Array;
             nHash: Uint8Array;
@@ -1065,16 +1063,17 @@ export class EthereumBaseChain
         return txSubmitted;
     };
 
-    private getPayloadHandler = (payloadType: string): PayloadHandler => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private getPayloadHandler = (payloadType: string): PayloadHandler<any> => {
         switch (payloadType) {
             case "approval":
-                return approvalPayloadHandler as PayloadHandler<EVMPayload>;
+                return approvalPayloadHandler;
             case "contract":
-                return contractPayloadHandler as PayloadHandler<EVMPayload>;
+                return contractPayloadHandler;
             case "address":
-                return accountPayloadHandler as PayloadHandler<EVMPayload>;
+                return accountPayloadHandler;
             case "transaction":
-                return txPayloadHandler as PayloadHandler<EVMPayload>;
+                return txPayloadHandler;
         }
 
         // TODO: Allow adding custom payload handlers.
@@ -1084,7 +1083,7 @@ export class EthereumBaseChain
 
     public createGatewayAddress = (
         _asset: string,
-        fromPayload: EVMPayload,
+        fromPayload: EVMPayloadInterface,
         shardPublicKey: Uint8Array,
         gHash: Uint8Array,
     ): Promise<string> | string => {
@@ -1276,7 +1275,7 @@ export class EthereumBaseChain
         anyoneCanSubmit?: boolean;
         infiniteApproval?: boolean;
         payloadConfig?: EVMPayloadInterface["payloadConfig"];
-    } = {}): EVMPayload => {
+    } = {}): EVMPayloadInterface => {
         assertType<BigNumber | string | number | undefined>(
             "BigNumber | string | number | undefined",
             { amount },
@@ -1339,7 +1338,7 @@ export class EthereumBaseChain
     public Address = (
         address: string,
         payloadConfig?: EVMPayloadInterface["payloadConfig"],
-    ): EVMPayload => {
+    ): EVMPayloadInterface => {
         assertType<string>("string", {
             address,
         });
@@ -1375,7 +1374,7 @@ export class EthereumBaseChain
         withRenParams: boolean;
         txConfig?: ethers.PayableOverrides;
         payloadConfig?: EVMPayloadInterface["payloadConfig"];
-    }): EVMPayload => {
+    }): EVMPayloadInterface => {
         let { to } = params;
         if (to.slice(0, 5) !== "__EVM") {
             if (!this.validateAddress(to)) {
@@ -1447,7 +1446,7 @@ export class EthereumBaseChain
         partialTx: Partial<ChainTransaction> &
             ({ txid: string } | { txHash: string } | { txidFormatted: string }),
         payloadConfig?: EVMPayloadInterface["payloadConfig"],
-    ): EVMPayload => {
+    ): EVMPayloadInterface => {
         return {
             chain: this.chain,
             type: "transaction",

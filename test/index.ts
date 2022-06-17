@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { AbiCoder } from "ethers/lib/utils";
 import { Ethereum } from "packages/chains/chains-ethereum/src";
 import { BinanceSmartChain } from "packages/chains/chains/src";

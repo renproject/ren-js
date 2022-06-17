@@ -220,7 +220,7 @@ export class RenJS {
         this.provider.selectShard(asset);
 
     /**
-     * `gateway` inistiates a new Gateway for bridging an asset between two
+     * `gateway` initiates a new Gateway for bridging an asset between two
      * chains.
      *
      * See [[Gateway]] for all the options that can be set.
@@ -228,10 +228,8 @@ export class RenJS {
      * @example
      * const gateway = renJS.gateway({
      *     asset: "BTC",
-     *     from: Bitcoin(),
-     *     to: Ethereum(web3Provider).Account({
-     *         address: "0x...",
-     *     }),
+     *     from: bitcoin.GatewayAddress(),
+     *     to: ethereum.Account(),
      * });
      * ```
      *
@@ -252,7 +250,13 @@ export class RenJS {
             this.provider,
             this.getChain(params.from.chain),
             this.getChain(params.to.chain),
-            params,
+            // Make copy of params.
+            {
+                ...params,
+                from: { ...params.from },
+                to: { ...params.to },
+                ...(params.shard ? { shard: { ...params.shard } } : {}),
+            },
             {
                 ...this._config,
                 ...config,
@@ -280,7 +284,13 @@ export class RenJS {
             this.provider,
             this.getChain(params.fromTx.chain),
             this.getChain(params.to.chain),
-            params,
+            // Make copy of params.
+            {
+                ...params,
+                fromTx: { ...params.fromTx },
+                to: { ...params.to },
+                ...(params.shard ? { shard: { ...params.shard } } : {}),
+            },
             undefined,
             {
                 ...this._config,

@@ -28,9 +28,9 @@ import { AbiItem } from "./abi";
 import { checkProviderNetwork, txHashToChainTransaction } from "./generic";
 import {
     EVMParamValues,
-    EVMPayload,
+    EVMPayloadInterface,
     PayloadHandler,
-} from "./payloads/evmPayloadHandlers";
+} from "./payloads/evmParams";
 import { EVMNetworkConfig } from "./types";
 
 /** Fix numeric values in the transaction config. */
@@ -102,7 +102,7 @@ export class EVMTxSubmitter
     private _network: EVMNetworkConfig;
     private _getProvider: () => Provider;
     private _getSigner: () => Signer | undefined;
-    private _payload: EVMPayload;
+    private _payload: EVMPayloadInterface;
     private _tx?: TransactionResponse;
     private _getPayloadHandler: (payloadType: string) => PayloadHandler;
     private _getParams: () => EVMParamValues;
@@ -143,7 +143,7 @@ export class EVMTxSubmitter
         getProvider: () => Provider;
         getSigner: () => Signer | undefined;
         chain: string;
-        payload: EVMPayload;
+        payload: EVMPayloadInterface;
         target: number;
         getPayloadHandler: (payloadType: string) => PayloadHandler;
         getParams: () => EVMParamValues;

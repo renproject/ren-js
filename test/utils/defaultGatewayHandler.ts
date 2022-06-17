@@ -147,7 +147,8 @@ export const defaultGatewayHandler = async (
                     `[${printChain(from.chain)}⇢${printChain(to.chain)}][${
                         tx.hash
                     }] Detected:`,
-                    tx.in.progress.transaction?.txHash,
+                    tx.in.progress.transaction &&
+                        tx.in.progress.transaction.txHash,
                 );
 
                 tx.in.eventEmitter.on("progress", (progress) =>
@@ -159,6 +160,13 @@ export const defaultGatewayHandler = async (
                         }/${progress.target} confirmations`,
                     ),
                 );
+
+                try {
+                    await tx.renVM.submit();
+                } catch (error) {
+                    logger.info(tx.renVM.export());
+                    console.error(error);
+                }
 
                 while (true) {
                     try {
@@ -181,7 +189,7 @@ export const defaultGatewayHandler = async (
                         `[${printChain(gateway.params.from.chain)}⇢${printChain(
                             gateway.params.to.chain,
                         )}][${tx.hash.slice(0, 6)}]: RenVM status: ${
-                            progress.response?.txStatus
+                            progress.response && progress.response.txStatus
                         }`,
                     ),
                 );
@@ -283,7 +291,8 @@ export const defaultGatewayHandler = async (
                         0,
                         6,
                     )}]: Done. (${foundDeposits} other deposits remaining)`,
-                    tx.out.progress.transaction?.txHash,
+                    tx.out.progress.transaction &&
+                        tx.out.progress.transaction.txHash,
                 );
                 if (foundDeposits === 0) {
                     resolve();

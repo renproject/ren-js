@@ -1,8 +1,7 @@
+import { utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { expect } from "chai";
 import { describe, it } from "mocha";
-
-import { utils } from "@renproject/utils";
 
 import { unmarshalPackValue } from "../../utils/src/libraries/pack/unmarshal";
 import { burnParamsType, crossChainParamsType } from "../src";

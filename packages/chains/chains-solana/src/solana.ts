@@ -38,12 +38,7 @@ import {
 import BigNumber from "bignumber.js";
 import base58 from "bs58";
 
-import {
-    GatewayLayout,
-    GatewayRegistryState,
-    GatewayStateKey,
-    MintLogLayout,
-} from "./layouts";
+import { GatewayLayout, GatewayStateKey, MintLogLayout } from "./layouts";
 import { resolveNetwork, SolNetworkConfig } from "./networks";
 import { SolanaTxWaiter } from "./solanaTxSubmitter";
 import { SolanaInputPayload, SolanaOutputPayload } from "./types/types";

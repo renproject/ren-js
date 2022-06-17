@@ -17,7 +17,7 @@ See [Ren Client Docs](https://renproject.github.io/ren-client-docs/ren-js/)
 RenJS v3 is currently available as an alpha release:
 
 ```sh
-yarn add @renproject/ren@next @renproject/chains@next
+yarn add @renproject/ren @renproject/chains
 ```
 
 [RenJS v3 Docs](https://renproject.github.io/ren-client-docs/ren-js/ren-js-v3) (WIP)

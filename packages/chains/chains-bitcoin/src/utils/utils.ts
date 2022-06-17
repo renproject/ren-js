@@ -111,5 +111,7 @@ export const txHashToBytes = (txHash: string): Uint8Array => {
  * string.
  */
 export const txHashFromBytes = (bytes: Uint8Array): string => {
-    return utils.toHex(bytes.reverse());
+    // Create new Uint8Array before reversing to avoid modifying the input
+    // array.
+    return utils.toHex(new Uint8Array(bytes).reverse());
 };

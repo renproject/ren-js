@@ -62,7 +62,7 @@ export class Insight implements BitcoinAPI {
                                 : null,
                     }))
                     // If the amount is undefined, fetch the UTXO again.
-                    // This is due to the Digibyte explorer not returning
+                    // This is due to the DigiByte explorer not returning
                     // amounts correctly when fetching UTXOs.
                     .map((utxo) =>
                         utils.isDefined(utxo.amount)

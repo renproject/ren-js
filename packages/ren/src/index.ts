@@ -69,10 +69,6 @@ export class RenJS {
      * ```
      */
     public static defaultTransactionHandler = defaultTransactionHandler;
-    /**
-     * @deprecated Use `defaultTransactionHandler` instead.
-     */
-    public static defaultDepositHandler = defaultTransactionHandler;
 
     /**
      * In order to add support for chains, `withChains` must be called,

@@ -174,30 +174,17 @@ export class EthereumBaseChain
         return txHashFromBytes(bytes);
     };
 
-    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
-    public txidFormattedToTxid = (txHash: string): string => {
-        return utils.toURLBase64(txHashToBytes(txHash));
-    };
-
-    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
-    public txidToTxidFormatted = ({ txid }: { txid: string }): string => {
-        return txHashFromBytes(utils.fromBase64(txid));
-    };
-
     public transactionExplorerLink = ({
         txid,
         txHash,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
         | string
         | undefined => {
-        const txHashOrTxHashFormatted = txHash || txidFormatted;
-        if (txHashOrTxHashFormatted) {
-            return this.explorer.transaction(txHashOrTxHashFormatted);
+        if (txHash) {
+            return this.explorer.transaction(txHash);
         } else if (txid) {
             return this.explorer.transaction(
-                this.txidToTxidFormatted({ txid }),
+                this.txHashFromBytes(utils.fromBase64(txid)),
             );
         }
         return undefined;
@@ -494,16 +481,14 @@ export class EthereumBaseChain
             (await this.provider.getBlockNumber()).toString(),
         );
         const receipt = await this.provider.getTransactionReceipt(
-            this.txidToTxidFormatted(transaction),
+            transaction.txHash,
         );
         if (receipt === null) {
             throw ErrorWithCode.updateError(
                 new Error(
-                    `${String(
-                        transaction.chain,
-                    )} transaction not found: ${String(
-                        transaction.txHash || transaction.txidFormatted,
-                    )}`,
+                    `${String(transaction.chain)} transaction not found: ${
+                        transaction.txHash
+                    }`,
                 ),
                 RenJSError.TRANSACTION_NOT_FOUND,
             );
@@ -850,9 +835,7 @@ export class EthereumBaseChain
                 chainTransaction: contractCall.params.tx,
                 onFirstProgress: async (tx: ChainTransaction) => {
                     onReceipt(
-                        await this.provider.getTransactionReceipt(
-                            String(tx.txHash || tx.txidFormatted),
-                        ),
+                        await this.provider.getTransactionReceipt(tx.txHash),
                     );
                 },
             });
@@ -885,9 +868,7 @@ export class EthereumBaseChain
                 chainTransaction,
                 onFirstProgress: async (tx: ChainTransaction) => {
                     onReceipt(
-                        await this.provider.getTransactionReceipt(
-                            String(tx.txHash || tx.txidFormatted),
-                        ),
+                        await this.provider.getTransactionReceipt(tx.txHash),
                     );
                 },
             });
@@ -1259,7 +1240,6 @@ export class EthereumBaseChain
     public Account = ({
         account,
         amount,
-        convertToWei,
         convertUnit,
         anyoneCanSubmit,
         infiniteApproval,
@@ -1267,10 +1247,6 @@ export class EthereumBaseChain
     }: {
         account?: string;
         amount?: BigNumber | string | number;
-        /**
-         * @deprecated - renamed to `convertUnit`
-         */
-        convertToWei?: boolean;
         convertUnit?: boolean;
         anyoneCanSubmit?: boolean;
         infiniteApproval?: boolean;
@@ -1281,10 +1257,8 @@ export class EthereumBaseChain
             { amount },
         );
         assertType<boolean | undefined>("boolean | undefined", {
-            convertToWei,
             convertUnit,
         });
-        convertUnit = convertToWei || convertUnit;
 
         let fixedAmount;
         if (utils.isDefined(amount)) {
@@ -1444,7 +1418,7 @@ export class EthereumBaseChain
      */
     public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
         payloadConfig?: EVMPayloadInterface["payloadConfig"],
     ): EVMPayloadInterface => {
         return {

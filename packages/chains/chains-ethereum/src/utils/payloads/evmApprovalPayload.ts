@@ -22,10 +22,6 @@ export type EVMApprovalPayload = EVMPayloadInterface<
         token: string;
         spender: string;
         amount: string;
-        /**
-         * @deprecated renamed to `convertUnit`.
-         */
-        convertToWei?: boolean;
         convertUnit?: boolean;
         txConfig?: PayableOverrides;
     }
@@ -54,7 +50,7 @@ const getContractFromApproval = async (
     const amount = utils.isDefined(payload.params.amount)
         ? new BigNumber(payload.params.amount)
               .shiftedBy(
-                  payload.params.convertUnit || payload.params.convertToWei
+                  payload.params.convertUnit
                       ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
                       : 0,
               )
@@ -110,7 +106,7 @@ export const approvalPayloadHandler: PayloadHandler<EVMApprovalPayload> = {
         );
 
         const amount = new BigNumber(payload.params.amount).shiftedBy(
-            payload.params.convertUnit || payload.params.convertToWei
+            payload.params.convertUnit
                 ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
                 : 0,
         );

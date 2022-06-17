@@ -87,9 +87,7 @@ export abstract class BitcoinBaseChain
           }
         | undefined => {
         this._assertAssetIsSupported(asset);
-        const address = toPayload.params
-            ? toPayload.params.address
-            : toPayload.address;
+        const address = toPayload.params.address;
         if (!address) {
             // throw new Error(`No ${this.chain} address specified.`);
             return undefined;
@@ -108,14 +106,11 @@ export abstract class BitcoinBaseChain
     public transactionExplorerLink = ({
         txid,
         txHash,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
         | string
         | undefined => {
-        const txHashOrTxHashFormatted = txHash || txidFormatted;
-        if (txHashOrTxHashFormatted) {
-            return this.network.explorer.transaction(txHashOrTxHashFormatted);
+        if (txHash) {
+            return this.network.explorer.transaction(txHash);
         } else if (txid) {
             return this.network.explorer.transaction(
                 this.txHashFromBytes(utils.fromBase64(txid)),
@@ -165,23 +160,9 @@ export abstract class BitcoinBaseChain
         return txHashFromBytes(bytes);
     };
 
-    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
-    public txidFormattedToTxid = (txHash: string): string => {
-        return utils.toURLBase64(txHashToBytes(txHash));
-    };
-
-    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
-    public txidToTxidFormatted = ({ txid }: { txid: string }): string => {
-        return txHashFromBytes(utils.fromBase64(txid));
-    };
-
     public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            (
-                | { txid: string }
-                | { txHash: string }
-                | { /* deprecated: */ txidFormatted: string }
-            ),
+            ({ txid: string } | { txHash: string }),
     ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
@@ -255,7 +236,7 @@ export abstract class BitcoinBaseChain
                 while (true) {
                     try {
                         const tx = await this.api.fetchUTXO(
-                            String(inputTx.txHash || inputTx.txidFormatted),
+                            inputTx.txHash,
                             inputTx.txindex,
                         );
                         onInput({
@@ -265,8 +246,6 @@ export abstract class BitcoinBaseChain
                             ),
                             txHash: tx.txid,
                             txindex: tx.txindex,
-                            /** @deprecated */
-                            txidFormatted: tx.txid,
                             explorerLink:
                                 this.transactionExplorerLink({
                                     txHash: tx.txid,
@@ -298,8 +277,6 @@ export abstract class BitcoinBaseChain
                     txid: utils.toURLBase64(utils.fromHex(tx.txid).reverse()),
                     txHash: tx.txid,
                     txindex: tx.txindex,
-                    /** @deprecated */
-                    txidFormatted: tx.txid,
                     explorerLink:
                         this.transactionExplorerLink({
                             txHash: tx.txid,
@@ -327,8 +304,6 @@ export abstract class BitcoinBaseChain
                         ),
                         txHash: tx.txid,
                         txindex: tx.txindex,
-                        /** @deprecated */
-                        txidFormatted: tx.txid,
                         explorerLink:
                             this.transactionExplorerLink({
                                 txHash: tx.txid,
@@ -352,7 +327,7 @@ export abstract class BitcoinBaseChain
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
         const { height } = await this.api.fetchUTXO(
-            this.txidToTxidFormatted(transaction),
+            transaction.txHash,
             transaction.txindex,
         );
         if (!height) {
@@ -441,7 +416,6 @@ export abstract class BitcoinBaseChain
     public Transaction = (
         partialTx: Partial<ChainTransaction> & { txindex: string } & (
                 | { txid: string }
-                | { txidFormatted: string }
                 | { txHash: string }
             ),
     ): BitcoinInputPayload => {

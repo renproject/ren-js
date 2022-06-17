@@ -280,7 +280,6 @@ export class GatewayTransaction<
                     txid,
                     txindex,
                     txHash,
-                    txidFormatted: txHash,
                     explorerLink:
                         this.toChain.transactionExplorerLink({
                             txHash,

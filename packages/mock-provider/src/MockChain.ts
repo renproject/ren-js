@@ -1,12 +1,18 @@
-import BigNumber from "bignumber.js";
-
-import { BitcoinBaseChain } from "@renproject/chains-bitcoin";
+import {
+    BitcoinBaseChain,
+    BitcoinInputPayload,
+    BitcoinOutputPayload,
+} from "@renproject/chains-bitcoin";
 import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
 import { DepositChain, utils } from "@renproject/utils";
+import BigNumber from "bignumber.js";
 
 import { randomBytes } from "./utils";
 
-export class MockChain extends BitcoinBaseChain implements DepositChain {
+export class MockChain
+    extends BitcoinBaseChain
+    implements DepositChain<BitcoinInputPayload, BitcoinOutputPayload>
+{
     public mempool: Array<UTXO & { to: string }>;
 
     public assets: {

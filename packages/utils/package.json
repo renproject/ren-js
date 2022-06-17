@@ -43,7 +43,7 @@
         "prepare-release": "run-s npmignore build"
     },
     "dependencies": {
-        "@noble/hashes": "1.0.0",
+        "@noble/hashes": "1.1.1",
         "@types/events": "3.0.0",
         "axios": "^0.27.2",
         "base64-js": "^1.5.1",

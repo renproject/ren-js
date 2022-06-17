@@ -582,9 +582,9 @@ export class Gateway<
                 await this.addTransaction(depositIdentifier, await promise);
             } catch (error: unknown) {
                 await this.removeTransaction(depositIdentifier);
-                const message = `Error processing deposit ${String(
-                    inputTx.txHash || inputTx.txidFormatted,
-                )}: ${utils.extractError(error)}`;
+                const message = `Error processing deposit ${
+                    inputTx.txHash
+                }: ${utils.extractError(error)}`;
                 if (error instanceof Error) {
                     error.message = message;
                 } else {

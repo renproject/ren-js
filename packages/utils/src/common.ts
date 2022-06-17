@@ -106,17 +106,17 @@ export const populateChainTransaction = ({
     defaultTxindex,
 }: {
     partialTx: Partial<ChainTransaction> &
-        ({ txid: string } | { txHash: string } | { txidFormatted: string });
+        ({ txid: string } | { txHash: string });
     chain: string;
     txHashToBytes: (txHash: string) => Uint8Array;
     txHashFromBytes: (bytes: Uint8Array) => string;
     explorerLink: (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined;
     defaultTxindex?: string;
 }): ChainTransaction => {
-    const maybeTxHash = partialTx.txHash || partialTx.txidFormatted;
+    const maybeTxHash = partialTx.txHash;
     const txid =
         partialTx.txid ||
         (maybeTxHash && utils.toURLBase64(txHashToBytes(maybeTxHash)));
@@ -144,9 +144,6 @@ export const populateChainTransaction = ({
         txid,
         txHash,
         txindex,
-
-        /** @deprecated Renamed to `txHash`. */
-        txidFormatted: txHash,
     };
 
     return {

@@ -71,9 +71,6 @@ export const txHashToChainTransaction = (
         txid: utils.toURLBase64(txHashBytes),
         txindex: "0",
         explorerLink,
-
-        /** @deprecated Renamed to `txHash`. */
-        txidFormatted: txHash === "" ? txHash : utils.Ox(txHashBytes),
     };
 };
 
@@ -167,7 +164,7 @@ export const findInputByNonce = async (
     nonce: Uint8Array,
     transactionExplorerLink: (
         params: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined,
     blockLimit?: number,
 ): Promise<InputChainTransaction | undefined> => {
@@ -497,20 +494,13 @@ export const validateAddress = (address: string): boolean => {
 
 export const validateTransaction = (
     transaction: Partial<ChainTransaction> &
-        ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+        ({ txid: string } | { txHash: string }),
 ): boolean => {
     return (
         (utils.isDefined(transaction.txid) ||
-            utils.isDefined(transaction.txHash) ||
-            utils.isDefined(transaction.txidFormatted)) &&
+            utils.isDefined(transaction.txHash)) &&
         (transaction.txHash
             ? utils.isHex(transaction.txHash, {
-                  length: 32,
-                  prefix: true,
-              })
-            : true) &&
-        (transaction.txidFormatted
-            ? utils.isHex(transaction.txidFormatted, {
                   length: 32,
                   prefix: true,
               })
@@ -525,10 +515,6 @@ export const validateTransaction = (
             : true) &&
         (transaction.txHash && transaction.txid
             ? utils.toURLBase64(txHashToBytes(transaction.txHash)) ===
-              transaction.txid
-            : true) &&
-        (transaction.txidFormatted && transaction.txid
-            ? utils.toURLBase64(txHashToBytes(transaction.txidFormatted)) ===
               transaction.txid
             : true) &&
         (transaction.txindex === undefined || transaction.txindex === "0")
@@ -583,8 +569,6 @@ export const resolveEVMNetworkConfig = (
 
     return networkConfig;
 };
-/** @deprecated Renamed to resolveEVMNetworkConfig. */
-export const resolveEvmNetworkConfig = resolveEVMNetworkConfig;
 
 /**
  * Resolve an EVM chain's JSON-RPC endpoints, replacing variable keys such as

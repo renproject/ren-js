@@ -473,7 +473,7 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("DAI/toBinanceSmartChain", async () => {
+    it.only("DAI/toBinanceSmartChain", async () => {
         const network = RenNetwork.Testnet;
 
         const asset = Ethereum.assets.DAI;

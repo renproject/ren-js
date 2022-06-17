@@ -112,7 +112,7 @@ export class EVMTxSubmitter
     >;
     private _transactionExplorerLink?: (
         params: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined;
 
     private updateProgress = (
@@ -151,11 +151,7 @@ export class EVMTxSubmitter
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
         transactionExplorerLink?: (
             params: Partial<ChainTransaction> &
-                (
-                    | { txid: string }
-                    | { txHash: string }
-                    | { txidFormatted: string }
-                ),
+                ({ txid: string } | { txHash: string }),
         ) => string | undefined;
     }) {
         this._network = network;
@@ -229,10 +225,7 @@ export class EVMTxSubmitter
                     await this._findExistingTransaction();
 
                 if (existingTransaction) {
-                    if (
-                        existingTransaction.txHash === "" ||
-                        existingTransaction.txidFormatted === ""
-                    ) {
+                    if (existingTransaction.txHash === "") {
                         this.updateProgress({
                             status: ChainTransactionStatus.Done,
                             confirmations: this.progress.target,
@@ -240,10 +233,7 @@ export class EVMTxSubmitter
                         return this.progress;
                     }
                     this._tx = await provider.getTransaction(
-                        String(
-                            existingTransaction.txHash ||
-                                existingTransaction.txidFormatted,
-                        ),
+                        String(existingTransaction.txHash),
                     );
                 }
             }
@@ -347,7 +337,7 @@ export class EVMTxSubmitter
     ): Promise<ChainTransactionProgress> => {
         const provider = this._getProvider();
         this._tx = await provider.getTransaction(
-            String(chainTransaction.txHash || chainTransaction.txidFormatted),
+            String(chainTransaction.txHash),
         );
         return this.updateProgress({
             status:

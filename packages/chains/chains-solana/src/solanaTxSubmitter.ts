@@ -39,7 +39,7 @@ export class SolanaTxWaiter
     >;
     private _transactionExplorerLink?: (
         params: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined;
     private _logger: Logger;
 
@@ -87,11 +87,7 @@ export class SolanaTxWaiter
         findExistingTransaction?: () => Promise<ChainTransaction | undefined>;
         transactionExplorerLink?: (
             params: Partial<ChainTransaction> &
-                (
-                    | { txid: string }
-                    | { txHash: string }
-                    | { txidFormatted: string }
-                ),
+                ({ txid: string } | { txHash: string }),
         ) => string | undefined;
         logger?: Logger;
     }) {
@@ -230,9 +226,6 @@ export class SolanaTxWaiter
                                 txHash: confirmedSignature,
                             })) ||
                         "",
-
-                    /** @deprecated Renamed to `txHash`. */
-                    txidFormatted: confirmedSignature,
                 },
             });
 
@@ -276,10 +269,7 @@ export class SolanaTxWaiter
             let currentConfidenceRatio = -1;
             while (true) {
                 const tx = await this._provider.getConfirmedTransaction(
-                    String(
-                        this.progress.transaction.txHash ||
-                            this.progress.transaction.txidFormatted,
-                    ),
+                    String(this.progress.transaction.txHash),
                 );
 
                 const currentSlot = await this._provider.getSlot();

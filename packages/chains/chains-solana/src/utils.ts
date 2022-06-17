@@ -218,8 +218,6 @@ export const signerFromPrivateKey = (
         },
     } as Wallet;
 };
-/** @deprecated Renamed to 'signerFromPrivateKey'. */
-export const makeTestSigner = signerFromPrivateKey;
 
 export const getGatewayRegistryState = async (
     provider: Connection,
@@ -267,9 +265,6 @@ export const txHashToChainTransaction = (
     txid: utils.toURLBase64(txHashToBytes(txHash)),
     txindex: "0",
     explorerLink,
-
-    /** @deprecated Renamed to `txHash`. */
-    txidFormatted: txHash,
 });
 
 /**
@@ -348,7 +343,7 @@ export const getBurnFromNonce = async (
     txHashIn?: string,
     transactionExplorerLink?: (
         params: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined,
 ): Promise<InputChainTransaction | undefined> => {
     let leNonce: Uint8Array;
@@ -415,8 +410,6 @@ export const getBurnFromNonce = async (
         txid,
         txindex: "0",
         txHash,
-        /** @deprecated Renamed to `txHash`. */
-        txidFormatted: txHash,
         // Input details
         asset,
         amount: burnAmount.toFixed(),
@@ -444,7 +437,7 @@ export const getBurnFromTxid = async (
     nonce: number | undefined,
     transactionExplorerLink?: (
         params: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined,
 ): Promise<InputChainTransaction | undefined> => {
     const [burnId, burnIdAlt] = await getBurnPublicKey(provider, txHash);

@@ -31,10 +31,6 @@ export type EVMAddressPayload = EVMPayloadInterface<
         address: string;
         amount?: string;
         anyoneCanSubmit?: boolean;
-        /**
-         * @deprecated renamed to `convertUnit`.
-         */
-        convertToWei?: boolean;
         convertUnit?: boolean;
         infiniteApproval?: boolean;
     }
@@ -73,7 +69,7 @@ export const accountPayloadHandler: PayloadHandler<EVMAddressPayload> = {
             : utils.isDefined(payload.params.amount)
             ? new BigNumber(payload.params.amount)
                   .shiftedBy(
-                      payload.params.convertUnit || payload.params.convertToWei
+                      payload.params.convertUnit
                           ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
                           : 0,
                   )
@@ -348,7 +344,7 @@ const getContractFromAccount = async (
     const amount = utils.isDefined(payload.params.amount)
         ? new BigNumber(payload.params.amount)
               .shiftedBy(
-                  payload.params.convertUnit || payload.params.convertToWei
+                  payload.params.convertUnit
                       ? await evmParams[EVMParam.EVM_TOKEN_DECIMALS]()
                       : 0,
               )

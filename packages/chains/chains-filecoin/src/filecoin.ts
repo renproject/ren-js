@@ -116,11 +116,7 @@ export type FilecoinInputPayload =
 export interface FilecoinOutputPayload {
     chain: string;
     type?: "address";
-    /**
-     * @deprecated Use params.address instead.
-     */
-    address?: string;
-    params?: {
+    params: {
         address: string;
     };
 }
@@ -184,17 +180,13 @@ export class Filecoin
 
     public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
-                utils.isDefined(transaction.txHash) ||
-                utils.isDefined(transaction.txidFormatted)) &&
+                utils.isDefined(transaction.txHash)) &&
             (transaction.txHash
                 ? this.txHashToBytes(transaction.txHash).length === 38
-                : true) &&
-            (transaction.txidFormatted
-                ? this.txHashToBytes(transaction.txidFormatted).length === 38
                 : true) &&
             (transaction.txid
                 ? utils.isURLBase64(transaction.txid, {
@@ -207,11 +199,6 @@ export class Filecoin
             (transaction.txHash && transaction.txid
                 ? utils.toURLBase64(this.txHashToBytes(transaction.txHash)) ===
                   transaction.txid
-                : true) &&
-            (transaction.txidFormatted && transaction.txid
-                ? utils.toURLBase64(
-                      this.txHashToBytes(transaction.txidFormatted),
-                  ) === transaction.txid
                 : true) &&
             (transaction.txindex === undefined || transaction.txindex === "0")
         );
@@ -230,15 +217,12 @@ export class Filecoin
     public transactionExplorerLink = ({
         txid,
         txHash,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
         | string
         | undefined => {
         const hash =
             txHash ||
-            txidFormatted ||
-            (txid && this.txidToTxidFormatted({ txid })) ||
+            (txid && this.txHashFromBytes(utils.fromBase64(txid))) ||
             undefined;
         if (!hash) {
             return undefined;
@@ -299,13 +283,11 @@ export class Filecoin
 
                     try {
                         if (this.filfox) {
-                            tx = await this.filfox.fetchMessage(
-                                String(inputTx.txHash || inputTx.txidFormatted),
-                            );
+                            tx = await this.filfox.fetchMessage(inputTx.txHash);
                         } else {
                             tx = await fetchMessage(
                                 this.client,
-                                String(inputTx.txHash || inputTx.txidFormatted),
+                                inputTx.txHash,
                                 this.network.addressPrefix,
                             );
                         }
@@ -314,9 +296,6 @@ export class Filecoin
                             txid: utils.toURLBase64(txHashToBytes(tx.cid)),
                             txHash: tx.cid,
                             txindex: "0",
-
-                            /** @deprecated Renamed to `txHash`. */
-                            txidFormatted: tx.cid,
 
                             explorerLink:
                                 this.transactionExplorerLink({
@@ -391,9 +370,6 @@ export class Filecoin
                                     txHash: tx.cid,
                                     txindex: "0",
 
-                                    /** @deprecated Renamed to `txHash`. */
-                                    txidFormatted: tx.cid,
-
                                     explorerLink:
                                         this.transactionExplorerLink({
                                             txHash: tx.cid,
@@ -436,9 +412,6 @@ export class Filecoin
                             txHash: tx.cid,
                             txindex: "0",
 
-                            /** @deprecated Renamed to `txHash`. */
-                            txidFormatted: tx.cid,
-
                             explorerLink:
                                 this.transactionExplorerLink({
                                     txHash: tx.cid,
@@ -463,18 +436,17 @@ export class Filecoin
     public transactionConfidence = async (
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
-        const cid = String(transaction.txHash || transaction.txidFormatted);
         let msg;
         try {
             msg = await fetchMessage(
                 this.client,
-                cid,
+                transaction.txHash,
                 this.network.addressPrefix,
             );
         } catch (error: unknown) {
             if (this.filfox) {
                 try {
-                    msg = await this.filfox.fetchMessage(cid);
+                    msg = await this.filfox.fetchMessage(transaction.txHash);
                 } catch (errorInner) {
                     console.error(errorInner);
                 }
@@ -575,16 +547,6 @@ export class Filecoin
         return txHashFromBytes(bytes);
     };
 
-    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
-    public txidFormattedToTxid = (txHash: string): string => {
-        return utils.toURLBase64(txHashToBytes(txHash));
-    };
-
-    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
-    public txidToTxidFormatted = ({ txid }: { txid: string }): string => {
-        return txHashFromBytes(utils.fromBase64(txid));
-    };
-
     public getOutputPayload = (
         asset: string,
         _inputType: InputType,
@@ -598,9 +560,7 @@ export class Filecoin
           }
         | undefined => {
         this._assertAssetIsSupported(asset);
-        const address = toPayload.params
-            ? toPayload.params.address
-            : toPayload.address;
+        const address = toPayload.params.address;
         if (!address) {
             // throw new Error(`No ${this.chain} address specified.`);
             return undefined;
@@ -663,7 +623,7 @@ export class Filecoin
      */
     public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): FilecoinInputPayload => {
         return {
             chain: this.chain,

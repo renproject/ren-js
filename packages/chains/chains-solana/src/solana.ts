@@ -115,19 +115,13 @@ export class Solana
      */
     public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
-                utils.isDefined(transaction.txHash) ||
-                utils.isDefined(transaction.txidFormatted)) &&
+                utils.isDefined(transaction.txHash)) &&
             (transaction.txHash
                 ? isBase58(transaction.txHash, {
-                      length: 64,
-                  })
-                : true) &&
-            (transaction.txidFormatted
-                ? isBase58(transaction.txidFormatted, {
                       length: 64,
                   })
                 : true) &&
@@ -143,14 +137,6 @@ export class Solana
                 ? utils.toURLBase64(this.txHashToBytes(transaction.txHash)) ===
                   transaction.txid
                 : true) &&
-            (transaction.txidFormatted && transaction.txid
-                ? utils.toURLBase64(
-                      this.txHashToBytes(transaction.txidFormatted),
-                  ) === transaction.txid
-                : true) &&
-            (transaction.txHash && transaction.txidFormatted
-                ? transaction.txHash === transaction.txidFormatted
-                : true) &&
             (transaction.txindex === undefined || transaction.txindex === "0")
         );
     };
@@ -162,15 +148,11 @@ export class Solana
     public transactionExplorerLink = ({
         txid,
         txHash,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
         | string
         | undefined => {
         const hash =
-            txHash ||
-            txidFormatted ||
-            (txid && this.txidToTxidFormatted({ txid }));
+            txHash || (txid && this.txHashFromBytes(utils.fromBase64(txid)));
         if (!hash) {
             return "";
         }
@@ -263,10 +245,9 @@ export class Solana
     public transactionConfidence = async (
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
-        const tx = await this.provider.getTransaction(
-            String(transaction.txHash || transaction.txidFormatted),
-            { commitment: "confirmed" },
-        );
+        const tx = await this.provider.getTransaction(transaction.txHash, {
+            commitment: "confirmed",
+        });
 
         const currentSlot = await this.provider.getSlot();
         return new BigNumber(currentSlot - (tx && tx.slot ? tx.slot : 0));
@@ -286,16 +267,6 @@ export class Solana
 
     public txHashFromBytes = (bytes: Uint8Array): string => {
         return txHashFromBytes(bytes);
-    };
-
-    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
-    public txidFormattedToTxid = (txHash: string): string => {
-        return utils.toURLBase64(txHashToBytes(txHash));
-    };
-
-    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
-    public txidToTxidFormatted = ({ txid }: { txid: string }): string => {
-        return txHashFromBytes(utils.fromBase64(txid));
     };
 
     public async getMintGateway<ReturnPublicKey extends true | false = false>(
@@ -788,8 +759,7 @@ export class Solana
                 chainTransaction,
                 chain: this,
                 target: confirmationTarget,
-                onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt(String(tx.txHash || tx.txidFormatted)),
+                onFirstProgress: (tx: ChainTransaction) => onReceipt(tx.txHash),
             });
         }
 
@@ -798,8 +768,7 @@ export class Solana
                 chainTransaction: contractCall.params.tx,
                 chain: this,
                 target: confirmationTarget,
-                onFirstProgress: (tx: ChainTransaction) =>
-                    onReceipt(String(tx.txHash || tx.txidFormatted)),
+                onFirstProgress: (tx: ChainTransaction) => onReceipt(tx.txHash),
             });
         }
 
@@ -1146,9 +1115,6 @@ export class Solana
                     txindex: "0",
                     txHash: "",
                     explorerLink: "",
-
-                    /** @deprecated Renamed to `txHash`. */
-                    txidFormatted: "",
                 };
             }
             return undefined;
@@ -1233,7 +1199,7 @@ export class Solana
      */
     public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): SolanaInputPayload => {
         return {
             chain: this.chain,

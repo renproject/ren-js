@@ -75,11 +75,7 @@ export type TerraInputPayload =
 export interface TerraOutputPayload {
     chain: string;
     type?: "address";
-    /**
-     * @deprecated Use params.address instead.
-     */
-    address?: string;
-    params?: {
+    params: {
         address: string;
     };
 }
@@ -115,20 +111,13 @@ export class Terra
 
     public validateTransaction = (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): boolean => {
         return (
             (utils.isDefined(transaction.txid) ||
-                utils.isDefined(transaction.txHash) ||
-                utils.isDefined(transaction.txidFormatted)) &&
+                utils.isDefined(transaction.txHash)) &&
             (transaction.txHash
                 ? utils.isHex(transaction.txHash, {
-                      length: 32,
-                      uppercase: true,
-                  })
-                : true) &&
-            (transaction.txidFormatted
-                ? utils.isHex(transaction.txidFormatted, {
                       length: 32,
                       uppercase: true,
                   })
@@ -144,11 +133,6 @@ export class Terra
             (transaction.txHash && transaction.txid
                 ? utils.toURLBase64(this.txHashToBytes(transaction.txHash)) ===
                   transaction.txid
-                : true) &&
-            (transaction.txidFormatted && transaction.txid
-                ? utils.toURLBase64(
-                      this.txHashToBytes(transaction.txidFormatted),
-                  ) === transaction.txid
                 : true)
         );
     };
@@ -161,15 +145,11 @@ export class Terra
     public transactionExplorerLink = ({
         txid,
         txHash,
-        txidFormatted,
-    }: Partial<ChainTransaction> &
-        ({ txid: string } | { txHash: string } | { txidFormatted: string })):
+    }: Partial<ChainTransaction> & ({ txid: string } | { txHash: string })):
         | string
         | undefined => {
         const hash =
-            txHash ||
-            txidFormatted ||
-            (txid && this.txHashFromBytes(utils.fromBase64(txid)));
+            txHash || (txid && this.txHashFromBytes(utils.fromBase64(txid)));
         return hash
             ? new URL(`/tx/${String(hash)}`, /* base */ this.network.explorer)
                   .href
@@ -190,16 +170,6 @@ export class Terra
 
     public txHashFromBytes = (bytes: Uint8Array): string => {
         return txHashFromBytes(bytes);
-    };
-
-    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
-    public txidFormattedToTxid = (txHash: string): string => {
-        return utils.toURLBase64(txHashToBytes(txHash));
-    };
-
-    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
-    public txidToTxidFormatted = ({ txid }: { txid: string }): string => {
-        return txHashFromBytes(utils.fromBase64(txid));
     };
 
     public constructor({
@@ -294,9 +264,6 @@ export class Terra
                     txid: utils.toURLBase64(txHashToBytes(tx.hash)),
                     txindex: "0",
                     txHash: tx.hash.toUpperCase(),
-                    /** @deprecated Renamed to `txHash`. */
-                    txidFormatted: tx.hash.toUpperCase(),
-
                     explorerLink:
                         this.transactionExplorerLink({
                             txHash: tx.hash.toUpperCase(),
@@ -320,9 +287,7 @@ export class Terra
         if (!this.network) {
             throw new Error(`${this.name} object not initialized.`);
         }
-        return await this.api.fetchConfirmations(
-            String(transaction.txHash || transaction.txidFormatted),
-        );
+        return await this.api.fetchConfirmations(transaction.txHash);
     };
 
     /**
@@ -381,9 +346,7 @@ export class Terra
           }
         | undefined => {
         this._assertAssetIsSupported(asset);
-        const address = toPayload.params
-            ? toPayload.params.address
-            : toPayload.address;
+        const address = toPayload.params.address;
         if (!address) {
             // throw new Error(`No ${this.chain} address specified.`);
             return undefined;
@@ -450,7 +413,7 @@ export class Terra
      */
     public Transaction = (
         partialTx: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): TerraInputPayload => {
         return {
             chain: this.chain,

@@ -121,9 +121,6 @@ export class RenVMTxSubmitter<Transaction extends RenVMTransaction>
                 txHash: this.tx.hash,
                 txindex: "0",
                 explorerLink,
-
-                /** @deprecated Renamed to `txHash`. */
-                txidFormatted: this.tx.hash,
             },
         };
     }

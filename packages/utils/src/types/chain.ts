@@ -30,10 +30,7 @@ export interface ChainTransaction {
     txindex: NumericString;
     /** A human-readable form of the txid. */
     txHash: string;
-
-    /** @deprecated Renamed to txHash. */
-    txidFormatted?: string;
-
+    /** A URL to an explorer's page for this transaction. */
     explorerLink: string;
 }
 
@@ -128,7 +125,7 @@ export interface ChainCommon {
     /** Check if the transaction's format is valid. */
     validateTransaction(
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ): boolean;
 
     /** Return a URL to the address's page on an explorer. */
@@ -139,15 +136,10 @@ export interface ChainCommon {
     txHashToBytes: (txHash: string) => Uint8Array;
     txHashFromBytes: (bytes: Uint8Array) => string;
 
-    /** @deprecated Replace with `txHashFromBytes(utils.fromBase64(txid))`. */
-    txidToTxidFormatted(transaction: { txid: string; txindex: string }): string;
-    /** @deprecated Replace with `utils.toURLBase64(txHashToBytes(txHash))`. */
-    txidFormattedToTxid(formattedTxid: string): string;
-
     /** Return a URL to the transaction's page on an explorer. */
     transactionExplorerLink: (
         transaction: Partial<ChainTransaction> &
-            ({ txid: string } | { txHash: string } | { txidFormatted: string }),
+            ({ txid: string } | { txHash: string }),
     ) => string | undefined;
 
     // /** Return a TxWaiter instance for the provided chain transaction. */

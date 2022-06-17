@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+
 import {
     BurnAndReleaseTransaction,
     getRenNetworkDetails,
@@ -21,7 +23,6 @@ import {
     sleep,
     toURLBase64,
 } from "@renproject/utils";
-import BigNumber from "bignumber.js";
 
 import { AbstractRenVMProvider } from "../abstract";
 import {
@@ -553,7 +554,10 @@ export class RenVMProvider
         }
 
         const { gasLimit, gasCap } = blockState[asset];
-        const fee = new BigNumber(gasLimit).times(new BigNumber(gasCap));
+        const fee = new BigNumber(gasLimit)
+            .times(new BigNumber(gasCap))
+            // Temporary work-around.
+            .shiftedBy(asset === "LUNA" ? -5 : 0);
 
         const mintAndBurnFees = blockState[asset].fees.chains.filter(
             (chainFees) => chainFees.chain === hostChain.name,

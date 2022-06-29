@@ -150,12 +150,8 @@ export interface ChainCommon {
 }
 
 export interface DepositChain<
-    FromPayload extends { chain: string; txConfig?: any } = {
-        chain: string;
-    },
-    ToPayload extends { chain: string; txConfig?: any } = {
-        chain: string;
-    },
+    FromPayload extends { chain: string; txConfig?: any } = any,
+    ToPayload extends { chain: string; txConfig?: any } = any,
 > extends ChainCommon {
     /** Return true if the asset originates from the chain. */
     isLockAsset: (asset: string) => SyncOrPromise<boolean>;

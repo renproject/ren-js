@@ -455,25 +455,27 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("DAI/fromBSCtoFantom", async () => {
+    it("BTC/fromEthereum", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.DAI;
-        const bsc = initializeChain(BinanceSmartChain, network);
-        const fantom = initializeChain(Fantom, network);
+        const asset = Bitcoin.assets.BTC;
+        const from = initializeChain(Ethereum, network);
+        const to = initializeChain(Solana, network);
 
-        const renJS = new RenJS(network).withChains(bsc, fantom);
+        const renJS = new RenJS(network).withChains(from, to);
 
         const gatewayParams: GatewayParams = {
             asset,
-            from: bsc.Account({ amount: 0.5, convertUnit: true }),
-            to: fantom.Account(),
+            from: from.Account({ amount: 1, convertUnit: true }),
+            to: to.Account(),
         };
+
+        const _fees = await renJS.getFees(gatewayParams);
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it.only("DAI/toBinanceSmartChain", async () => {
+    it("DAI/toBinanceSmartChain", async () => {
         const network = RenNetwork.Testnet;
 
         const asset = Ethereum.assets.DAI;

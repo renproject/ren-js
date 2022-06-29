@@ -117,7 +117,7 @@ export enum Chain {
     Filecoin = "Filecoin",
     Goerli = "Goerli",
     Polygon = "Polygon",
-    RenChain = "RenChain",
+    Catalog = "Catalog",
     Solana = "Solana",
     Terra = "Terra",
     Zcash = "Zcash",

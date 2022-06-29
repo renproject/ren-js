@@ -96,8 +96,11 @@ export const estimateTransactionFee = async (
         dustAmount,
     } = blockState[asset];
 
+    // For burning, use the fees for the origin chain. For other txs, use
+    // the fees for the target chain.
+    const feesChain = isBurnAndRelease ? fromChain.chain : toChain.chain;
     const mintAndBurnFees = blockState[asset].fees.chains.filter(
-        (chainFees) => chainFees.chain === toChain.chain,
+        (chainFees) => chainFees.chain === feesChain,
     )[0];
 
     // No other way of getting proper decimals for burn-and-mints.
@@ -150,15 +153,14 @@ export const estimateTransactionFee = async (
             | BigNumber
             | string
             | number
-            | { amount: string; convertUnit?: boolean },
+            | { amount: BigNumber | string | number; convertUnit?: boolean },
     ): BigNumber => {
-        const amount = BigNumber.isBigNumber(input)
-            ? input
-            : typeof input === "string"
-            ? input
-            : typeof input === "number"
-            ? input
-            : input.amount;
+        const amount =
+            BigNumber.isBigNumber(input) ||
+            typeof input === "string" ||
+            typeof input === "number"
+                ? input
+                : input.amount;
         const convertUnit =
             typeof input === "object" && !BigNumber.isBigNumber(input)
                 ? input.convertUnit || false

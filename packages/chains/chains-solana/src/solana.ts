@@ -254,7 +254,7 @@ export class Solana
     };
 
     public addressToBytes = (address: string): Uint8Array => {
-        throw base58.decode(address);
+        return base58.decode(address);
     };
 
     public addressFromBytes = (bytes: Uint8Array): string => {

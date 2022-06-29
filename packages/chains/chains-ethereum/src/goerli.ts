@@ -35,10 +35,10 @@ const configMap: EthereumBaseChain["configMap"] = {
 
 export class Goerli extends EthereumBaseChain {
     // Static members.
-    public static chain = "Goerli";
+    public static chain = "Goerli" as const;
     public static configMap = configMap;
     public static assets = {
-        gETH: "gETH",
+        gETH: "gETH" as const,
     };
 
     public configMap = configMap;

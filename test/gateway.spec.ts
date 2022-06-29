@@ -55,25 +55,25 @@ describe("Gateway", () => {
     //     console.info(burnLogs[0]);
     // });
 
-    it("recover", async () => {
-        const network = RenNetwork.Mainnet;
-        const asset = Terra.assets.LUNA;
-        const from = initializeChain(Polygon, network);
-        const to = initializeChain(Terra, network, {
-            preserveAddressFormat: true,
-        });
-        const renJS = new RenJS(network).withChains(from, to);
+    // it("recover", async () => {
+    //     const network = RenNetwork.Mainnet;
+    //     const asset = Terra.assets.LUNA;
+    //     const from = initializeChain(Polygon, network);
+    //     const to = initializeChain(Terra, network, {
+    //         preserveAddressFormat: true,
+    //     });
+    //     const renJS = new RenJS(network).withChains(from, to);
 
-        const gatewayParams: GatewayParams = {
-            asset,
-            from: from.Transaction({
-                txHash: "0x112e09e083ca35a084799736d949e30271965000a6903565a6408857afee9cad",
-            }),
-            to: to.Address("terra1dqfxvrt23pftru924w0mxjv3vnjzzf35mp7g24"),
-        };
+    //     const gatewayParams: GatewayParams = {
+    //         asset,
+    //         from: from.Transaction({
+    //             txHash: "0x112e09e083ca35a084799736d949e30271965000a6903565a6408857afee9cad",
+    //         }),
+    //         to: to.Address("terra1dqfxvrt23pftru924w0mxjv3vnjzzf35mp7g24"),
+    //     };
 
-        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
-    }).timeout(100000000000);
+    //     await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    // }).timeout(100000000000);
 
     // it("Get fees", async () => {
     //     const network = RenNetwork.Testnet;

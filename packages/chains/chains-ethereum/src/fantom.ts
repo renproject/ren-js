@@ -55,11 +55,11 @@ const configMap: EthereumBaseChain["configMap"] = {
 };
 
 export class Fantom extends EthereumBaseChain {
-    // Static fields.
-    public static chain = "Fantom";
+    // Static members.
+    public static chain = "Fantom" as const;
     public static configMap = configMap;
     public static assets = {
-        FTM: "FTM",
+        FTM: "FTM" as const,
     };
 
     public configMap = Fantom.configMap;

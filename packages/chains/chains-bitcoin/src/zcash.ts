@@ -59,7 +59,7 @@ const ZcashTestnet: BitcoinNetworkConfig = {
 };
 
 export class Zcash extends BitcoinBaseChain {
-    public static chain = "Zcash";
+    public static chain = "Zcash" as const;
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: ZcashMainnet,
         [RenNetwork.Testnet]: ZcashTestnet,

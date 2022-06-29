@@ -65,26 +65,26 @@ const configMap: EthereumBaseChain["configMap"] = {
  * The Ethereum RenJS implementation.
  */
 export class Ethereum extends EthereumBaseChain {
-    // Static fields.
+    // Static members.
     public static chain = "Ethereum" as const;
     public static configMap = configMap;
     public static assets = {
-        ETH: "ETH",
-        DAI: "DAI",
-        REN: "REN",
-        USDC: "USDC",
-        USDT: "USDT",
-        EURT: "EURT",
-        BUSD: "BUSD",
-        MIM: "MIM",
-        CRV: "CRV",
-        LINK: "LINK",
-        UNI: "UNI",
-        SUSHI: "SUSHI",
-        FTT: "FTT",
-        ROOK: "ROOK",
-        BADGER: "BADGER",
-        KNC: "KNC",
+        ETH: "ETH" as const,
+        DAI: "DAI" as const,
+        REN: "REN" as const,
+        USDC: "USDC" as const,
+        USDT: "USDT" as const,
+        EURT: "EURT" as const,
+        BUSD: "BUSD" as const,
+        MIM: "MIM" as const,
+        CRV: "CRV" as const,
+        LINK: "LINK" as const,
+        UNI: "UNI" as const,
+        SUSHI: "SUSHI" as const,
+        FTT: "FTT" as const,
+        ROOK: "ROOK" as const,
+        BADGER: "BADGER" as const,
+        KNC: "KNC" as const,
     };
 
     public configMap = Ethereum.configMap;

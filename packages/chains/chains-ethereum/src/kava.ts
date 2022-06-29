@@ -56,10 +56,10 @@ const configMap: EthereumBaseChain["configMap"] = {
 
 export class Kava extends EthereumBaseChain {
     // Static members.
-    public static chain = "Kava";
+    public static chain = "Kava" as const;
     public static configMap = configMap;
     public static assets = {
-        KAVA: "KAVA",
+        KAVA: "KAVA" as const,
     };
 
     public configMap = configMap;

@@ -60,11 +60,11 @@ const configMap: EthereumBaseChain["configMap"] = {
  * Avalanche/AVAX configuration.
  */
 export class Avalanche extends EthereumBaseChain {
-    // Static memebers.
-    public static chain = "Avalanche";
+    // Static members.
+    public static chain = "Avalanche" as const;
     public static configMap = configMap;
     public static assets = {
-        AVAX: "AVAX",
+        AVAX: "AVAX" as const,
     };
 
     public configMap = configMap;

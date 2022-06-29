@@ -49,7 +49,8 @@ const configMap: EthereumBaseChain["configMap"] = {
  * Catalog configuration.
  */
 export class Catalog extends EthereumBaseChain {
-    public static chain = "Catalog";
+    // Static members.
+    public static chain = "Catalog" as const;
     public static configMap = configMap;
     public static assets = {};
 

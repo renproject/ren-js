@@ -65,10 +65,10 @@ const configMap: EthereumBaseChain["configMap"] = {
 
 export class Polygon extends EthereumBaseChain {
     // Static members.
-    public static chain = "Polygon";
+    public static chain = "Polygon" as const;
     public static configMap = configMap;
     public static assets = {
-        MATIC: "MATIC",
+        MATIC: "MATIC" as const,
     };
 
     public configMap = configMap;

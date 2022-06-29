@@ -87,7 +87,7 @@ import {
 export class EthereumBaseChain
     implements ContractChain<EVMPayloadInterface, EVMPayloadInterface>
 {
-    public static chain = "Ethereum";
+    public static chain: string;
     public chain: string;
 
     public assets: { [asset: string]: string } = {};

@@ -64,11 +64,11 @@ const configMap: EthereumBaseChain["configMap"] = {
  * Arbitrum/arbETH configuration.
  */
 export class Arbitrum extends EthereumBaseChain {
-    // Static memebers.
-    public static chain = "Arbitrum";
+    // Static members.
+    public static chain = "Arbitrum" as const;
     public static configMap = configMap;
     public static assets = {
-        ArbETH: "ArbETH",
+        ArbETH: "ArbETH" as const,
     };
 
     public configMap = configMap;

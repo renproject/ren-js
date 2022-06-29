@@ -65,7 +65,7 @@ const BitcoinCashTestnet: BitcoinNetworkConfig = {
 };
 
 export class BitcoinCash extends BitcoinBaseChain {
-    public static chain = "BitcoinCash";
+    public static chain = "BitcoinCash" as const;
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: BitcoinCashMainnet,
         [RenNetwork.Testnet]: BitcoinCashTestnet,

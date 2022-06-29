@@ -124,7 +124,7 @@ export interface FilecoinOutputPayload {
 export class Filecoin
     implements DepositChain<FilecoinInputPayload, FilecoinOutputPayload>
 {
-    public static chain = "Filecoin";
+    public static chain = "Filecoin" as const;
     public chain: string;
     public static assets = {
         FIL: "FIL",

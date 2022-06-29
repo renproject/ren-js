@@ -92,10 +92,11 @@ const configMap: EthereumBaseChain["configMap"] = {
 };
 
 export class BinanceSmartChain extends EthereumBaseChain {
-    public static chain = "BinanceSmartChain";
+    // Static members.
+    public static chain = "BinanceSmartChain" as const;
     public static configMap = configMap;
     public static assets = {
-        BNB: "BNB",
+        BNB: "BNB" as const,
     };
 
     public assets = BinanceSmartChain.assets;

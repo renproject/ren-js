@@ -50,7 +50,7 @@ const DogecoinTestnet: BitcoinNetworkConfig = {
 };
 
 export class Dogecoin extends BitcoinBaseChain {
-    public static chain = "Dogecoin";
+    public static chain = "Dogecoin" as const;
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: DogecoinMainnet,
         [RenNetwork.Testnet]: DogecoinTestnet,

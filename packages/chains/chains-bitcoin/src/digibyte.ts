@@ -59,7 +59,7 @@ const DigiByteTestnet: BitcoinNetworkConfig = {
 };
 
 export class DigiByte extends BitcoinBaseChain {
-    public static chain = "DigiByte";
+    public static chain = "DigiByte" as const;
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: DigiByteMainnet,
         [RenNetwork.Testnet]: DigiByteTestnet,

@@ -70,7 +70,7 @@ const BitcoinTestnet: BitcoinNetworkConfig = {
  * The Bitcoin class adds support for the asset BTC.
  */
 export class Bitcoin extends BitcoinBaseChain {
-    public static chain = "Bitcoin";
+    public static chain = "Bitcoin" as const;
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: BitcoinMainnet,
         [RenNetwork.Testnet]: BitcoinTestnet,

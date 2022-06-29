@@ -87,9 +87,8 @@ export interface TerraOutputPayload {
 export class Terra
     implements DepositChain<TerraInputPayload, TerraOutputPayload>
 {
-    public static chain = "Terra";
-    public chain = Terra.chain;
-    public name = Terra.chain;
+    public static chain = "Terra" as const;
+    public chain: string;
 
     public static configMap = TerraConfigMap;
     public configMap = TerraConfigMap;
@@ -285,7 +284,7 @@ export class Terra
         transaction: ChainTransaction,
     ): Promise<BigNumber> => {
         if (!this.network) {
-            throw new Error(`${this.name} object not initialized.`);
+            throw new Error(`${this.chain} object not initialized.`);
         }
         return await this.api.fetchConfirmations(transaction.txHash);
     };

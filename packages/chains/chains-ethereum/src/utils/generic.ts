@@ -1,3 +1,4 @@
+import { JsonFragmentType, ParamType } from "@ethersproject/abi";
 import { Provider } from "@ethersproject/providers";
 import {
     ChainTransaction,
@@ -8,7 +9,7 @@ import {
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
-import { defaultAbiCoder, ParamType } from "ethers/lib/utils";
+import { defaultAbiCoder } from "ethers/lib/utils";
 
 import {
     findABIMethod,
@@ -521,10 +522,32 @@ export const validateTransaction = (
     );
 };
 
+const tupleRegEx = /^tuple\((.*)\)$/;
 export const rawEncode = (
-    types: Array<string | ParamType>,
+    types: Array<string | JsonFragmentType>,
     parameters: unknown[],
-): Uint8Array => utils.fromHex(defaultAbiCoder.encode(types, parameters));
+): Uint8Array => {
+    return utils.fromHex(
+        defaultAbiCoder.encode(
+            types.map((type) => {
+                // If a tuple has no components, set them.
+                if (typeof type === "object" && !type.components) {
+                    const match = tupleRegEx.exec(type.type || "");
+                    if (match) {
+                        type = {
+                            ...type,
+                            components: match[1].split(",").map((value) => ({
+                                type: value,
+                            })),
+                        };
+                    }
+                }
+                return ParamType.from(type);
+            }),
+            parameters,
+        ),
+    );
+};
 
 export const isEVMNetworkConfig = (
     renNetwork: EVMNetworkInput,
@@ -597,14 +620,14 @@ export const resolveRpcEndpoints = (
     protocol: RegExp | string = "https",
 ): string[] => {
     return (
-        urls
-            .sort((a) =>
+        [...urls]
+            .sort((_, b) =>
                 ((variables || {}).INFURA_API_KEY &&
-                    a.includes("${INFURA_API_KEY}")) ||
+                    b.includes("${INFURA_API_KEY}")) ||
                 ((variables || {}).ALCHEMY_API_KEY &&
-                    a.includes("${ALCHEMY_API_KEY}"))
-                    ? -1
-                    : 1,
+                    b.includes("${ALCHEMY_API_KEY}"))
+                    ? 1
+                    : -1,
             )
             // Replace variable keys surround by "${...}" with variable values.
             // If a variable's value is undefined, it is not replaced.
@@ -613,7 +636,7 @@ export const resolveRpcEndpoints = (
                     (urlAcc, variableKey) =>
                         urlAcc.replace(
                             `\${${variableKey}}`,
-                            utils.isDefined((variables || {})[variableKey])
+                            (variables || {})[variableKey]
                                 ? String((variables || {})[variableKey])
                                 : `\${${variableKey}}`,
                         ),

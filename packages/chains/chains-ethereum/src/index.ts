@@ -10,4 +10,4 @@ export * from "./goerli";
 export * from "./polygon";
 export * from "./bsc";
 export * from "./ethereum";
-export * from "./renchain";
+export * from "./catalog";

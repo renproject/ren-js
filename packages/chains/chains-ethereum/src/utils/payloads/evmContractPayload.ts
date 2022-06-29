@@ -1,3 +1,4 @@
+import { JsonFragmentType } from "@ethersproject/abi";
 import { ErrorWithCode, RenJSError, utils } from "@renproject/utils";
 import {
     Contract,
@@ -5,7 +6,6 @@ import {
     PopulatedTransaction,
     Signer,
 } from "ethers";
-import { ParamType } from "ethers/lib/utils";
 
 import { EthArg, payloadToABI } from "../abi";
 import { fixEVMTransactionConfig } from "../evmTxSubmitter";
@@ -98,8 +98,8 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
             );
         }
 
-        const types: ParamType[] = args.map(
-            ({ value: _, ...params }) => params as ParamType,
+        const types: JsonFragmentType[] = args.map(
+            ({ value: _, ...params }) => params as JsonFragmentType,
         );
         const values = args.map((param): unknown => param.value);
 
@@ -158,8 +158,8 @@ export const contractPayloadHandler: PayloadHandler<EVMContractPayload> = {
                   }
                 : x,
         );
-        const paramTypes: ParamType[] = params.map(
-            ({ value: _value, ...paramABI }) => paramABI as ParamType,
+        const paramTypes: JsonFragmentType[] = params.map(
+            ({ value: _value, ...paramABI }) => paramABI as JsonFragmentType,
         );
         const paramValues = params.map((x) => x.value);
 

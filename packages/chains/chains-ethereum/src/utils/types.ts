@@ -80,29 +80,23 @@ export interface EVMNetworkConfig {
     config: EIP3085Config;
 }
 
-export const populateEVMNetwork = (
-    config: Omit<EVMNetworkConfig, "network">,
-): EVMNetworkConfig => ({
-    ...config,
-});
-
 export type EVMNetworkInput = RenNetwork | RenNetworkString | EVMNetworkConfig;
 export type EvmNetworkInput = EVMNetworkInput;
 
 export type EthProvider =
     | string
     | {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          sendAsync?: (request: any, callback: any) => any;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          send?: (request: any, callback: any) => any;
-          request?: (request: {
-              method: string;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              params?: any[];
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          }) => Promise<any>;
-      }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sendAsync?: (request: any, callback: any) => any;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        send?: (request: any, callback: any) => any;
+        request?: (request: {
+            method: string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            params?: any[];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }) => Promise<any>;
+    }
     | ExternalProvider
     | JsonRpcFetchFunc
     | Provider;

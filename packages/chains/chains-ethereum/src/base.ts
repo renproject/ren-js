@@ -57,6 +57,7 @@ import {
     mapBurnToChainLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
+    resolveEVMNetworkConfig,
     txHashFromBytes,
     txHashToBytes,
     txHashToChainTransaction,
@@ -79,6 +80,7 @@ import {
     EthSigner,
     EVMExplorer,
     EVMNetworkConfig,
+    EVMNetworkInput,
     StandardEVMExplorer,
 } from "./utils/types";
 
@@ -111,12 +113,12 @@ export class EthereumBaseChain
         signer,
         config,
     }: {
-        network: EVMNetworkConfig;
+        network: EVMNetworkInput;
         provider: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
-        this.network = network;
+        this.network = resolveEVMNetworkConfig(this.configMap, network);
         this.chain = this.network.selector;
         this.explorer = StandardEVMExplorer(
             this.network.config.blockExplorerUrls[0],

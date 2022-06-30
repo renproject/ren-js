@@ -15,9 +15,7 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainId: "0x504",
             chainName: "Moonbeam",
             nativeCurrency: { name: "Glimmer", symbol: "GLMR", decimals: 18 },
-            rpcUrls: [
-                "https://rpc.api.moonbeam.network",
-            ],
+            rpcUrls: ["https://rpc.api.moonbeam.network"],
             blockExplorerUrls: ["https://moonbeam.moonscan.io"],
         },
 

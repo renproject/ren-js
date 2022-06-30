@@ -20,7 +20,7 @@
     "module": "./build/module/index.js",
     "scripts": {
         "clean": "yarn rimraf ./build ./node_modules",
-        "link": "yarn prepublishOnly && cd build && yarn link",
+        "link": "yarn build:link && cd build && yarn link",
         "unlink": "yarn unlink",
         "build": "run-s build:*",
         "build:main": "tsc -p tsconfig.json",

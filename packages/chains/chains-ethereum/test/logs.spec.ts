@@ -1,12 +1,11 @@
 /* eslint-disable no-console */
 
+import { RenNetwork } from "@renproject/utils";
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 import { providers } from "ethers";
 
-import { RenNetwork } from "@renproject/utils";
-
-import { BinanceSmartChain } from "../build/main";
+import { BinanceSmartChain } from "../src";
 import { findABIMethod, LockGatewayABI } from "../src/contracts";
 import { LogLockToChainEvent } from "../src/contracts/typechain/LockGatewayV3";
 import { Ethereum } from "../src/ethereum";
@@ -37,7 +36,9 @@ describe("Logs", () => {
         const lockDetails = filterLogs<LogLockToChainEvent>(
             receipt.logs,
             logLockABI,
-        ).map((e) => mapLockLogToInputChainTransaction("Ethereun", "BTC", e));
+        ).map((e) =>
+            mapLockLogToInputChainTransaction("Ethereun", "BTC", e, ""),
+        );
         console.debug(lockDetails);
     });
 

@@ -10,6 +10,7 @@ import {
     BitcoinCash,
     Dogecoin,
     Ethereum,
+    EVMNetworkConfig,
     Zcash,
 } from "../src";
 
@@ -46,7 +47,7 @@ const addresses = {
     },
 };
 
-describe("Chain utils", () => {
+describe("BTC chain utils", () => {
     for (const ChainClass of [Bitcoin, Zcash, BitcoinCash, Dogecoin]) {
         for (const network of [RenNetwork.Mainnet, RenNetwork.Testnet]) {
             it(ChainClass.chain, () => {
@@ -87,10 +88,12 @@ describe("Chain utils", () => {
     ]) {
         for (const network of [RenNetwork.Mainnet, RenNetwork.Testnet]) {
             it(ChainClass.chain, () => {
-                const provider = (ChainClass.configMap[network] as any).network
+                const provider = (
+                    ChainClass.configMap[network] as EVMNetworkConfig
+                ).config
                     ? new providers.JsonRpcProvider(
                           (
-                              ChainClass.configMap["testnet"] as any
+                              ChainClass.configMap[network] as EVMNetworkConfig
                           ).config.rpcUrls[0],
                       )
                     : undefined;

@@ -3,6 +3,7 @@
 import { Buffer } from "buffer";
 
 import { EthProvider, EVMNetworkConfig } from "@renproject/chains-ethereum/src";
+import { resolveRpcEndpoints } from "@renproject/chains-ethereum/src/utils/generic";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chalk from "chalk";
@@ -65,22 +66,13 @@ export const getEVMProvider = <EVM>(
     provider: EthProvider;
     signer: EthSigner;
 } => {
-    const urls = ChainClass.configMap[network].config.rpcUrls;
-    let rpcUrl = urls[0];
-    if (process.env.INFURA_KEY) {
-        const infuraRegEx = /^https:\/\/.*\$\{INFURA_API_KEY\}/;
-        for (const url of urls) {
-            if (infuraRegEx.exec(url)) {
-                rpcUrl = url.replace(
-                    /\$\{INFURA_API_KEY\}/,
-                    process.env.INFURA_KEY,
-                );
-                break;
-            }
-        }
-    }
-
-    const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+    const urls = resolveRpcEndpoints(
+        ChainClass.configMap[network].config.rpcUrls,
+        {
+            INFURA_KEY: process.env.INFURA_KEY,
+        },
+    );
+    const provider = new ethers.providers.JsonRpcProvider(urls[0]);
     const signer = Wallet.fromMnemonic(
         MNEMONIC,
         `m/44'/60'/0'/0/${index}`,

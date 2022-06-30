@@ -620,15 +620,10 @@ export const resolveRpcEndpoints = (
     protocol: RegExp | string = "https",
 ): string[] => {
     return (
-        [...urls]
-            .sort((_, b) =>
-                ((variables || {}).INFURA_API_KEY &&
-                    b.includes("${INFURA_API_KEY}")) ||
-                ((variables || {}).ALCHEMY_API_KEY &&
-                    b.includes("${ALCHEMY_API_KEY}"))
-                    ? 1
-                    : -1,
-            )
+        [
+            ...urls.filter((url) => url.includes("${")),
+            ...urls.filter((url) => !url.includes("${")),
+        ]
             // Replace variable keys surround by "${...}" with variable values.
             // If a variable's value is undefined, it is not replaced.
             .map((url) =>

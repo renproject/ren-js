@@ -11,3 +11,6 @@ export * from "./polygon";
 export * from "./bsc";
 export * from "./ethereum";
 export * from "./catalog";
+export * from "./kava";
+export * from "./moonbeam";
+export * from "./optimism";

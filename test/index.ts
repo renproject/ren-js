@@ -4,7 +4,7 @@ import { AbiCoder } from "ethers/lib/utils";
 import { Ethereum } from "packages/chains/chains-ethereum/src";
 import { BinanceSmartChain } from "packages/chains/chains/src";
 import RenJS from "packages/ren/src";
-import { RenNetwork } from "packages/utils/build/main";
+import { RenNetwork } from "packages/utils";
 
 import { getEVMProvider } from "./utils/testUtils";
 

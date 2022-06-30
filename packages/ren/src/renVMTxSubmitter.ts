@@ -6,7 +6,7 @@ import {
     RenVMTransactionWithStatus,
     TransactionInput,
 } from "@renproject/provider";
-import { renExplorerUrls } from "@renproject/provider/build/main/rpcUrls";
+import { renExplorerUrls } from "@renproject/provider/rpcUrls";
 import {
     ChainTransactionProgress,
     ChainTransactionStatus,

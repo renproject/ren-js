@@ -1,6 +1,5 @@
+import { RPCMethod } from "@renproject/provider/methods";
 import { expect } from "chai";
-
-import { RPCMethod } from "@renproject/provider/build/main/methods";
 
 import { MockChain, MockProvider } from "../src";
 

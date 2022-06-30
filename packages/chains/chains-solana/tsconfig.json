@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "es2017",
-        "outDir": "build/main",
+        "outDir": "build",
         "downlevelIteration": true,
         "rootDir": "src",
         "moduleResolution": "node",

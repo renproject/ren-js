@@ -7,7 +7,8 @@
         "url": "git+https://github.com/renproject/ren-js.git"
     },
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "directory": "build"
     },
     "keywords": [
         "RenVM",
@@ -25,18 +26,18 @@
     "bugs": {
         "url": "https://github.com/renproject/ren-js/issues"
     },
-    "main": "./build/main/index.js",
-    "typings": "./build/main/index.d.ts",
+    "main": "./build/index.js",
+    "typings": "./build/index.d.ts",
     "module": "./build/module/index.js",
     "scripts": {
-        "describe": "npm-scripts-info",
         "clean": "yarn rimraf ./build ./node_modules",
-        "link": "yarn link",
+        "link": "yarn prepublishOnly && cd build && yarn link",
         "unlink": "yarn unlink",
-        "build": "yarn build:main && yarn build:module",
+        "build": "run-s build:*",
         "build:main": "tsc -p tsconfig.json",
         "build:module": "tsc -p tsconfig.module.json",
-        "build:bundled": "cross-env NODE_ENV=production webpack --config ../../webpack.config.js --mode production --progress --color",
+        "build:link": "cp package.json build && cp README.md build && sed -i '' 's/\\/build\\//\\//' ./build/package.json",
+        "_build:bundled": "cross-env NODE_ENV=production webpack --config ../../webpack.config.js --mode production --progress --color",
         "prettier": "yarn fix:prettier",
         "lint": "run-s lint:*",
         "lint:eslint": "eslint --config ../../.eslintrc.js src",
@@ -52,10 +53,7 @@
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 0 --functions 0 --branches 0",
-        "prepare": "yarn build",
-        "npmignore": "npmignore -g ../../.gitignore",
-        "prepare-release-old": "run-s npmignore build doc:html doc:publish",
-        "prepare-release": "run-s npmignore build"
+        "prepare": "yarn build"
     },
     "dependencies": {
         "@renproject/provider": "^3.2.0",
@@ -82,5 +80,6 @@
         "trailingComma": "all",
         "endOfLine": "lf",
         "arrowParens": "always"
-    }
+    },
+    "gitHead": "2a9cd41d873132ad4230da6257dbb5f0a33994fb"
 }

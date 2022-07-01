@@ -2,7 +2,7 @@ export * from "@renproject/chains-bitcoin";
 export * from "@renproject/chains-ethereum";
 export * from "@renproject/chains-filecoin";
 export * from "@renproject/chains-terra";
-// export * from "@renproject/chains-solana";
+export * from "@renproject/chains-solana";
 
 import {
     Bitcoin,
@@ -27,30 +27,6 @@ import {
 import { Filecoin } from "@renproject/chains-filecoin";
 import { Solana } from "@renproject/chains-solana";
 import { Terra } from "@renproject/chains-terra";
-
-export {
-    Arbitrum,
-    Avalanche,
-    BinanceSmartChain,
-    Catalog,
-    Ethereum,
-    Fantom,
-    Goerli,
-    Kava,
-    Moonbeam,
-    Optimism,
-    Polygon,
-} from "@renproject/chains-ethereum";
-export {
-    Bitcoin,
-    BitcoinCash,
-    DigiByte,
-    Dogecoin,
-    Zcash,
-} from "@renproject/chains-bitcoin";
-export { Filecoin } from "@renproject/chains-filecoin";
-export { Solana } from "@renproject/chains-solana";
-export { Terra } from "@renproject/chains-terra";
 
 export const chains = {
     Arbitrum,
@@ -99,6 +75,7 @@ export enum Asset {
     LUNA = "LUNA",
     MATIC = "MATIC",
     MIM = "MIM",
+    oETH = "oETH",
     REN = "REN",
     ROOK = "ROOK",
     SOL = "SOL",

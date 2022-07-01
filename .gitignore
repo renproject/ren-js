@@ -1,18 +1,24 @@
+# Any file in src or build will get pushed to npm
+!src
+build
+
+# Environment variables/secrets
 *.env
-.cache
+
+# Typedoc output
 docs
 
+# NPM/Yarn files
 node_modules
-
+package-lock.json
+.npmrc
+.yarnrc
+.yarn
 lerna-debug.log
 yarn-error.log
-
-.yarn
 .cache
-/.project
-/.settings/
 
-# Logs
+# Misc. logs
 *.log
 
 # Coverage
@@ -20,25 +26,10 @@ yarn-error.log
 coverage
 reports
 
-# IDE specific
+# IDE/OS specific
 .vscode
 .idea
 .dir-locals.el
-
+.editorconfig
 .DS_Store
 
-typedoc/
-
-*.env
-
-build
-misc
-dist
-
-package-lock.json
-.npmrc
-.yarnrc
-.yarn/
-
-# FIXME: settle on cannonical and use
-.editorconfig

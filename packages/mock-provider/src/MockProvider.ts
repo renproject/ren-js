@@ -12,13 +12,13 @@ import {
     RPCParams,
     RPCResponses,
     TransactionInput,
-} from "@renproject/provider/build/main/methods";
+} from "@renproject/provider/methods";
 import {
     BlockState,
     ParamsQueryBlockState,
     ResponseQueryBlockState,
-} from "@renproject/provider/build/main/methods/ren_queryBlockState";
-import { Provider } from "@renproject/provider/build/main/rpc/jsonRpc";
+} from "@renproject/provider/methods/ren_queryBlockState";
+import { Provider } from "@renproject/provider/rpc/jsonRpc";
 import {
     Chain,
     decodeRenVMSelector,

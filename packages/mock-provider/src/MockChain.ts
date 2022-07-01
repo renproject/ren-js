@@ -3,7 +3,7 @@ import {
     BitcoinInputPayload,
     BitcoinOutputPayload,
 } from "@renproject/chains-bitcoin";
-import { UTXO } from "@renproject/chains-bitcoin/build/main/APIs/API";
+import { UTXO } from "@renproject/chains-bitcoin/APIs/API";
 import { DepositChain, utils } from "@renproject/utils";
 import BigNumber from "bignumber.js";
 

@@ -4,7 +4,8 @@
     "scripts": {
         "link-packages": "yarn lerna link --contents build",
         "clean": "lerna run clean --scope @renproject/* && yarn rimraf ./node_modules && yarn && yarn link-packages && yarn build",
-        "build": "build() { yarn link-packages --loglevel=error && lerna run build --scope \"@renproject/${@:-\"*\"}\"; }; build",
+        "build": "yarn link-packages --loglevel=error && lerna run build --scope \"@renproject/${@:-\"*\"}\"",
+        "build-package": "build() { yarn link-packages --loglevel=error && lerna run build --scope \"@renproject/${@:-\"*\"}\"; }; build",
         "watch": "yarn build && lerna run watch --parallel --scope @renproject/*",
         "lint": "lerna run lint --scope @renproject/*",
         "fix": "lerna run fix --scope @renproject/*",

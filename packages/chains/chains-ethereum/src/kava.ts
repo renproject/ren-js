@@ -13,13 +13,15 @@ const configMap: EthereumBaseChain["configMap"] = {
 
         config: {
             chainId: "0x8ad",
-            chainName: "Kava EVM Testnet",
+            chainName: "Kava EVM",
             nativeCurrency: { name: "Kava", symbol: "KAVA", decimals: 18 },
             rpcUrls: [
-                "https://evm.evm-alpha.kava.io",
-                "wss://evm-ws.evm-alpha.kava.io",
+                "https://evm.kava.io",
+                "https://evm2.kava.io",
+                "wss://wevm.kava.io",
+                "wss://wevm2.kava.io",
             ],
-            blockExplorerUrls: ["https://explorer.evm-alpha.kava.io"],
+            blockExplorerUrls: ["https://explorer.kava.io"],
         },
 
         addresses: {

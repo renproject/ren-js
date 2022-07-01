@@ -16,4 +16,7 @@ export * from "./catalog";
 export * from "./ethereum";
 export * from "./fantom";
 export * from "./goerli";
+export * from "./kava";
+export * from "./moonbeam";
+export * from "./optimism";
 export * from "./polygon";

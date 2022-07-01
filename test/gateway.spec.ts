@@ -437,19 +437,19 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("DAI/fromBinanceSmartChain", async () => {
+    it.only("DAI/fromBinanceSmartChain", async () => {
         const network = RenNetwork.Testnet;
 
         const asset = Ethereum.assets.DAI;
-        const ethereum = initializeChain(Ethereum, network);
-        const bsc = initializeChain(BinanceSmartChain, network);
+        const to = initializeChain(Ethereum, network);
+        const from = initializeChain(BinanceSmartChain, network);
 
-        const renJS = new RenJS(network).withChains(bsc, ethereum);
+        const renJS = new RenJS(network).withChains(from, to);
 
         const gatewayParams = {
             asset,
-            from: bsc.Account({ amount: 0.5, convertUnit: true }),
-            to: ethereum.Account(),
+            from: from.Account({ amount: 0.5, convertUnit: true }),
+            to: to.Address("0x797522fb74d42bb9fbf6b76dea24d01a538d5d66"),
         };
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));

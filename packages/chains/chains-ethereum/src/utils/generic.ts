@@ -618,39 +618,34 @@ export const resolveRpcEndpoints = (
         ALCHEMY_API_KEY?: string;
     } & { [variableKey: string]: string | undefined },
     protocol: RegExp | string = "https",
-): string[] => {
-    return (
-        [
-            ...urls.filter((url) => url.includes("${")),
-            ...urls.filter((url) => !url.includes("${")),
-        ]
-            // Replace variable keys surround by "${...}" with variable values.
-            // If a variable's value is undefined, it is not replaced.
-            .map((url) =>
-                Object.keys(variables || {}).reduce(
-                    (urlAcc, variableKey) =>
-                        urlAcc.replace(
-                            `\${${variableKey}}`,
-                            (variables || {})[variableKey]
-                                ? String((variables || {})[variableKey])
-                                : `\${${variableKey}}`,
-                        ),
-                    url,
-                ),
-            )
-            // Match only endpoints that don't include any left-over "${"s,
-            // and that have the right protocol.
-            .filter(
-                (url) =>
-                    url.match(/^[^(${)]*$/) &&
-                    url.match(
-                        typeof protocol === "string"
-                            ? "^" + protocol
-                            : protocol,
+): string[] =>
+    [
+        ...urls.filter((url) => url.includes("${")),
+        ...urls.filter((url) => !url.includes("${")),
+    ]
+        // Replace variable keys surround by "${...}" with variable values.
+        // If a variable's value is undefined, it is not replaced.
+        .map((url) =>
+            Object.keys(variables || {}).reduce(
+                (urlAcc, variableKey) =>
+                    urlAcc.replace(
+                        `\${${variableKey}}`,
+                        (variables || {})[variableKey]
+                            ? String((variables || {})[variableKey])
+                            : `\${${variableKey}}`,
                     ),
-            )
-    );
-};
+                url,
+            ),
+        )
+        // Match only endpoints that don't include any left-over "${"s,
+        // and that have the right protocol.
+        .filter(
+            (url) =>
+                url.match(/^[^(${)]*$/) &&
+                url.match(
+                    typeof protocol === "string" ? "^" + protocol : protocol,
+                ),
+        );
 
 /**
  *

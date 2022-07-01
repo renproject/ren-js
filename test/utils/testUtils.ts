@@ -69,7 +69,7 @@ export const getEVMProvider = <EVM>(
     const urls = resolveRpcEndpoints(
         ChainClass.configMap[network].config.rpcUrls,
         {
-            INFURA_KEY: process.env.INFURA_KEY,
+            INFURA_API_KEY: process.env.INFURA_KEY,
         },
     );
     const provider = new ethers.providers.JsonRpcProvider(urls[0]);

@@ -19,6 +19,9 @@ import {
     Ethereum,
     Fantom,
     Goerli,
+    Kava,
+    Moonbeam,
+    Optimism,
     Polygon,
 } from "@renproject/chains-ethereum";
 import { Filecoin } from "@renproject/chains-filecoin";

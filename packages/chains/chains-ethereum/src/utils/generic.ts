@@ -99,8 +99,8 @@ export const mapBurnToChainLogToInputChainTransaction = (
 ): InputChainTransaction => {
     const [
         recipientAddress,
-        _recipientChain,
-        _recipientPayload,
+        recipientChain,
+        recipientPayload,
         amount,
         burnNonce,
     ] = event.args;
@@ -109,6 +109,8 @@ export const mapBurnToChainLogToInputChainTransaction = (
         asset,
         amount: amount.toString(),
         toRecipient: recipientAddress,
+        toChain: recipientChain,
+        toPayload: utils.toURLBase64(utils.fromHex(recipientPayload)),
         nonce: utils.toURLBase64(utils.toNBytes(burnNonce.toString(), 32)),
     };
 };
@@ -134,10 +136,10 @@ export const mapLockLogToInputChainTransaction = (
         ...txHashToChainTransaction(chain, event.transactionHash, explorerLink),
         asset,
         amount: amount.toString(),
-        nonce: utils.toURLBase64(nonceBytes),
         toRecipient: recipientAddress,
         toChain: recipientChain,
         toPayload: utils.toURLBase64(utils.fromHex(recipientPayload)),
+        nonce: utils.toURLBase64(nonceBytes),
     };
 };
 

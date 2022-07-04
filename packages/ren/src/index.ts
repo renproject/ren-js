@@ -1,5 +1,6 @@
 import { RenVMProvider } from "@renproject/provider";
 import {
+    assertType,
     Chain,
     ErrorWithCode,
     isContractChain,
@@ -132,6 +133,7 @@ export class RenJS {
      * Return the chain handler previously added using [[withChains]].
      */
     public getChain = <T extends Chain>(name: string): T => {
+        assertType<string>("string", { name });
         if (!this.chains[name]) {
             throw ErrorWithCode.updateError(
                 new Error(

@@ -138,6 +138,7 @@ export class EthereumBaseChain
         async (asset: string): Promise<string> =>
             await getRenAsset(this.network, this.provider, asset),
     );
+    public getRenAsset = this.getMintAsset;
 
     public getMintGateway = utils.memoize(
         async (asset: string): Promise<string> =>

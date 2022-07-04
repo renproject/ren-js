@@ -130,7 +130,7 @@ export const populateChainTransaction = ({
     }
     if (partialTx.chain && partialTx.chain !== chain) {
         throw new Error(
-            `Unexpected chain (expected '${chain}', got '$partialTx.chain}').`,
+            `Unexpected chain (expected '${chain}', got '${partialTx.chain}').`,
         );
     }
     const txindex = partialTx.txindex || defaultTxindex;

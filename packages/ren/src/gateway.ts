@@ -268,15 +268,6 @@ export class Gateway<
         }
 
         if (payload) {
-            if (
-                this.outputType === OutputType.Release &&
-                payload.payload.length > 0
-            ) {
-                throw new Error(
-                    `Burning with a payload is not currently enabled.`,
-                );
-            }
-
             this._pHash = generatePHash(payload.payload);
         }
 

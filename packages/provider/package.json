@@ -1,6 +1,6 @@
 {
     "name": "@renproject/provider",
-    "version": "3.3.1",
+    "version": "3.4.1",
     "description": "Official Ren JavaScript client",
     "repository": {
         "type": "git",
@@ -43,7 +43,7 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@renproject/utils": "^3.3.1",
+        "@renproject/utils": "^3.4.1",
         "axios": "^0.27.2",
         "bignumber.js": "^9.0.2"
     },

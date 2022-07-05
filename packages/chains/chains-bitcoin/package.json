@@ -75,6 +75,5 @@
         "trailingComma": "all",
         "endOfLine": "lf",
         "arrowParens": "always"
-    },
-    "gitHead": "2a9cd41d873132ad4230da6257dbb5f0a33994fb"
+    }
 }

@@ -9,7 +9,6 @@ import chai from "chai";
 import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
 import { ethers, Wallet } from "ethers";
-import { Kava } from "packages/chains/chains-ethereum/src/kava";
 import { Solana } from "packages/chains/chains-solana/src";
 import { signerFromPrivateKey } from "packages/chains/chains-solana/src/utils";
 import { ChainCommon, RenNetwork, utils } from "packages/utils/src";
@@ -29,6 +28,9 @@ import {
     Fantom,
     Filecoin,
     Goerli,
+    Kava,
+    Moonbeam,
+    Optimism,
     Polygon,
     Terra,
     Zcash,
@@ -125,6 +127,8 @@ export const initializeChain = <T extends ChainCommon>(
         case Avalanche.chain:
         case Goerli.chain:
         case Kava.chain:
+        case Moonbeam.chain:
+        case Optimism.chain:
             return new (Chain as unknown as typeof Ethereum)({
                 network,
                 ...getEVMProvider(Chain as unknown as typeof Ethereum, network),

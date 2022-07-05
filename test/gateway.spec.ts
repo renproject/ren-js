@@ -19,6 +19,7 @@ import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
 import { generateNHash, RenNetwork, utils } from "packages/utils/src";
 
+import { Optimism } from "../packages/chains/chains/build";
 import { defaultGatewayHandler } from "./utils/defaultGatewayHandler";
 import { initializeChain } from "./utils/testUtils";
 
@@ -55,25 +56,25 @@ describe("Gateway", () => {
     //     console.info(burnLogs[0]);
     // });
 
-    // it("recover", async () => {
-    //     const network = RenNetwork.Mainnet;
-    //     const asset = Terra.assets.LUNA;
-    //     const from = initializeChain(Polygon, network);
-    //     const to = initializeChain(Terra, network, {
-    //         preserveAddressFormat: true,
-    //     });
-    //     const renJS = new RenJS(network).withChains(from, to);
+    it.skip("recover", async () => {
+        const network = RenNetwork.Mainnet;
+        const asset = Terra.assets.LUNA;
+        const from = initializeChain(Polygon, network);
+        const to = initializeChain(Terra, network, {
+            preserveAddressFormat: true,
+        });
+        const renJS = new RenJS(network).withChains(from, to);
 
-    //     const gatewayParams: GatewayParams = {
-    //         asset,
-    //         from: from.Transaction({
-    //             txHash: "0x112e09e083ca35a084799736d949e30271965000a6903565a6408857afee9cad",
-    //         }),
-    //         to: to.Address("terra1dqfxvrt23pftru924w0mxjv3vnjzzf35mp7g24"),
-    //     };
+        const gatewayParams: GatewayParams = {
+            asset,
+            from: from.Transaction({
+                txHash: "0x112e09e083ca35a084799736d949e30271965000a6903565a6408857afee9cad",
+            }),
+            to: to.Address("terra1dqfxvrt23pftru924w0mxjv3vnjzzf35mp7g24"),
+        };
 
-    //     await defaultGatewayHandler(await renJS.gateway(gatewayParams));
-    // }).timeout(100000000000);
+        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+    }).timeout(100000000000);
 
     // it("Get fees", async () => {
     //     const network = RenNetwork.Testnet;
@@ -441,8 +442,8 @@ describe("Gateway", () => {
         const network = RenNetwork.Testnet;
 
         const asset = Ethereum.assets.DAI;
-        const to = initializeChain(Ethereum, network);
         const from = initializeChain(BinanceSmartChain, network);
+        const to = initializeChain(Ethereum, network);
 
         const renJS = new RenJS(network).withChains(from, to);
 

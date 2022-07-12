@@ -1,25 +1,25 @@
-import { getERC20Instance } from "@renproject/chains-ethereum/src/contracts";
+import { ERC20ABI, getERC20Instance } from "@renproject/chains-ethereum/src/contracts";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
+import { ethers } from "ethers";
 import { Bitcoin, Dogecoin } from "packages/chains/chains-bitcoin/src";
 import {
-    Arbitrum,
-    Avalanche,
-    BinanceSmartChain,
-    Ethereum,
-    EVMParam,
-    Fantom,
-    Polygon,
+  Arbitrum,
+  Avalanche,
+  BinanceSmartChain,
+  Catalog,
+  Ethereum,
+  EVMParam,
+  Polygon,
 } from "packages/chains/chains-ethereum/src";
 import { Filecoin } from "packages/chains/chains-filecoin/src";
 import { Solana } from "packages/chains/chains-solana/src";
 import { Terra } from "packages/chains/chains-terra/src";
 import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
-import { generateNHash, RenNetwork, utils } from "packages/utils/src";
+import { RenNetwork } from "packages/utils/src";
 
-import { Optimism } from "../packages/chains/chains/build";
 import { defaultGatewayHandler } from "./utils/defaultGatewayHandler";
 import { initializeChain } from "./utils/testUtils";
 
@@ -438,7 +438,7 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it.only("DAI/fromBinanceSmartChain", async () => {
+    it("DAI/fromBinanceSmartChain", async () => {
         const network = RenNetwork.Testnet;
 
         const asset = Ethereum.assets.DAI;

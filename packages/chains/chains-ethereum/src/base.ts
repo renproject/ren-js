@@ -752,9 +752,9 @@ export class EthereumBaseChain
                         mapBurnLogToInputChainTransaction(
                             this.chain,
                             asset,
-                            e,
+                            e.event,
                             this.transactionExplorerLink({
-                                txHash: e.transactionHash,
+                                txHash: e.log.transactionHash,
                             }) || "",
                         ),
                     )
@@ -762,8 +762,10 @@ export class EthereumBaseChain
 
                 // Filter logs that are releases to other chains.
                 const { toChain: receiptToChain } = getParams();
-                const filterByRecipientChain = (e: LogBurnToChainEvent) => {
-                    const [_recipientAddress, recipientChain] = e.args;
+                const filterByRecipientChain = (e: {
+                    event: LogBurnToChainEvent;
+                }) => {
+                    const [_recipientAddress, recipientChain] = e.event.args;
                     return recipientChain === receiptToChain;
                 };
 
@@ -777,9 +779,9 @@ export class EthereumBaseChain
                         mapBurnToChainLogToInputChainTransaction(
                             this.chain,
                             asset,
-                            e,
+                            e.event,
                             this.transactionExplorerLink({
-                                txHash: e.transactionHash,
+                                txHash: e.log.transactionHash,
                             }) || "",
                         ),
                     )
@@ -796,9 +798,9 @@ export class EthereumBaseChain
                     mapLockLogToInputChainTransaction(
                         this.chain,
                         asset,
-                        e,
+                        e.event,
                         this.transactionExplorerLink({
-                            txHash: e.transactionHash,
+                            txHash: e.log.transactionHash,
                         }) || "",
                     ),
                 );
@@ -815,9 +817,9 @@ export class EthereumBaseChain
                     mapTransferLogToInputChainTransaction(
                         this.chain,
                         asset,
-                        e,
+                        e.event,
                         this.transactionExplorerLink({
-                            txHash: e.transactionHash,
+                            txHash: e.log.transactionHash,
                         }) || "",
                     ),
                 );
@@ -877,12 +879,12 @@ export class EthereumBaseChain
             });
         }
 
-        const { toChain, toPayload } = getParams();
-        if (!toPayload) {
-            throw new Error(
-                `Unable to generate ${this.chain} transaction: No ${toChain} payload.`,
-            );
-        }
+        // const { toChain, toPayload } = getParams();
+        // if (!toPayload) {
+        //     throw new Error(
+        //         `Unable to generate ${this.chain} transaction: No ${toChain} payload.`,
+        //     );
+        // }
 
         return new EVMTxSubmitter({
             getProvider: () => this.provider,

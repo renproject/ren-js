@@ -178,30 +178,6 @@ export class RenJS {
         );
         const toChain = this.getChain(typeof to === "string" ? to : to.chain);
 
-        if (
-            !(
-                (await fromChain.isLockAsset(asset)) ||
-                (isContractChain(fromChain) &&
-                    (await fromChain.isMintAsset(asset)))
-            )
-        ) {
-            throw ErrorWithCode.updateError(
-                new Error(`Asset not supported by chain ${fromChain.chain}.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-        if (
-            !(
-                (await toChain.isLockAsset(asset)) ||
-                (isContractChain(toChain) && (await toChain.isMintAsset(asset)))
-            )
-        ) {
-            throw ErrorWithCode.updateError(
-                new Error(`Asset not supported by chain ${toChain.chain}.`),
-                RenJSError.PARAMETER_ERROR,
-            );
-        }
-
         return await estimateTransactionFee(
             this.provider,
             asset,

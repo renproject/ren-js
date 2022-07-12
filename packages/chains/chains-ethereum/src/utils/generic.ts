@@ -349,7 +349,7 @@ export const findReleaseBySigHash = async (
 export const filterLogs = <T extends TypedEvent>(
     logs: ethers.providers.Log[],
     eventABI: AbiItem,
-): T[] => {
+): Array<{ event: T; log: ethers.providers.Log }> => {
     if (!logs) {
         throw Error("No events found in transaction");
     }
@@ -359,14 +359,15 @@ export const filterLogs = <T extends TypedEvent>(
     const logDecoder = new ethers.utils.Interface([eventABI]);
 
     return logs
-        .filter((event) => event.topics[0] === logTopic)
-        .map(
-            (event) =>
-                ({
-                    ...logDecoder.parseLog(event),
-                    transactionHash: event.transactionHash,
-                } as unknown as T),
-        );
+        .filter((log) => log.topics[0] === logTopic)
+        .map((log) => ({
+            event: {
+                ...logDecoder.parseLog(log),
+                // address: event.address,
+                transactionHash: log.transactionHash,
+            } as unknown as T,
+            log,
+        }));
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -393,7 +394,7 @@ const getPastLogs = async <T extends TypedEvent>(
         topics: [utils.Ox(getEventTopic(eventABI)), ...filter],
     });
 
-    return filterLogs<T>(events, eventABI);
+    return filterLogs<T>(events, eventABI).map((e) => e.event);
 };
 
 // /**

@@ -232,7 +232,19 @@ export class Gateway<
             );
         }
 
-        const [confirmationTarget, shard, payload] = await Promise.all([
+        const [
+            fees,
+            confirmationTarget,
+            shard,
+            payload,
+            isDepositAssetOnFromChain,
+        ] = await Promise.all([
+            estimateTransactionFee(
+                this.provider,
+                asset,
+                this.fromChain,
+                this.toChain,
+            ),
             this.provider.getConfirmationTarget(this.fromChain.chain),
             (async () => {
                 if (utils.isDefined(this.params.shard)) {
@@ -256,7 +268,11 @@ export class Gateway<
                 this.outputType,
                 to,
             ),
+            isDepositChain(this.fromChain) &&
+                this.fromChain.isDepositAsset(this.params.asset),
         ]);
+
+        this._fees = fees;
 
         // Check if the selector is whitelisted - ie currently enabled in RenVM.
         // Run this later because the underlying queryConfig is cached by
@@ -280,10 +296,7 @@ export class Gateway<
             `${this.params.asset}/to${this.params.to.chain}`,
         );
 
-        if (
-            isDepositChain(this.fromChain) &&
-            (await this.fromChain.isDepositAsset(this.params.asset))
-        ) {
+        if (isDepositChain(this.fromChain) && isDepositAssetOnFromChain) {
             try {
                 if (!isContractChain(this.toChain)) {
                     throw new Error(
@@ -414,25 +427,24 @@ export class Gateway<
             // TODO
             const removeInput = () => {};
 
-            this.in = await this.fromChain.getInputTx(
-                this.inputType,
-                this.outputType,
-                asset,
-                from,
-                () => ({
-                    toChain: to.chain,
-                    toPayload: payload,
-                    gatewayAddress: this.gatewayAddress,
-                }),
-                this.inConfirmationTarget,
-                processInput,
-                removeInput,
-            );
-
-            if (this.fromChain.getInSetup) {
-                this.inSetup = {
-                    ...this.inSetup,
-                    ...(await this.fromChain.getInSetup(
+            let inSetup;
+            [this.in, inSetup] = await Promise.all([
+                this.fromChain.getInputTx(
+                    this.inputType,
+                    this.outputType,
+                    asset,
+                    from,
+                    () => ({
+                        toChain: to.chain,
+                        toPayload: payload,
+                        gatewayAddress: this.gatewayAddress,
+                    }),
+                    this.inConfirmationTarget,
+                    processInput,
+                    removeInput,
+                ),
+                this.fromChain.getInSetup &&
+                    this.fromChain.getInSetup(
                         asset,
                         this.inputType,
                         this.outputType,
@@ -442,17 +454,16 @@ export class Gateway<
                             toPayload: payload,
                             gatewayAddress: this.gatewayAddress,
                         }),
-                    )),
+                    ),
+            ]);
+
+            if (inSetup) {
+                this.inSetup = {
+                    ...this.inSetup,
+                    ...inSetup,
                 };
             }
         }
-
-        this._fees = await estimateTransactionFee(
-            this.provider,
-            asset,
-            this.fromChain,
-            this.toChain,
-        );
 
         return this;
     };

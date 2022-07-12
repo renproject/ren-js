@@ -2,6 +2,7 @@ import { RenVMProvider } from "@renproject/provider";
 import {
     Chain,
     ErrorWithCode,
+    isContractChain,
     isDepositChain,
     RenJSError,
 } from "@renproject/utils";
@@ -69,18 +70,45 @@ export const estimateTransactionFee = async (
     // burn-and-mint.
     const [
         blockState,
-        isLockAndMint,
-        isBurnAndRelease,
+
+        isLockAssetOnFromChain,
+        isLockAssetOnToChain,
+        isMintAssetOnFromChain,
+        isMintAssetOnToChain,
+
         decimalsOnFromChain,
         decimalsOnToChain,
+        isDepositAssetOnFromChain,
+        isDepositAssetOnToChain,
     ] = await Promise.all([
         renVM.queryBlockState(asset, 5),
         fromChain.isLockAsset(asset),
         toChain.isLockAsset(asset),
-
+        isContractChain(fromChain) && fromChain.isMintAsset(asset),
+        isContractChain(toChain) && toChain.isMintAsset(asset),
         fromChain.assetDecimals(asset),
         toChain.assetDecimals(asset),
+        isDepositChain(fromChain) && fromChain.isDepositAsset(asset),
+        isDepositChain(toChain) && toChain.isDepositAsset(asset),
     ]);
+
+    if (!isLockAssetOnFromChain && !isMintAssetOnFromChain) {
+        throw ErrorWithCode.updateError(
+            new Error(`Asset not supported by chain ${fromChain.chain}.`),
+            RenJSError.PARAMETER_ERROR,
+        );
+    }
+
+    if (!isLockAssetOnToChain && !isMintAssetOnToChain) {
+        throw ErrorWithCode.updateError(
+            new Error(`Asset not supported by chain ${toChain.chain}.`),
+            RenJSError.PARAMETER_ERROR,
+        );
+    }
+
+    const isLockAndMint = isLockAssetOnFromChain;
+    const isBurnAndRelease = isLockAssetOnToChain;
+    // const isBurnAndMint = isMintAssetOnFromChain && isMintAssetOnToChain;
 
     if (!blockState[asset]) {
         throw ErrorWithCode.updateError(
@@ -106,11 +134,9 @@ export const estimateTransactionFee = async (
     // No other way of getting proper decimals for burn-and-mints.
     const nativeDecimals = Math.max(decimalsOnFromChain, decimalsOnToChain);
 
-    const requiresTransfer = isLockAndMint
-        ? isDepositChain(fromChain) && (await fromChain.isDepositAsset(asset))
-        : isBurnAndRelease
-        ? isDepositChain(toChain) && (await toChain.isDepositAsset(asset))
-        : false;
+    const requiresTransfer =
+        (isLockAndMint && isDepositAssetOnFromChain) ||
+        (isBurnAndRelease && isDepositAssetOnToChain);
 
     const fixedFee = requiresTransfer
         ? gasLimit

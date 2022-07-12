@@ -8,9 +8,17 @@ import {
 } from "./types/eventEmitter";
 
 export enum ChainTransactionStatus {
+    // The transaction hasn't been submitted - note that the transaction may
+    // have incomplete dependencies which aren't reflected in this status.
     Ready = "ready",
+    // The transaction has been submitted but has not reached the required
+    // confirmation threshold to be considered done. Note that it may still
+    // have one or more confirmations on the chain.
     Confirming = "confirming",
+    // The transaction was executed successfully and has reached the required
+    // number of confirmations.
     Done = "done",
+    // The transaction was submitted on-chain but its execution failed.
     Reverted = "reverted",
 }
 

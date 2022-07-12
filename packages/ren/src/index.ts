@@ -3,7 +3,6 @@ import {
     assertType,
     Chain,
     ErrorWithCode,
-    isContractChain,
     RenJSError,
     RenNetwork,
     RenNetworkString,

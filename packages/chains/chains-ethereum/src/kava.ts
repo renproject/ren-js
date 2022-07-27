@@ -8,11 +8,11 @@ const configMap: EthereumBaseChain["configMap"] = {
         selector: "Kava",
 
         nativeAsset: { name: "Kava", symbol: "KAVA", decimals: 18 },
-        averageConfirmationTime: 1,
+        averageConfirmationTime: 5,
         logRequestLimit: 10000,
 
         config: {
-            chainId: "0x8ad",
+            chainId: "0x8ae",
             chainName: "Kava EVM",
             nativeCurrency: { name: "Kava", symbol: "KAVA", decimals: 18 },
             rpcUrls: [
@@ -35,7 +35,7 @@ const configMap: EthereumBaseChain["configMap"] = {
         selector: "Kava",
 
         nativeAsset: { name: "Testnet Kava", symbol: "KAVA", decimals: 18 },
-        averageConfirmationTime: 1,
+        averageConfirmationTime: 5,
         logRequestLimit: 10000,
 
         config: {
@@ -43,8 +43,8 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainName: "Kava EVM Testnet",
             nativeCurrency: { name: "Kava", symbol: "KAVA", decimals: 18 },
             rpcUrls: [
-                "https://evm.evm-alpha.kava.io",
-                "wss://evm-ws.evm-alpha.kava.io",
+                "https://evm.testnet.kava.io",
+                "wss://wevm.testnet.kava.io",
             ],
             blockExplorerUrls: ["https://explorer.evm-alpha.kava.io"],
         },

@@ -58,6 +58,9 @@ export const encodePackType = (type: PackTypeDefinition): number => {
         // KindBytes65 is the kind of all 65-byte arrays.
         case PackPrimitive.Bytes65:
             return 13;
+        // KindBytes64 is the kind of all 64-byte arrays.
+        case PackPrimitive.Bytes64:
+            return 14;
     }
 
     // Complex types.
@@ -219,6 +222,7 @@ export const encodePackPrimitive = (
         }
         case PackPrimitive.Bytes32:
         case PackPrimitive.Bytes65:
+        case PackPrimitive.Bytes64:
             return value instanceof Uint8Array
                 ? value
                 : // Supports base64 url format

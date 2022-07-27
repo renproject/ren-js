@@ -42,6 +42,7 @@ export const unmarshalPackPrimitive = <T extends PackPrimitive = PackPrimitive>(
         case PackPrimitive.Bytes:
         case PackPrimitive.Bytes32:
         case PackPrimitive.Bytes65:
+        case PackPrimitive.Bytes64:
             return utils.fromBase64(value) as Unmarshalled<T>;
     }
     throw new Error(`Unknown pack type '${type}'.`);

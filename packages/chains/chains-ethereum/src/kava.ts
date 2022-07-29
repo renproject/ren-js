@@ -25,9 +25,8 @@ const configMap: EthereumBaseChain["configMap"] = {
         },
 
         addresses: {
-            // TODO: Fill out once available.
-            GatewayRegistry: "",
-            BasicBridge: "",
+            GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
+            BasicBridge: "0xa3FA9A73D22618FfdF6958Ba6285FB3F565e1443",
         },
     },
 

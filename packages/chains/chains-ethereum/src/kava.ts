@@ -45,7 +45,7 @@ const configMap: EthereumBaseChain["configMap"] = {
                 "https://evm.testnet.kava.io",
                 "wss://wevm.testnet.kava.io",
             ],
-            blockExplorerUrls: ["https://explorer.evm-alpha.kava.io"],
+            blockExplorerUrls: ["https://explorer.testnet.kava.io"],
         },
 
         addresses: {

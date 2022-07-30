@@ -8,11 +8,11 @@ const configMap: EthereumBaseChain["configMap"] = {
         selector: "Kava",
 
         nativeAsset: { name: "Kava", symbol: "KAVA", decimals: 18 },
-        averageConfirmationTime: 1,
+        averageConfirmationTime: 5,
         logRequestLimit: 10000,
 
         config: {
-            chainId: "0x8ad",
+            chainId: "0x8ae",
             chainName: "Kava EVM",
             nativeCurrency: { name: "Kava", symbol: "KAVA", decimals: 18 },
             rpcUrls: [
@@ -25,9 +25,8 @@ const configMap: EthereumBaseChain["configMap"] = {
         },
 
         addresses: {
-            // TODO: Fill out once available.
-            GatewayRegistry: "",
-            BasicBridge: "",
+            GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
+            BasicBridge: "0xa3FA9A73D22618FfdF6958Ba6285FB3F565e1443",
         },
     },
 
@@ -35,7 +34,7 @@ const configMap: EthereumBaseChain["configMap"] = {
         selector: "Kava",
 
         nativeAsset: { name: "Testnet Kava", symbol: "KAVA", decimals: 18 },
-        averageConfirmationTime: 1,
+        averageConfirmationTime: 5,
         logRequestLimit: 10000,
 
         config: {
@@ -43,8 +42,8 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainName: "Kava EVM Testnet",
             nativeCurrency: { name: "Kava", symbol: "KAVA", decimals: 18 },
             rpcUrls: [
-                "https://evm.evm-alpha.kava.io",
-                "wss://evm-ws.evm-alpha.kava.io",
+                "https://evm.testnet.kava.io",
+                "wss://wevm.testnet.kava.io",
             ],
             blockExplorerUrls: ["https://explorer.evm-alpha.kava.io"],
         },

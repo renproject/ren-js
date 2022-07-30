@@ -14,6 +14,7 @@ export enum PackPrimitive {
     Bytes = "bytes",
     Bytes32 = "bytes32",
     Bytes65 = "bytes65",
+    Bytes64 = "bytes64",
 }
 
 export interface PackStructType<
@@ -68,6 +69,8 @@ export type Marshalled<
     ? string
     : Type extends PackPrimitive.Bytes65
     ? string
+    : Type extends PackPrimitive.Bytes64
+    ? string
     : Type extends PackNilType
     ? string
     : Type extends { list: InnerType }
@@ -100,6 +103,8 @@ export type Unmarshalled<
     : Type extends PackPrimitive.Bytes32
     ? Uint8Array
     : Type extends PackPrimitive.Bytes65
+    ? Uint8Array
+    : Type extends PackPrimitive.Bytes64
     ? Uint8Array
     : Type extends PackNilType
     ? null

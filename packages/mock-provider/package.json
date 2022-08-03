@@ -1,6 +1,6 @@
 {
     "name": "@renproject/mock-provider",
-    "version": "3.4.2",
+    "version": "3.4.4",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,9 +42,9 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@renproject/chains-bitcoin": "^3.4.2",
-        "@renproject/provider": "^3.4.2",
-        "@renproject/utils": "^3.4.2",
+        "@renproject/chains-bitcoin": "^3.4.4",
+        "@renproject/provider": "^3.4.4",
+        "@renproject/utils": "^3.4.4",
         "@types/elliptic": "^6.4.14",
         "bignumber.js": "^9.0.2",
         "elliptic": "^6.5.4",

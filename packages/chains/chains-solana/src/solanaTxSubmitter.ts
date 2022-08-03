@@ -178,7 +178,10 @@ export class SolanaTxWaiter
 
             // sendAndConfirmRawTransaction already calls simulate.
             const simulationResult = await utils.tryNTimes(
-                async () => this._provider.simulateTransaction(transaction),
+                async () =>
+                    this._provider.simulateTransaction(
+                        transaction.compileMessage(),
+                    ),
                 5,
             );
             if (simulationResult.value.err) {

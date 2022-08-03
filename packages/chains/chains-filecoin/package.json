@@ -49,7 +49,7 @@
         "bignumber.js": "^9.0.2",
         "blakejs": "^1.2.1",
         "elliptic": "^6.5.4",
-        "multiformats": "^9.6.5"
+        "multiformats": "^9.7.1"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

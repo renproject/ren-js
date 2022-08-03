@@ -202,7 +202,9 @@ describe("common utils", () => {
                 await utils.tryNTimes(mustBeCalledNTimes(2), 2, timeout),
             ).to.equal(2);
             const t2 = Date.now();
-            expect(t2 - t1).to.be.greaterThanOrEqual(timeout);
+            // Should be greater than the timeout (allow for a small margin of
+            // error).
+            expect(t2 - t1).to.be.greaterThanOrEqual(timeout * 0.99);
         });
     });
 

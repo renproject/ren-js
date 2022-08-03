@@ -1,17 +1,15 @@
-import { ERC20ABI, getERC20Instance } from "@renproject/chains-ethereum/src/contracts";
+import { getERC20Instance } from "@renproject/chains-ethereum/src/contracts";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
-import { ethers } from "ethers";
 import { Bitcoin, Dogecoin } from "packages/chains/chains-bitcoin/src";
 import {
-  Arbitrum,
-  Avalanche,
-  BinanceSmartChain,
-  Catalog,
-  Ethereum,
-  EVMParam,
-  Polygon,
+    Arbitrum,
+    Avalanche,
+    BinanceSmartChain,
+    Ethereum,
+    EVMParam,
+    Polygon,
 } from "packages/chains/chains-ethereum/src";
 import { Filecoin } from "packages/chains/chains-filecoin/src";
 import { Solana } from "packages/chains/chains-solana/src";

@@ -42,7 +42,7 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@noble/hashes": "1.1.1",
+        "@noble/hashes": "1.1.2",
         "@renproject/utils": "^3.4.2",
         "@types/bchaddrjs": "^0.4.0",
         "@types/bs58": "^4.0.1",
@@ -54,7 +54,7 @@
         "bs58": "^5.0.0",
         "bs58check": "^2.1.2",
         "cashaddrjs": "^0.4.4",
-        "qs": "^6.10.5",
+        "qs": "^6.11.0",
         "wallet-address-validator": "^0.2.4"
     },
     "nyc": {

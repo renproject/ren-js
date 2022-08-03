@@ -42,14 +42,14 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@ethersproject/abi": "^5.6.3",
+        "@ethersproject/abi": "^5.6.4",
         "@ethersproject/bytes": "^5.6.1",
         "@ethersproject/providers": "^5.6.8",
         "@renproject/utils": "^3.4.2",
         "@types/elliptic": "^6.4.14",
         "bignumber.js": "^9.0.2",
         "elliptic": "^6.5.4",
-        "ethers": "^5.6.8"
+        "ethers": "^5.6.9"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

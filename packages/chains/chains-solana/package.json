@@ -48,14 +48,14 @@
         "@renproject/utils": "^3.4.2",
         "@solana/buffer-layout": "^4.0.0",
         "@solana/spl-token": "0.2.0",
-        "@solana/web3.js": "1.44.0",
+        "@solana/web3.js": "1.50.1",
         "@types/bs58": "^4.0.1",
         "@types/node-fetch": "^2.6.2",
         "bignumber.js": "^9.0.2",
         "bip39": "^3.0.4",
         "bs58": "^5.0.0",
         "crypto-hash": "^2.0.1",
-        "ed25519-hd-key": "^1.2.0",
+        "ed25519-hd-key": "^1.3.0",
         "tweetnacl": "^1.0.3"
     },
     "nyc": {

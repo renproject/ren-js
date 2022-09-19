@@ -46,8 +46,7 @@ export class MockChain
                             this.fetchUTXO(txid, txindex),
                         fetchUTXOs: async (address: string) =>
                             this.fetchUTXOs(address),
-                        fetchTXs: async (address: string) =>
-                            this.fetchUTXOs(address),
+                        fetchTXs: (_address: string) => Promise.resolve([]),
                     },
                 ],
             },

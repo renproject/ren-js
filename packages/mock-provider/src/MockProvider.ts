@@ -22,6 +22,7 @@ import { Provider } from "@renproject/provider/rpc/jsonRpc";
 import {
     Chain,
     decodeRenVMSelector,
+    EMPTY_SIGNATURE,
     generateSHash,
     generateSighash,
     isDepositChain,
@@ -284,7 +285,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                             amount: amountOut,
                             hash: request.tx.hash,
                             revert: undefined,
-                            sig: "",
+                            sig: EMPTY_SIGNATURE,
                             sighash: "",
                             txid,
                             txindex,

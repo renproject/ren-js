@@ -1,10 +1,7 @@
 import BigNumber from "bignumber.js";
-import chai, { expect } from "chai";
-import chaiAsPromised from "chai-as-promised";
+import { expect } from "chai";
 
 import { utils } from "../src/internal";
-
-chai.use(chaiAsPromised);
 
 describe("common utils", () => {
     context("sleep", () => {

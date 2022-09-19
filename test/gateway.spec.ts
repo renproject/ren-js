@@ -1,3 +1,4 @@
+import { Solana } from "@renproject/chains";
 import { getERC20Instance } from "@renproject/chains-ethereum/src/contracts";
 import BigNumber from "bignumber.js";
 import chai from "chai";
@@ -7,12 +8,14 @@ import {
     Arbitrum,
     Avalanche,
     BinanceSmartChain,
+    Catalog,
     Ethereum,
+    EthereumBaseChain,
     EVMParam,
+    Goerli,
     Polygon,
 } from "packages/chains/chains-ethereum/src";
 import { Filecoin } from "packages/chains/chains-filecoin/src";
-import { Solana } from "packages/chains/chains-solana/src";
 import { Terra } from "packages/chains/chains-terra/src";
 import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
@@ -436,36 +439,143 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("DAI/fromBinanceSmartChain", async () => {
+    it("USDT/toCatalog", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.DAI;
-        const from = initializeChain(BinanceSmartChain, network);
-        const to = initializeChain(Ethereum, network);
+        const from = initializeChain(Goerli, network);
+        const catalog = initializeChain(Catalog, network);
+        const bsc = initializeChain(BinanceSmartChain, network);
+        const polygon = initializeChain(Polygon, network);
+        const renJS = new RenJS(network).withChains(
+            from,
+            catalog,
+            bsc,
+            polygon,
+        );
+        console.log(await from.signer!.getAddress());
 
-        const renJS = new RenJS(network).withChains(from, to);
+        console.log(
+            Goerli.assets.USDT,
+            (await from.getBalance(Goerli.assets.USDT))
+                .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDT)))
+                .toFixed(),
+        );
+        console.log(
+            Goerli.assets.DAI,
+            (await from.getBalance(Goerli.assets.DAI))
+                .shiftedBy(-(await from.assetDecimals(Goerli.assets.DAI)))
+                .toFixed(),
+        );
+        console.log(
+            Goerli.assets.USDC,
+            (await from.getBalance(Goerli.assets.USDC))
+                .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDC)))
+                .toFixed(),
+        );
 
-        const gatewayParams = {
-            asset,
-            from: from.Account({ amount: 0.5, convertUnit: true }),
-            to: to.Address("0x797522fb74d42bb9fbf6b76dea24d01a538d5d66"),
-        };
+        const options: Array<[string, EthereumBaseChain]> = [
+            // [Goerli.assets.USDT, catalog],
+            // [Goerli.assets.USDC, catalog],
+            // [Goerli.assets.DAI, catalog],
+            [Goerli.assets.USDT, bsc],
+            [Goerli.assets.USDC, bsc],
+            [Goerli.assets.DAI, bsc],
+            [Goerli.assets.USDT, polygon],
+            [Goerli.assets.USDC, polygon],
+            [Goerli.assets.DAI, polygon],
+        ];
 
-        await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+        for (const [asset, to] of options) {
+            // const asset = Ethereum.assets.USDT;
+            const decimals = await from.assetDecimals(asset);
+
+            const amount = 100.2;
+
+            const gatewayParams = {
+                asset,
+                from: from.Account({ amount, convertUnit: true }),
+                to: to.Address("0x5eb99e19183728404AaeBc8eEF47C085dBE86F54"),
+            };
+
+            await defaultGatewayHandler(
+                await renJS.gateway(gatewayParams),
+                new BigNumber(amount).shiftedBy(decimals),
+            );
+
+            console.log(
+                asset,
+                "on",
+                to.chain,
+                (
+                    await to.getBalance(
+                        asset,
+                        "0x5eb99e19183728404AaeBc8eEF47C085dBE86F54",
+                    )
+                )
+                    .shiftedBy(-(await to.assetDecimals(asset)))
+                    .toFixed(),
+            );
+        }
     }).timeout(100000000000);
 
-    it("BTC/fromEthereum", async () => {
+    it("BTC/to catalog chains", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Bitcoin.assets.BTC;
-        const from = initializeChain(Ethereum, network);
-        const to = initializeChain(Solana, network);
+        const from = initializeChain(Bitcoin, network);
+        const asset = from.assets.BTC;
+        const catalog = initializeChain(Catalog, network);
+        const bsc = initializeChain(BinanceSmartChain, network);
+        const polygon = initializeChain(Polygon, network);
+        const ethereum = initializeChain(Ethereum, network);
+        const renJS = new RenJS(network).withChains(
+            from,
+            catalog,
+            bsc,
+            polygon,
+            ethereum,
+        );
+
+        const options: EthereumBaseChain[] = [catalog, bsc, polygon, ethereum];
+
+        for (const to of options) {
+            // const asset = Ethereum.assets.USDT;
+
+            const gatewayParams = {
+                asset,
+                from: from.GatewayAddress(),
+                to: to.Address("0x5eb99e19183728404AaeBc8eEF47C085dBE86F54"),
+            };
+
+            await defaultGatewayHandler(await renJS.gateway(gatewayParams));
+
+            console.log(
+                asset,
+                "on",
+                to.chain,
+                (
+                    await to.getBalance(
+                        asset,
+                        "0x5eb99e19183728404AaeBc8eEF47C085dBE86F54",
+                    )
+                )
+                    .shiftedBy(-(await to.assetDecimals(asset)))
+                    .toFixed(),
+            );
+        }
+    }).timeout(100000000000);
+
+    it.only("REN/toSolana", async () => {
+        const network = RenNetwork.Testnet;
+
+        const asset = Ethereum.assets.REN;
+        const from = initializeChain(Solana, network);
+        const to = initializeChain(Ethereum, network);
 
         const renJS = new RenJS(network).withChains(from, to);
 
         const gatewayParams: GatewayParams = {
             asset,
-            from: from.Account({ amount: 1, convertUnit: true }),
+            from: from.Account({ amount: 95, convertUnit: true }),
             to: to.Account(),
         };
 

@@ -39,17 +39,29 @@ const chainTransactionHandler = async (
                 }, retries);
                 break;
             case ChainTransactionStatus.Confirming:
-                await utils.tryNTimes(async (i: number) => {
-                    try {
-                        await tx.wait();
-                    } catch (error: unknown) {
-                        // Log error every 10 attempts.
-                        if ((i + 1) % 10 === 0) {
-                            console.error(error);
-                        }
-                        throw error;
-                    }
-                }, retries);
+                await new Promise((resolve, reject) =>
+                    resolve(
+                        utils.tryNTimes(async (i: number) => {
+                            try {
+                                await tx.wait();
+                            } catch (error: unknown) {
+                                if (
+                                    ErrorWithCode.isErrorWithCode(error) &&
+                                    error.code ===
+                                        RenJSError.CHAIN_TRANSACTION_REVERTED
+                                ) {
+                                    reject(error);
+                                    throw error;
+                                }
+                                // Log error every 10 attempts.
+                                if ((i + 1) % 10 === 0) {
+                                    console.error(error);
+                                }
+                                throw error;
+                            }
+                        }, retries),
+                    ),
+                );
                 break;
             case ChainTransactionStatus.Reverted:
                 throw new ErrorWithCode(

@@ -6,6 +6,7 @@ import { printChain, sendFunds } from "./testUtils";
 
 export const defaultGatewayHandler = async (
     gateway: Gateway,
+    amount?: BigNumber | number | string,
     logger: Logger = console,
 ): Promise<void> => {
     const asset = gateway.params.asset;
@@ -29,7 +30,7 @@ export const defaultGatewayHandler = async (
         -decimalsOnFromChain,
     );
     const receivedAmount = gateway.fees
-        .estimateOutput(gateway.fees.minimumAmount)
+        .estimateOutput(amount || gateway.fees.minimumAmount)
         .shiftedBy(-decimalsOnFromChain);
 
     try {
@@ -117,7 +118,7 @@ export const defaultGatewayHandler = async (
                 gateway.gatewayAddress
             } (to receive at least ${receivedAmount.toFixed()})`,
         );
-        const SEND_FUNDS = false;
+        const SEND_FUNDS = true;
         if (SEND_FUNDS) {
             try {
                 await sendFunds(

@@ -2,19 +2,17 @@
 
 import { Buffer } from "buffer";
 
-import { EthProvider, EVMNetworkConfig } from "@renproject/chains-ethereum/src";
-import { resolveRpcEndpoints } from "@renproject/chains-ethereum/src/utils/generic";
+import { getEVMProvider } from "@renproject/chains-ethereum/src/utils/generic";
 import BigNumber from "bignumber.js";
 import chai from "chai";
 import chalk from "chalk";
 import { config as loadDotEnv } from "dotenv";
-import { ethers, Wallet } from "ethers";
 import { Solana } from "packages/chains/chains-solana/src";
 import { signerFromPrivateKey } from "packages/chains/chains-solana/src/utils";
+import { Chain, EthereumBaseChain } from "packages/chains/chains/build";
 import { ChainCommon, RenNetwork, utils } from "packages/utils/src";
 import SendCrypto from "send-crypto";
 
-import { Chain } from "../../packages/chains/chains/build";
 import {
     Arbitrum,
     Avalanche,
@@ -25,8 +23,6 @@ import {
     DigiByte,
     Dogecoin,
     Ethereum,
-    EthereumClassConfig,
-    EthSigner,
     Fantom,
     Filecoin,
     Goerli,
@@ -43,50 +39,6 @@ chai.should();
 loadDotEnv();
 
 const MNEMONIC = process.env.MNEMONIC;
-
-interface EVMConstructor<EVM> {
-    configMap: {
-        [network in RenNetwork]?: EVMNetworkConfig;
-    };
-
-    new ({
-        network,
-        provider,
-        signer,
-        config,
-    }: {
-        network: EVMNetworkConfig;
-        provider: EthProvider;
-        signer?: EthSigner;
-        config?: EthereumClassConfig;
-    }): EVM;
-}
-
-export const getEVMProvider = <EVM>(
-    ChainClass: EVMConstructor<EVM>,
-    network: RenNetwork,
-    index: number = 0,
-): {
-    provider: EthProvider;
-    signer: EthSigner;
-} => {
-    const urls = resolveRpcEndpoints(
-        ChainClass.configMap[network].config.rpcUrls,
-        {
-            INFURA_API_KEY: process.env.INFURA_KEY,
-        },
-    );
-    const provider = new ethers.providers.JsonRpcProvider(urls[0]);
-    const signer = Wallet.fromMnemonic(
-        MNEMONIC,
-        `m/44'/60'/0'/0/${index}`,
-    ).connect(provider);
-
-    return {
-        provider,
-        signer,
-    };
-};
 
 export const initializeChain = <T extends ChainCommon>(
     Chain: {
@@ -134,7 +86,22 @@ export const initializeChain = <T extends ChainCommon>(
         case Catalog.chain:
             return new (Chain as unknown as typeof Ethereum)({
                 network,
-                ...getEVMProvider(Chain as unknown as typeof Ethereum, network),
+                ...getEVMProvider(
+                    Chain.chain === "Ethereum"
+                        ? Ethereum.configMap[network]
+                        : (
+                              Chain as unknown as {
+                                  configMap: EthereumBaseChain["configMap"];
+                              }
+                          ).configMap[network],
+                    {
+                        mnemonic: MNEMONIC,
+                    },
+                    {
+                        INFURA_API_KEY: process.env.INFURA_KEY,
+                    },
+                ),
+                testnet: "Kovan",
                 config,
             }) as ChainCommon as T;
 

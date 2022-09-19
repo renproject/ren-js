@@ -96,6 +96,12 @@ export interface ChainCommon {
     /** Override the chain's provider. */
     provider?: any;
     withProvider?: (...providers: any[]) => SyncOrPromise<this>;
+    checkProviderNetwork?: () => SyncOrPromise<{
+        result: boolean;
+        actualNetworkId: string | number;
+        expectedNetworkId: string | number;
+        expectedNetworkLabel: string;
+    }>;
 
     /** Override the chain's signer. */
     signer?: any;

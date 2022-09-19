@@ -1,25 +1,18 @@
 /* eslint-disable no-console */
 
-import { AbiCoder } from "ethers/lib/utils";
 import { Ethereum } from "packages/chains/chains-ethereum/src";
 import { BinanceSmartChain } from "packages/chains/chains/src";
 import RenJS from "packages/ren/src";
 import { RenNetwork } from "packages/utils";
 
-import { getEVMProvider } from "./utils/testUtils";
+import { initializeChain } from "./utils/testUtils";
 
 const network = RenNetwork.Testnet;
 
 const main = async () => {
     // Initialize Ethereum and BSC chains.
-    const ethereum = new Ethereum({
-        network,
-        ...getEVMProvider(Ethereum, network),
-    });
-    const bsc = new BinanceSmartChain({
-        network,
-        ...getEVMProvider(BinanceSmartChain, network),
-    });
+    const ethereum = initializeChain(Ethereum, network);
+    const bsc = initializeChain(BinanceSmartChain, network);
 
     // Create RenJS instance. NOTE - chains must now be linked to RenJS using
     // `withChains`.

@@ -5,7 +5,7 @@ import chalk from "chalk";
 import { BinanceSmartChain } from "packages/chains/chains/src";
 import RenJS from "packages/ren/src";
 
-import { getEVMProvider } from "./utils/testUtils";
+import { initializeChain } from "./utils/testUtils";
 
 const network = RenNetwork.Testnet;
 
@@ -18,14 +18,8 @@ const network = RenNetwork.Testnet;
 
 describe("DAI/toBinanceSmartChain - simpler", () => {
     it("DAI/toBinanceSmartChain - simpler", async () => {
-        const ethereum = new Ethereum({
-            network,
-            ...getEVMProvider(Ethereum, network),
-        });
-        const bsc = new BinanceSmartChain({
-            network,
-            ...getEVMProvider(BinanceSmartChain, network),
-        });
+        const ethereum = initializeChain(Ethereum, network);
+        const bsc = initializeChain(BinanceSmartChain, network);
 
         const renJS = new RenJS(network).withChains(ethereum, bsc);
 

@@ -568,7 +568,6 @@ export class Gateway<
 
                 await transaction.initialize();
 
-                // Check if deposit has already been submitted.
                 this.eventEmitter.emit("transaction", transaction);
                 // this.deposits.set(deposit);
                 this.config.logger.debug("new deposit:", inputTx);

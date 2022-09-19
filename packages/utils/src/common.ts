@@ -42,7 +42,7 @@ export const decodeRenVMSelector = (
     };
 };
 
-const EMPTY_SIGNATURE =
+export const EMPTY_SIGNATURE =
     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 export const isEmptySignature = (sig: Uint8Array): boolean =>
     utils.toURLBase64(sig) === EMPTY_SIGNATURE;

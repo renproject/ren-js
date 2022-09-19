@@ -1,3 +1,4 @@
+import { ErrorWithCode, RenJSError } from "./errors";
 import { isDefined, newPromiEvent } from "./internal/common";
 import { sleep } from "./internal/sleep";
 import { Chain, ChainTransaction, SyncOrPromise } from "./types/chain";
@@ -358,6 +359,16 @@ export class DefaultTxWaiter implements TxWaiter {
                         }
                     }
                 } catch (error: unknown) {
+                    this.updateProgress({
+                        ...this.progress,
+                        status: ChainTransactionStatus.Reverted,
+                    });
+                    if (
+                        ErrorWithCode.isErrorWithCode(error) &&
+                        error.code === RenJSError.CHAIN_TRANSACTION_REVERTED
+                    ) {
+                        throw error;
+                    }
                     console.error(error);
                 }
                 await sleep(15 * sleep.SECONDS);

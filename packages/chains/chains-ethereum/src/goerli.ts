@@ -1,47 +1,23 @@
-import { RenNetwork } from "@renproject/utils";
-
 import { EthereumBaseChain } from "./base";
+import { goerliConfigMap } from "./ethereum";
 import { resolveEVMNetworkConfig } from "./utils/generic";
-
-const configMap: EthereumBaseChain["configMap"] = {
-    [RenNetwork.Testnet]: {
-        selector: "Goerli",
-
-        nativeAsset: { name: "Görli Ether", symbol: "gETH", decimals: 18 },
-        averageConfirmationTime: 15,
-
-        config: {
-            chainId: "0x5",
-            chainName: "Görli",
-            nativeCurrency: {
-                name: "Görli Ether",
-                symbol: "GOR",
-                decimals: 18,
-            },
-            rpcUrls: [
-                "https://rpc.goerli.mudit.blog/",
-                "https://goerli.infura.io/v3/${INFURA_API_KEY}",
-                "wss://goerli.infura.io/v3/${INFURA_API_KEY}",
-            ],
-            blockExplorerUrls: ["https://goerli.etherscan.io"],
-        },
-
-        addresses: {
-            GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
-            BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
-        },
-    },
-};
 
 export class Goerli extends EthereumBaseChain {
     // Static members.
     public static chain = "Goerli" as const;
-    public static configMap = configMap;
+    public static configMap = goerliConfigMap;
     public static assets = {
         gETH: "gETH" as const,
+        REN: "REN_Goerli" as const,
+        DAI: "DAI_Goerli" as const,
+        USDC: "USDC_Goerli" as const,
+        USDT: "USDT_Goerli" as const,
+
+        // Aliases
+        ETH: "gETH" as const,
     };
 
-    public configMap = configMap;
+    public configMap = goerliConfigMap;
     public assets = Goerli.assets;
 
     public constructor({
@@ -50,7 +26,7 @@ export class Goerli extends EthereumBaseChain {
     }: ConstructorParameters<typeof EthereumBaseChain>[0]) {
         super({
             ...params,
-            network: resolveEVMNetworkConfig(configMap, network),
+            network: resolveEVMNetworkConfig(goerliConfigMap, network),
         });
     }
 }

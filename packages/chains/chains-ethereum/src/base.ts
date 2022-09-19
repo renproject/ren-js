@@ -258,10 +258,9 @@ export class EthereumBaseChain
         if (!this.signer) {
             throw new Error(`Must connect ${this.chain} signer.`);
         }
-        return checkProviderNetwork(
+        return this.checkProviderNetwork(
             // If the signer as no provider, fall back to the provider field.
             this.signer.provider || this.provider,
-            this.network,
         );
     };
 
@@ -275,18 +274,31 @@ export class EthereumBaseChain
         ) {
             throw new Error(`Signer doesn't support switching network.`);
         }
-        // await (this.signer.provider as JsonRpcProvider).send(
-        //     "wallet_switchEthereumChain",
-        //     [
-        //         {
-        //             chainId: this.network.config.chainId,
-        //         },
-        //     ],
-        // );
-        await (this.signer.provider as JsonRpcProvider).send(
-            "wallet_addEthereumChain",
-            [this.network.config],
-        );
+
+        // Check if the network is an Ethereum network, to avoid MetaMask
+        // throwing `Must not specify default MetaMask chain`.
+        // TODO: Try addEthereumChain first and fallback to switchEthereumChain
+        // based on the returned error message.
+        if (
+            // Ethereum chains
+            this.network.nativeAsset.symbol === "ETH" ||
+            // Goerli
+            this.network.nativeAsset.symbol === "gETH"
+        ) {
+            await (this.signer.provider as JsonRpcProvider).send(
+                "wallet_switchEthereumChain",
+                [
+                    {
+                        chainId: this.network.config.chainId,
+                    },
+                ],
+            );
+        } else {
+            await (this.signer.provider as JsonRpcProvider).send(
+                "wallet_addEthereumChain",
+                [this.network.config],
+            );
+        }
     };
 
     public getOutputPayload = async (
@@ -494,6 +506,16 @@ export class EthereumBaseChain
                     }`,
                 ),
                 RenJSError.TRANSACTION_NOT_FOUND,
+            );
+        }
+        if (receipt.status === 0) {
+            throw ErrorWithCode.updateError(
+                new Error(
+                    `${String(transaction.chain)} transaction failed: ${
+                        transaction.txHash
+                    }`,
+                ),
+                RenJSError.CHAIN_TRANSACTION_REVERTED,
             );
         }
         if (receipt && receipt.blockNumber) {

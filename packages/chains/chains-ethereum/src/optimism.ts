@@ -15,7 +15,11 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainId: "0xA",
             chainName: "Optimism",
             nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-            rpcUrls: ["https://mainnet.optimism.io/"],
+            rpcUrls: [
+                "https://mainnet.optimism.io/",
+                "https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+                "wss://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+            ],
             blockExplorerUrls: ["https://optimistic.etherscan.io"],
         },
 
@@ -36,7 +40,11 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainId: "0x45",
             chainName: "Optimism",
             nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-            rpcUrls: ["https://kovan.optimism.io/"],
+            rpcUrls: [
+                "https://kovan.optimism.io/",
+                "https://opt-kovan.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+                "wss://opt-kovan.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+            ],
             blockExplorerUrls: ["https://kovan-optimistic.etherscan.io"],
         },
 

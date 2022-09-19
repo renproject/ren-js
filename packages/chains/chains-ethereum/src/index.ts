@@ -9,14 +9,14 @@ export {
 } from "./utils/generic";
 
 // Chains
-export * from "./arbitrum";
-export * from "./avalanche";
-export * from "./bsc";
-export * from "./catalog";
-export * from "./ethereum";
-export * from "./fantom";
-export * from "./goerli";
-export * from "./kava";
-export * from "./moonbeam";
-export * from "./optimism";
-export * from "./polygon";
+export { Arbitrum } from "./arbitrum";
+export { Avalanche } from "./avalanche";
+export { BinanceSmartChain } from "./bsc";
+export { Catalog } from "./catalog";
+export { Ethereum } from "./ethereum";
+export { Fantom } from "./fantom";
+export { Goerli } from "./goerli";
+export { Kava } from "./kava";
+export { Moonbeam } from "./moonbeam";
+export { Optimism } from "./optimism";
+export { Polygon } from "./polygon";

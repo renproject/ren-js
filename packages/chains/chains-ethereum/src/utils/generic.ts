@@ -8,7 +8,7 @@ import {
     utils,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
-import { ethers } from "ethers";
+import { ethers, Wallet } from "ethers";
 import { defaultAbiCoder } from "ethers/lib/utils";
 
 import {
@@ -29,7 +29,12 @@ import {
 import { LogTransferredEvent } from "../contracts/typechain/TransferWithLog";
 import { AbiItem } from "./abi";
 import { getLockGateway, getMintGateway } from "./gatewayRegistry";
-import { EVMNetworkConfig, EVMNetworkInput } from "./types";
+import {
+    EthProvider,
+    EthSigner,
+    EVMNetworkConfig,
+    EVMNetworkInput,
+} from "./types";
 
 /**
  * Convert an Ethereum transaction hash from its standard format to the format
@@ -679,5 +684,43 @@ export const checkProviderNetwork = async (
         actualNetworkId,
         expectedNetworkId,
         expectedNetworkLabel: network.config.chainName,
+    };
+};
+
+/**
+ * Build a provider and signer for an EVM class, using the provided key and
+ * PRC url variables.
+ */
+export const getEVMProvider = (
+    networkConfig: EVMNetworkConfig,
+    key:
+        | { privateKey: string | Uint8Array }
+        | {
+              mnemonic: string;
+              index?: number;
+              privateKey?: undefined;
+          },
+    variables?: {
+        INFURA_API_KEY?: string;
+        ALCHEMY_API_KEY?: string;
+    } & { [variableKey: string]: string | undefined },
+): {
+    provider: EthProvider;
+    signer: EthSigner;
+} => {
+    const urls = resolveRpcEndpoints(networkConfig.config.rpcUrls, variables);
+    const provider = new ethers.providers.JsonRpcProvider(urls[0]);
+
+    const signer =
+        key.privateKey !== undefined
+            ? new Wallet(key.privateKey)
+            : Wallet.fromMnemonic(
+                  key.mnemonic,
+                  `m/44'/60'/0'/0/${String(key.index || 0)}`,
+              ).connect(provider);
+
+    return {
+        provider,
+        signer,
     };
 };

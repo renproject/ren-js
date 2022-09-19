@@ -1,6 +1,7 @@
-import Wallet from "@project-serum/sol-wallet-adapter";
 import { ChainTransaction } from "@renproject/utils";
 import { Connection } from "@solana/web3.js";
+
+import { Wallet } from "../wallet";
 
 export type SolanaProvider = Connection;
 export type SolanaSigner = Wallet;

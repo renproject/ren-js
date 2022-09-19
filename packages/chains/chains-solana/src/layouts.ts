@@ -1,56 +1,46 @@
 import {
-    array,
-    bool,
+    blob,
     Layout,
-    publicKey,
+    offset,
+    seq,
     struct,
-    u64,
+    u16,
+    u32,
     u8,
-    vec,
-} from "@project-serum/borsh";
-import { PublicKey } from "@solana/web3.js";
+    UInt,
+} from "@solana/buffer-layout";
 
-type BN = { toString(): string };
+// Note - `blob` layouts are used below for types which buffer-layout doesn't
+// directly support. Previously @project-serum/borsh was used for more complex
+// types but was removed to reduce dependencies.
 
 export interface BurnLog {
-    // amount gets decoded into four u64s. Each u64 is little-endian, but
-    // section_1 is the most significant section.
-    amount_section_1: BN;
-    amount_section_2: BN;
-    amount_section_3: BN;
-    amount_section_4: BN;
-
-    recipient_len: Number;
+    amount_section: Uint8Array;
+    recipient_len: number;
     recipient: Uint8Array;
 }
 
 export const BurnLogLayoutV0: Layout<BurnLog> = struct([
-    // amount's type is `spl_math::uint::U256`, which borsh doesn't support.
-    u64("amount_section_1"),
-    u64("amount_section_2"),
-    u64("amount_section_3"),
-    u64("amount_section_4"),
-
+    // uint256
+    blob(32, "amount_section"),
     u8("recipient_len"),
-    array(u8(), 32, "recipient"),
+    // 32-byte array
+    blob(32, "recipient"),
 ]);
 
 export const BurnLogLayout: Layout<BurnLog> = struct([
-    // amount's type is `spl_math::uint::U256`, which borsh doesn't support.
-    u64("amount_section_1"),
-    u64("amount_section_2"),
-    u64("amount_section_3"),
-    u64("amount_section_4"),
-
+    // uint256
+    blob(32, "amount_section"),
     u8("recipient_len"),
-    array(u8(), 64, "recipient"),
+    // 64-length bytes
+    blob(64, "recipient"),
 ]);
 
 interface MintLog {
-    is_initialized: boolean;
+    is_initialized: number;
 }
 
-export const MintLogLayout: Layout<MintLog> = struct([bool("is_initialized")]);
+export const MintLogLayout: Layout<MintLog> = struct([u8("is_initialized")]);
 
 export interface RenVmMsg {
     p_hash: Uint8Array;
@@ -61,15 +51,20 @@ export interface RenVmMsg {
 }
 
 export const RenVMMessageLayout: Layout<RenVmMsg> = struct([
-    array(u8(), 32, "p_hash"),
-    array(u8(), 32, "amount"),
-    array(u8(), 32, "token"),
-    array(u8(), 32, "to"),
-    array(u8(), 32, "n_hash"),
+    // 32-byte array
+    blob(32, "p_hash"),
+    // 32-byte array
+    blob(32, "amount"),
+    // 32-byte array
+    blob(32, "token"),
+    // 32-byte array
+    blob(32, "to"),
+    // 32-byte array
+    blob(32, "n_hash"),
 ]);
 
 export interface Gateway {
-    is_initialized: boolean;
+    is_initialized: number;
     /// RenVM Authority is the Eth compatible address of RenVM's authority key. RenVM mint
     /// instructions require a ECDSA over Secp256k1 mint signature signed by the authority key.
     renvm_authority: Uint8Array;
@@ -77,39 +72,104 @@ export interface Gateway {
     selector_hash: Uint8Array;
     /// The number of burn operations that have happened so far. This is incremented whenever Ren
     /// tokens on Solana are burned.
-    burn_count: BN;
+    burn_count: Uint8Array;
     /// The number of decimals in the underlying asset.
-    underlying_decimals: BN;
+    underlying_decimals: number;
 }
 
 export const GatewayLayout: Layout<Gateway> = struct([
-    bool("is_initialized"),
-    array(u8(), 20, "renvm_authority"),
-    array(u8(), 32, "selectors"),
-    u64("burn_count"),
+    // boolean
+    u8("is_initialized"),
+    // 20-byte array
+    blob(20, "renvm_authority"),
+    // 32-byte array
+    blob(32, "selectors"),
+    // uint64
+    blob(8, "burn_count"),
+    // uint8
     u8("underlying_decimals"),
 ]);
 
 export const GatewayStateKey = "GatewayStateV0.1.4";
 
-export const GatewayRegistryLayout: Layout<GatewayRegistryState> = struct([
-    bool("is_initialized"),
-    publicKey("owner"),
-    u64("count"),
-    vec(array(u8(), 32), "selectors"),
-    vec(publicKey(), "gateways"),
-]);
-
 export interface GatewayRegistryState {
-    is_initialized: boolean;
+    is_initialized: number;
     /// Owner is the pubkey that's allowed to write data to the registry state.
-    owner: PublicKey;
+    owner: Uint8Array;
     /// Number of selectors/gateway addresses stored in the registry.
-    count: BN;
+    count: Uint8Array;
     /// RenVM selector hashes.
-    selectors: Uint8Array[];
+    selectors: {
+        length: number;
+        values: Uint8Array[];
+    };
     /// RenVM gateway program addresses.
-    gateways: PublicKey[];
+    gateways: {
+        length: number;
+        values: Uint8Array[];
+    };
 }
 
 export const GatewayRegistryStateKey = "GatewayRegistryState";
+
+const vec = <T>(type: Layout<T>, name: string) => {
+    const length = u32("length");
+    return struct<{
+        length: number;
+        values: T[];
+    }>([length, seq(type, offset(length, -length.span), "values")], name);
+};
+
+export const GatewayRegistryLayout: Layout<GatewayRegistryState> = struct([
+    // boolean
+    u8("is_initialized"),
+    // PublicKey
+    blob(32, "owner"),
+    // uint64
+    blob(8, "count"),
+    // array of 32-byte arrays
+    vec(blob(32), "selectors"),
+    // PublicKey array
+    vec(blob(32), "gateways"),
+]);
+
+export const SECP256K1_INSTRUCTION_LAYOUT = struct<UInt>([
+    u8("numSignatures"),
+    u16("signatureOffset"),
+    u8("signatureInstructionIndex"),
+    u16("ethAddressOffset"),
+    u8("ethAddressInstructionIndex"),
+    u16("messageDataOffset"),
+    u16("messageDataSize"),
+    u8("messageInstructionIndex"),
+    blob(21, "ethAddress"),
+    blob(64, "signature"),
+    u8("recoveryId"),
+]);
+
+// NOT USED BECAUSE TYPESCRIPT DOESN'T SUPPORT INHERITING FROM CLASSES BUILT
+// USING A DIFFERENT TSC TARGET - RE-ENABLE IF FIXED.
+// // Layout that converts the data to a BigNumber.
+// class BigNumberLayout extends Layout<BigNumber> {
+//     private blob: Blob;
+
+//     public constructor(span: number, property?: string) {
+//         super(span, property);
+//         this.blob = blob(span);
+//     }
+
+//     public decode(b: Buffer, dataOffset = 0) {
+//         return utils.fromBytes(this.blob.decode(b, dataOffset), "le");
+//     }
+
+//     public encode(src: BigNumber, b: Buffer, dataOffset = 0) {
+//         return this.blob.encode(
+//             utils.toNBytes(src, this.span, "le"),
+//             b,
+//             dataOffset,
+//         );
+//     }
+// }
+
+// const u64 = (property: string) => new BigNumberLayout(64 / 8, property);
+// const u256 = (property: string) => new BigNumberLayout(64 / 8, property);

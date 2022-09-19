@@ -1,6 +1,5 @@
 import { Buffer } from "buffer";
 
-import Wallet from "@project-serum/sol-wallet-adapter";
 import {
     assert,
     ChainTransaction,
@@ -9,6 +8,7 @@ import {
     Logger,
     utils,
 } from "@renproject/utils";
+import { mnemonicToSeedSync } from "@scure/bip39";
 import * as Layout from "@solana/buffer-layout";
 import {
     Connection,
@@ -21,7 +21,6 @@ import {
     TransactionSignature,
 } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
-import * as bip39 from "bip39";
 import base58 from "bs58";
 import { derivePath } from "ed25519-hd-key";
 import tweetnacl from "tweetnacl";
@@ -36,24 +35,12 @@ import {
     GatewayRegistryStateKey,
     GatewayStateKey,
     RenVMMessageLayout,
+    SECP256K1_INSTRUCTION_LAYOUT,
 } from "./layouts";
+import { Wallet } from "./wallet";
 
 const ETHEREUM_ADDRESS_BYTES = 20;
 const SIGNATURE_OFFSETS_SERIALIZED_SIZE = 11;
-
-const SECP256K1_INSTRUCTION_LAYOUT = Layout.struct<Layout.UInt>([
-    Layout.u8("numSignatures"),
-    Layout.u16("signatureOffset"),
-    Layout.u8("signatureInstructionIndex"),
-    Layout.u16("ethAddressOffset"),
-    Layout.u8("ethAddressInstructionIndex"),
-    Layout.u16("messageDataOffset"),
-    Layout.u16("messageDataSize"),
-    Layout.u8("messageInstructionIndex"),
-    Layout.blob(21, "ethAddress"),
-    Layout.blob(64, "signature"),
-    Layout.u8("recoveryId"),
-]);
 
 /**
  * Create an secp256k1 instruction with an Ethereum address.
@@ -140,11 +127,11 @@ export const constructRenVMMsg = (
 ): Uint8Array[] => {
     try {
         const msgParams = {
-            p_hash: new Uint8Array(p_hash),
+            p_hash: new Uint8Array(p_hash, undefined, 32),
             amount: utils.toNBytes(amount, 32),
-            token: new Uint8Array(token),
-            to: new Uint8Array(base58.decode(to)),
-            n_hash: new Uint8Array(n_hash),
+            token: new Uint8Array(token, 32),
+            to: new Uint8Array(base58.decode(to), 32),
+            n_hash: new Uint8Array(n_hash, 32),
         };
 
         const renVMMsgSlice = utils.concat([
@@ -170,13 +157,13 @@ export const constructRenVMMsg = (
  * @param mnemonic A BIP-39 mnemonic.
  * @param derivationPath (optional) The BIP-39 derivation path (defaults to
  * m/44'/501'/0'/0').
- * @returns A `@project-serum/sol-wallet-adapter` Wallet.
+ * @returns A wallet struct as expected by the Solana class.
  */
 export const signerFromMnemonic = (
     mnemonic: string,
     derivationPath = "m/44'/501'/0'/0'",
 ): Wallet => {
-    const seed: Buffer = bip39.mnemonicToSeedSync(mnemonic);
+    const seed: Uint8Array = mnemonicToSeedSync(mnemonic);
     const derivedSeed = derivePath(derivationPath, utils.toHex(seed)).key;
     if (!derivedSeed) {
         throw new Error(
@@ -216,7 +203,7 @@ export const signerFromPrivateKey = (
             x.addSignature(keypair.publicKey, Buffer.from(sig));
             return x;
         },
-    } as Wallet;
+    };
 };
 
 export const getGatewayRegistryState = async (
@@ -248,8 +235,11 @@ export const resolveTokenGatewayContract = (
         utils.keccak256(utils.fromUTF8String(`${asset}/toSolana`)),
     );
     for (let i = 0; i < gatewayRegistryState.selectors.length; i++) {
-        if (gatewayRegistryState.selectors[i].toString() === sHash.toString()) {
-            return gatewayRegistryState.gateways[i];
+        if (
+            utils.toHex(gatewayRegistryState.selectors.values[i]) ===
+            utils.toHex(sHash)
+        ) {
+            return new PublicKey(gatewayRegistryState.gateways.values[i]);
         }
     }
     return undefined;
@@ -380,14 +370,7 @@ export const getBurnFromNonce = async (
     }
 
     // Concatenate four u64s into a u256 value.
-    const burnAmount = utils.fromBytes(
-        utils.concat([
-            utils.toNBytes(burnData.amount_section_1.toString(), 8, "le"),
-            utils.toNBytes(burnData.amount_section_2.toString(), 8, "le"),
-            utils.toNBytes(burnData.amount_section_3.toString(), 8, "le"),
-            utils.toNBytes(burnData.amount_section_4.toString(), 8, "le"),
-        ]),
-    );
+    const burnAmount = utils.fromBytes(burnData.amount_section, "be");
 
     // Convert borsh `Number` to built-in number
     const recipientLength = parseInt(burnData.recipient_len.toString());

@@ -1,11 +1,6 @@
 import { Buffer } from "buffer";
 
 import {
-    createAssociatedTokenAccount,
-    getAssociatedTokenAddress,
-} from "@project-serum/associated-token";
-import Wallet from "@project-serum/sol-wallet-adapter";
-import {
     ChainTransaction,
     ContractChain,
     defaultLogger,
@@ -54,6 +49,11 @@ import {
     txHashToBytes,
     txHashToChainTransaction,
 } from "./utils";
+import {
+    createAssociatedTokenAccount,
+    getAssociatedTokenAddress,
+} from "./utils/associatedTokenAccount";
+import { Wallet } from "./wallet";
 
 interface SolOptions {
     logger?: Logger;
@@ -844,9 +844,9 @@ export class Solana
             }
             const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
 
-            const nonceBN = new BigNumber(
-                gatewayState.burn_count.toString(),
-            ).plus(1);
+            const nonceBN = utils
+                .fromBytes(gatewayState.burn_count, "le")
+                .plus(1);
             this._logger.debug("burn nonce: ", nonceBN.toFixed());
 
             const burnLogAccountId = await PublicKey.findProgramAddress(

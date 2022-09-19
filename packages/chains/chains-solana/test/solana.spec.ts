@@ -27,11 +27,11 @@ describe("Solana", () => {
             );
             RenVMMessageLayout.encode(
                 {
-                    p_hash: new Uint8Array([0]),
+                    p_hash: utils.toNBytes(0, 32),
                     amount: utils.toNBytes(0, 32),
-                    token: new Uint8Array([0]),
-                    to: new Uint8Array([0]),
-                    n_hash: new Uint8Array([0]),
+                    token: utils.toNBytes(0, 32),
+                    to: utils.toNBytes(0, 32),
+                    n_hash: utils.toNBytes(0, 32),
                 },
                 outputBuffer,
             );

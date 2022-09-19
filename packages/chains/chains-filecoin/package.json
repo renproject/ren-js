@@ -35,21 +35,21 @@
         "test": "run-s test:* lint",
         "test:unit": "nyc ../../../node_modules/ts-mocha/bin/ts-mocha --bail --sort --exit --timeout 180000 --paths -p ./tsconfig.json ./test/*.spec.ts ./test/**/*.spec.ts --ignore ./test/testutils/chai.d.ts",
         "watch": "run-s build:main && run-s \"build:main -- -w\"",
-        "cov": "run-s build:main test:unit cov:html && open-cli coverage/index.html",
+        "cov": "run-s build:main test:unit cov:html && echo \"\n\nTo see coverage, run: 'open coverage/index.html'\n\n\"",
         "cov:html": "nyc report --reporter=html",
         "cov:send": "nyc report --reporter=lcov && codecov",
         "cov:check": "nyc report && nyc check-coverage --lines 0 --functions 0 --branches 0",
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@glif/filecoin-address": "^1.1.0",
-        "@glif/filecoin-rpc-client": "^1.1.0",
-        "@renproject/utils": "^3.4.4",
-        "@types/elliptic": "^6.4.14",
-        "bignumber.js": "^9.0.2",
-        "blakejs": "^1.2.1",
-        "elliptic": "^6.5.4",
-        "multiformats": "^9.7.1"
+        "@glif/filecoin-address": "1.1.0",
+        "@glif/filecoin-rpc-client": "1.1.0",
+        "@renproject/utils": "3.4.4",
+        "@types/elliptic": "6.4.14",
+        "bignumber.js": "9.0.2",
+        "blakejs": "1.2.1",
+        "elliptic": "6.5.4",
+        "multiformats": "9.7.1"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

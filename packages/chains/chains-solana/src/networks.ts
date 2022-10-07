@@ -1,4 +1,4 @@
-import { RenNetwork, RenNetworkString } from "@renproject/utils";
+import { RenNetwork } from "@renproject/utils";
 
 export interface SolNetworkConfig {
     name: RenNetwork;
@@ -27,7 +27,7 @@ const isSolNetworkConfig = (x: unknown): x is SolNetworkConfig =>
     (x as SolNetworkConfig).genesisHash !== undefined;
 
 export const resolveNetwork = (
-    networkInput: RenNetwork | RenNetworkString | SolNetworkConfig,
+    networkInput: RenNetwork | `${RenNetwork}` | SolNetworkConfig,
 ): SolNetworkConfig => {
     if (typeof networkInput === "string") {
         switch (networkInput) {

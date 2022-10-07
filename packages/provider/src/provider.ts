@@ -6,7 +6,6 @@ import {
     pack,
     RenJSError,
     RenNetwork,
-    RenNetworkString,
     RenVMShard,
     TxStatus,
     utils,
@@ -123,7 +122,7 @@ export class RenVMProvider extends JsonRpcProvider<RPCParams, RPCResponses> {
     public constructor(
         endpointOrProvider:
             | RenNetwork
-            | RenNetworkString
+            | `${RenNetwork}`
             | string
             | Provider<RPCParams, RPCResponses>,
         logger: Logger = defaultLogger,

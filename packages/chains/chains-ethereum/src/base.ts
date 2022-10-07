@@ -1262,6 +1262,20 @@ export class EthereumBaseChain
         };
     };
 
+    public populateChainTransaction = (
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ): ChainTransaction => {
+        return populateChainTransaction({
+            partialTx,
+            chain: this.chain,
+            txHashToBytes,
+            txHashFromBytes,
+            defaultTxindex: "0",
+            explorerLink: this.transactionExplorerLink,
+        });
+    };
+
     /* ====================================================================== */
 
     public Account = ({
@@ -1452,14 +1466,7 @@ export class EthereumBaseChain
             chain: this.chain,
             type: "transaction",
             params: {
-                tx: populateChainTransaction({
-                    partialTx,
-                    chain: this.chain,
-                    txHashToBytes,
-                    txHashFromBytes,
-                    defaultTxindex: "0",
-                    explorerLink: this.transactionExplorerLink,
-                }),
+                tx: this.populateChainTransaction(partialTx),
             },
             payloadConfig,
         };

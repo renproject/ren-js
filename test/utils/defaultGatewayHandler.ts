@@ -118,7 +118,7 @@ export const defaultGatewayHandler = async (
                 gateway.gatewayAddress
             } (to receive at least ${receivedAmount.toFixed()})`,
         );
-        const SEND_FUNDS = true;
+        const SEND_FUNDS = false;
         if (SEND_FUNDS) {
             try {
                 await sendFunds(

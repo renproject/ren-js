@@ -16,7 +16,6 @@ import {
     Polygon,
 } from "packages/chains/chains-ethereum/src";
 import { Filecoin } from "packages/chains/chains-filecoin/src";
-import { Terra } from "packages/chains/chains-terra/src";
 import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
 import { RenNetwork } from "packages/utils/src";
@@ -57,11 +56,11 @@ describe("Gateway", () => {
     //     console.info(burnLogs[0]);
     // });
 
-    it.skip("recover", async () => {
+    it("recover", async () => {
         const network = RenNetwork.Mainnet;
-        const asset = Terra.assets.LUNA;
-        const from = initializeChain(Polygon, network);
-        const to = initializeChain(Terra, network, {
+        const asset = Ethereum.assets.ETH;
+        const from = initializeChain(Ethereum, network);
+        const to = initializeChain(Catalog, network, {
             preserveAddressFormat: true,
         });
         const renJS = new RenJS(network).withChains(from, to);
@@ -69,9 +68,25 @@ describe("Gateway", () => {
         const gatewayParams: GatewayParams = {
             asset,
             from: from.Transaction({
-                txHash: "0x112e09e083ca35a084799736d949e30271965000a6903565a6408857afee9cad",
+                txHash: "0xc46b1a9a44c1a7041988100d0836d2e1837200ec35c82ff45ad8a7c501e23121",
             }),
-            to: to.Address("terra1dqfxvrt23pftru924w0mxjv3vnjzzf35mp7g24"),
+            to: to.Contract({
+                to: "0x96081a4e7C3617a4d7dAc9AC84D97255d63773d2",
+                withRenParams: true,
+                method: "mint",
+                params: [
+                    {
+                        name: "_token",
+                        value: "0x4680fb30aa384c15ce6b409a3f6ba9064587c321",
+                        type: "address",
+                    },
+                    {
+                        name: "_to",
+                        value: "0x99b6be7f16a7bba42d7cdc9ca8e93028612dcbed",
+                        type: "address",
+                    },
+                ],
+            }),
         };
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
@@ -439,7 +454,7 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("USDT/toCatalog", async () => {
+    it.only("USDT/toCatalog", async () => {
         const network = RenNetwork.Testnet;
 
         const from = initializeChain(Goerli, network);
@@ -452,6 +467,9 @@ describe("Gateway", () => {
             bsc,
             polygon,
         );
+
+        console.log(await catalog.getRenAsset(from.assets.DAI));
+
         console.log(await from.signer!.getAddress());
 
         console.log(
@@ -564,7 +582,7 @@ describe("Gateway", () => {
         }
     }).timeout(100000000000);
 
-    it.only("REN/toSolana", async () => {
+    it("REN/toSolana", async () => {
         const network = RenNetwork.Testnet;
 
         const asset = Ethereum.assets.REN;

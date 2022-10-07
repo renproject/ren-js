@@ -3,7 +3,7 @@ import {
     ExternalProvider,
     JsonRpcFetchFunc,
 } from "@ethersproject/providers/lib/web3-provider";
-import { Logger, RenNetwork, RenNetworkString } from "@renproject/utils";
+import { Logger, RenNetwork } from "@renproject/utils";
 import { ethers } from "ethers";
 
 export interface EVMExplorer {
@@ -69,7 +69,7 @@ export interface EVMNetworkConfig {
         BasicBridge: string;
     };
 
-    // See EVMNetworkConfig.network.nativeCurrency
+    // Allow overriding values from EVMNetworkConfig.config.nativeCurrency
     nativeAsset: {
         name: string;
         symbol: string;
@@ -80,7 +80,7 @@ export interface EVMNetworkConfig {
     config: EIP3085Config;
 }
 
-export type EVMNetworkInput = RenNetwork | RenNetworkString | EVMNetworkConfig;
+export type EVMNetworkInput = RenNetwork | `${RenNetwork}` | EVMNetworkConfig;
 export type EvmNetworkInput = EVMNetworkInput;
 
 export type EthProvider =

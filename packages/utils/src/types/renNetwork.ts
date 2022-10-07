@@ -4,4 +4,4 @@ export enum RenNetwork {
     Devnet = "devnet",
 }
 
-export type RenNetworkString = "mainnet" | "testnet" | "devnet";
+export type RenNetworkString = `${RenNetwork}`;

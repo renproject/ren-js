@@ -5,7 +5,6 @@ import {
     ErrorWithCode,
     RenJSError,
     RenNetwork,
-    RenNetworkString,
     RenVMShard,
 } from "@renproject/utils";
 
@@ -98,7 +97,7 @@ export class RenJS {
     public constructor(
         providerOrNetwork:
             | RenNetwork
-            | RenNetworkString
+            | `${RenNetwork}`
             | RenVMProvider
             | string = RenNetwork.Mainnet,
         config?: RenJSConfig,

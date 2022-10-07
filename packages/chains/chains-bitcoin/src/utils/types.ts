@@ -1,8 +1,4 @@
-import {
-    ChainTransaction,
-    RenNetwork,
-    RenNetworkString,
-} from "@renproject/utils";
+import { ChainTransaction, RenNetwork } from "@renproject/utils";
 
 import { APIWithPriority, BitcoinAPI } from "../APIs/API";
 
@@ -65,5 +61,5 @@ export type BitcoinNetworkConfigMap = {
 
 export type BitcoinNetworkInput =
     | RenNetwork
-    | RenNetworkString
+    | `${RenNetwork}`
     | BitcoinNetworkConfig;

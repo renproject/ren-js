@@ -102,6 +102,12 @@ export const goerliConfigMap: EthereumBaseChain["configMap"] = {
     [RenNetwork.Testnet]: goerliConfig,
 };
 
+export enum EthereumTestnet {
+    Goerli = "goerli",
+    Görli = "goerli",
+    Kovan = "kovan",
+}
+
 /**
  * The Ethereum RenJS implementation.
  */
@@ -153,19 +159,23 @@ export class Ethereum extends EthereumBaseChain {
      */
     public constructor({
         network,
-        testnet,
+        defaultTestnet,
         ...params
     }: ConstructorParameters<typeof EthereumBaseChain>[0] & {
-        testnet?: "Kovan" | "Goerli" | "Görli";
+        defaultTestnet: EthereumTestnet | `${EthereumTestnet}`;
     }) {
         super({
             ...params,
             network: resolveEVMNetworkConfig(
-                testnet === "Goerli" || testnet === "Görli"
+                defaultTestnet === EthereumTestnet.Görli
                     ? goerliConfigMap
                     : defaultConfigMap,
                 network,
             ),
         });
+        this.configMap =
+            defaultTestnet === EthereumTestnet.Görli
+                ? goerliConfigMap
+                : defaultConfigMap;
     }
 }

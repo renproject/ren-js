@@ -183,13 +183,27 @@ describe("common utils", () => {
             ).to.equal(2);
             expect(logged).to.equal(true);
 
-            await expect(
-                utils.tryNTimes(mustBeCalledNTimes(2), 1, 0),
-            ).to.be.rejectedWith("Only called 1/2 times");
+            expect(
+                await new Promise<string>((resolve, reject) => {
+                    utils
+                        .tryNTimes(mustBeCalledNTimes(2), 1, 0)
+                        .then(() =>
+                            reject(new Error(`Line should have thrown.`)),
+                        )
+                        .catch((error) => resolve(error.message));
+                }),
+            ).to.equal("Only called 1/2 times");
 
-            await expect(
-                utils.tryNTimes(mustBeCalledNTimes(2, true), 1, 0),
-            ).to.be.rejectedWith("Only called 1/2 times");
+            expect(
+                await new Promise<string>((resolve, reject) => {
+                    utils
+                        .tryNTimes(mustBeCalledNTimes(2, true), 1, 0)
+                        .then(() =>
+                            reject(new Error(`Line should have thrown.`)),
+                        )
+                        .catch((error) => resolve(error.message));
+                }),
+            ).to.equal("Only called 1/2 times");
         });
 
         it("should use provided timeout", async () => {

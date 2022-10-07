@@ -15,14 +15,16 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainId: "0x504",
             chainName: "Moonbeam",
             nativeCurrency: { name: "Glimmer", symbol: "GLMR", decimals: 18 },
-            rpcUrls: ["https://rpc.api.moonbeam.network"],
+            rpcUrls: [
+                "https://rpc.api.moonbeam.network",
+                "wss://wss.api.moonbeam.network",
+            ],
             blockExplorerUrls: ["https://moonbeam.moonscan.io"],
         },
 
         addresses: {
-            // TODO: Fill out once available.
-            GatewayRegistry: "",
-            BasicBridge: "",
+            GatewayRegistry: "0xf36666C230Fa12333579b9Bd6196CB634D6BC506",
+            BasicBridge: "0x82DF02A52E2e76C0c233367f2fE6c9cfe51578c5",
         },
     },
 

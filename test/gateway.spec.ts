@@ -425,13 +425,13 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("AVAX/fromSolana", async () => {
+    it.only("AVAX/toGoerli", async () => {
         const network = RenNetwork.Testnet;
         const renJS = new RenJS(network);
 
         const asset = Avalanche.assets.AVAX;
-        const from = initializeChain(Solana, network);
-        const to = initializeChain(Avalanche, network);
+        const from = initializeChain(Avalanche, network);
+        const to = initializeChain(Goerli, network);
         renJS.withChains(to, from);
 
         const amount = new BigNumber(1).shiftedBy(18);
@@ -454,7 +454,7 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it.only("USDT/toCatalog", async () => {
+    it.skip("USDT/toCatalog", async () => {
         const network = RenNetwork.Testnet;
 
         const from = initializeChain(Goerli, network);

@@ -19,6 +19,7 @@ describe("Initialization", () => {
         });
 
         expect(mainnet.configMap.mainnet.selector).to.equal("Ethereum");
+        expect(mainnet.assets.ETH).to.equal("ETH");
 
         const kovan = new Ethereum({
             network: RenNetwork.Testnet,
@@ -27,6 +28,7 @@ describe("Initialization", () => {
         });
 
         expect(kovan.configMap.testnet.selector).to.equal("Ethereum");
+        expect(kovan.assets.ETH).to.equal("ETH");
 
         const goerli = new Ethereum({
             network: RenNetwork.Testnet,
@@ -35,5 +37,6 @@ describe("Initialization", () => {
         });
 
         expect(goerli.configMap.testnet.selector).to.equal("Goerli");
+        expect(goerli.assets.ETH).to.equal("gETH");
     });
 });

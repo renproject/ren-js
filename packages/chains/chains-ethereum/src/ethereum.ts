@@ -102,6 +102,47 @@ export const goerliConfigMap: EthereumBaseChain["configMap"] = {
     [RenNetwork.Testnet]: goerliConfig,
 };
 
+export enum EthereumTestnet {
+    Goerli = "goerli",
+    Görli = "goerli",
+    Kovan = "kovan",
+}
+
+const defaultAssets = {
+    ETH: "ETH" as const,
+    DAI: "DAI" as const,
+    REN: "REN" as const,
+    USDC: "USDC" as const,
+    USDT: "USDT" as const,
+    EURT: "EURT" as const,
+    BUSD: "BUSD" as const,
+    MIM: "MIM" as const,
+    CRV: "CRV" as const,
+    LINK: "LINK" as const,
+    UNI: "UNI" as const,
+    SUSHI: "SUSHI" as const,
+    FTT: "FTT" as const,
+    ROOK: "ROOK" as const,
+    BADGER: "BADGER" as const,
+    KNC: "KNC" as const,
+};
+
+const goerliAssets = {
+    ETH: "gETH" as const,
+    DAI: "DAI_Goerli" as const,
+    REN: "REN_Goerli" as const,
+    USDC: "USDC_Goerli" as const,
+    USDT: "USDT_Goerli" as const,
+
+    // Goerli only
+    gETH: "gETH" as const,
+    REN_Goerli: "REN_Goerli" as const,
+    DAI_Goerli: "DAI_Goerli" as const,
+    USDC_Goerli: "USDC_Goerli" as const,
+    USDT_Goerli: "USDT_Goerli" as const,
+    ETH_Goerli: "gETH" as const,
+};
+
 /**
  * The Ethereum RenJS implementation.
  */
@@ -110,32 +151,8 @@ export class Ethereum extends EthereumBaseChain {
     public static chain = "Ethereum" as const;
     public static configMap = defaultConfigMap;
     public static assets = {
-        ETH: "ETH" as const,
-        DAI: "DAI" as const,
-        REN: "REN" as const,
-        USDC: "USDC" as const,
-        USDT: "USDT" as const,
-        EURT: "EURT" as const,
-        BUSD: "BUSD" as const,
-        MIM: "MIM" as const,
-        CRV: "CRV" as const,
-        LINK: "LINK" as const,
-        UNI: "UNI" as const,
-        SUSHI: "SUSHI" as const,
-        FTT: "FTT" as const,
-        ROOK: "ROOK" as const,
-        BADGER: "BADGER" as const,
-        KNC: "KNC" as const,
-
-        // Goerli only
-        gETH: "gETH" as const,
-        REN_Goerli: "REN_Goerli" as const,
-        DAI_Goerli: "DAI_Goerli" as const,
-        USDC_Goerli: "USDC_Goerli" as const,
-        USDT_Goerli: "USDT_Goerli" as const,
-
-        // Aliases
-        ETH_Goerli: "gETH" as const,
+        ...goerliAssets,
+        ...defaultAssets,
     };
 
     public configMap = Ethereum.configMap;
@@ -153,19 +170,29 @@ export class Ethereum extends EthereumBaseChain {
      */
     public constructor({
         network,
-        testnet,
+        defaultTestnet,
         ...params
     }: ConstructorParameters<typeof EthereumBaseChain>[0] & {
-        testnet?: "Kovan" | "Goerli" | "Görli";
+        defaultTestnet: EthereumTestnet | `${EthereumTestnet}`;
     }) {
         super({
             ...params,
             network: resolveEVMNetworkConfig(
-                testnet === "Goerli" || testnet === "Görli"
+                defaultTestnet === EthereumTestnet.Görli
                     ? goerliConfigMap
                     : defaultConfigMap,
                 network,
             ),
         });
+        this.configMap =
+            defaultTestnet === EthereumTestnet.Görli
+                ? goerliConfigMap
+                : defaultConfigMap;
+        this.assets = (
+            defaultTestnet === EthereumTestnet.Görli &&
+            network === RenNetwork.Testnet
+                ? goerliAssets
+                : defaultAssets
+        ) as typeof this.assets;
     }
 }

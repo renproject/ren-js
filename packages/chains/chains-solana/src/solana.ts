@@ -11,7 +11,6 @@ import {
     OutputType,
     populateChainTransaction,
     RenNetwork,
-    RenNetworkString,
     TxSubmitter,
     TxWaiter,
     utils,
@@ -82,7 +81,7 @@ export class Solana
         signer,
         config,
     }: {
-        network: RenNetwork | RenNetworkString | SolNetworkConfig;
+        network: RenNetwork | `${RenNetwork}` | SolNetworkConfig;
         provider?: Connection | string;
         signer?: Wallet;
         config?: SolOptions;
@@ -1131,6 +1130,22 @@ export class Solana
         });
     };
 
+    public populateChainTransaction = (
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ): ChainTransaction => {
+        return populateChainTransaction({
+            partialTx,
+            chain: this.chain,
+            txHashToBytes,
+            txHashFromBytes,
+            defaultTxindex: "0",
+            explorerLink: this.transactionExplorerLink,
+        });
+    };
+
+    /* ====================================================================== */
+
     public Account = ({
         amount,
         convertUnit,
@@ -1205,14 +1220,7 @@ export class Solana
             chain: this.chain,
             type: "transaction",
             params: {
-                tx: populateChainTransaction({
-                    partialTx,
-                    chain: this.chain,
-                    txHashToBytes,
-                    txHashFromBytes,
-                    defaultTxindex: "0",
-                    explorerLink: this.transactionExplorerLink,
-                }),
+                tx: this.populateChainTransaction(partialTx),
             },
         };
     };

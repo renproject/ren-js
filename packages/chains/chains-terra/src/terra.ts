@@ -9,7 +9,6 @@ import {
     populateChainTransaction,
     RenJSError,
     RenNetwork,
-    RenNetworkString,
     utils,
 } from "@renproject/utils";
 import { AccAddress, SimplePublicKey } from "@terra-money/terra.js";
@@ -174,7 +173,7 @@ export class Terra
     public constructor({
         network,
     }: {
-        network: RenNetwork | RenNetworkString | TerraNetworkConfig;
+        network: RenNetwork | `${RenNetwork}` | TerraNetworkConfig;
     }) {
         const networkConfig = isTerraNetworkConfig(network)
             ? network
@@ -359,6 +358,19 @@ export class Terra
         };
     };
 
+    public populateChainTransaction = (
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ): ChainTransaction => {
+        return populateChainTransaction({
+            partialTx,
+            chain: this.chain,
+            txHashToBytes,
+            txHashFromBytes,
+            explorerLink: this.transactionExplorerLink,
+        });
+    };
+
     // Methods for initializing mints and burns ////////////////////////////////
 
     /**
@@ -418,13 +430,7 @@ export class Terra
             chain: this.chain,
             type: "transaction",
             params: {
-                tx: populateChainTransaction({
-                    partialTx,
-                    chain: this.chain,
-                    txHashToBytes,
-                    txHashFromBytes,
-                    explorerLink: this.transactionExplorerLink,
-                }),
+                tx: this.populateChainTransaction(partialTx),
             },
         };
     };

@@ -153,6 +153,11 @@ export interface ChainCommon {
     //     tx: ChainTransaction,
     //     target?: number,
     // ) => SyncOrPromise<TxWaiter>;
+
+    populateChainTransaction: (
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ) => ChainTransaction;
 }
 
 export interface DepositChain<

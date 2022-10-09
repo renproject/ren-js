@@ -1,5 +1,5 @@
 import { EthereumBaseChain } from "./base";
-import { goerliConfigMap } from "./ethereum";
+import { EthereumTestnet, goerliConfigMap } from "./ethereum";
 import { resolveEVMNetworkConfig } from "./utils/generic";
 
 export class Goerli extends EthereumBaseChain {
@@ -15,6 +15,11 @@ export class Goerli extends EthereumBaseChain {
 
         // Aliases
         ETH: "gETH" as const,
+        ETH_Goerli: "gETH" as const,
+        REN_Goerli: "REN_Goerli" as const,
+        DAI_Goerli: "DAI_Goerli" as const,
+        USDC_Goerli: "USDC_Goerli" as const,
+        USDT_Goerli: "USDT_Goerli" as const,
     };
 
     public configMap = goerliConfigMap;
@@ -23,7 +28,9 @@ export class Goerli extends EthereumBaseChain {
     public constructor({
         network,
         ...params
-    }: ConstructorParameters<typeof EthereumBaseChain>[0]) {
+    }: ConstructorParameters<typeof EthereumBaseChain>[0] & {
+        defaultTestnet?: EthereumTestnet.Goerli | `${EthereumTestnet.Goerli}`;
+    }) {
         super({
             ...params,
             network: resolveEVMNetworkConfig(goerliConfigMap, network),

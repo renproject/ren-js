@@ -17,7 +17,6 @@ import {
     populateChainTransaction,
     RenJSError,
     RenNetwork,
-    RenNetworkString,
     utils,
 } from "@renproject/utils";
 import BigNumber from "bignumber.js";
@@ -149,7 +148,7 @@ export class Filecoin
         network,
         options,
     }: {
-        network: RenNetwork | RenNetworkString | FilecoinNetworkConfig;
+        network: RenNetwork | `${RenNetwork}` | FilecoinNetworkConfig;
         options?: FilecoinConfig;
     }) {
         const networkConfig = isFilecoinNetworkConfig(network)
@@ -572,6 +571,20 @@ export class Filecoin
         };
     };
 
+    public populateChainTransaction = (
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ): ChainTransaction => {
+        return populateChainTransaction({
+            partialTx,
+            chain: this.chain,
+            txHashToBytes,
+            txHashFromBytes,
+            defaultTxindex: "0",
+            explorerLink: this.transactionExplorerLink,
+        });
+    };
+
     // Methods for initializing mints and burns ////////////////////////////////
 
     /**
@@ -629,14 +642,7 @@ export class Filecoin
             chain: this.chain,
             type: "transaction",
             params: {
-                tx: populateChainTransaction({
-                    partialTx,
-                    chain: this.chain,
-                    txHashToBytes,
-                    txHashFromBytes,
-                    defaultTxindex: "0",
-                    explorerLink: this.transactionExplorerLink,
-                }),
+                tx: this.populateChainTransaction(partialTx),
             },
         };
     };

@@ -362,6 +362,19 @@ export abstract class BitcoinBaseChain
         );
     };
 
+    public populateChainTransaction = (
+        partialTx: Partial<ChainTransaction> &
+            ({ txid: string } | { txHash: string }),
+    ): ChainTransaction => {
+        return populateChainTransaction({
+            partialTx,
+            chain: this.chain,
+            txHashToBytes,
+            txHashFromBytes,
+            explorerLink: this.transactionExplorerLink,
+        });
+    };
+
     // Methods for initializing mints and burns ////////////////////////////////
 
     /**
@@ -423,13 +436,7 @@ export abstract class BitcoinBaseChain
             chain: this.chain,
             type: "transaction",
             params: {
-                tx: populateChainTransaction({
-                    partialTx,
-                    chain: this.chain,
-                    txHashToBytes,
-                    txHashFromBytes,
-                    explorerLink: this.transactionExplorerLink,
-                }),
+                tx: this.populateChainTransaction(partialTx),
             },
         };
     };

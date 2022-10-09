@@ -101,7 +101,7 @@ export const initializeChain = <T extends ChainCommon>(
                         INFURA_API_KEY: process.env.INFURA_KEY,
                     },
                 ),
-                testnet: "Kovan",
+                defaultTestnet: "kovan",
                 config,
             }) as ChainCommon as T;
 

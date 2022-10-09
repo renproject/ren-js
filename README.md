@@ -80,7 +80,7 @@ yarn link @renproject/ren @renproject/chains @renproject/utils @renproject/provi
 
 You'll need to:
 
-1. Generate a mnemonic and send ETH (kovan for testnet) (path: `m/44'/60'/0'/0/`).
+1. Generate a mnemonic and send ETH (goerli for testnet) (path: `m/44'/60'/0'/0/`).
     - `let w = require("ethers").Wallet.createRandom(); console.debug(w.address, w.mnemonic.phrase);`
 2. Generate a private key and send testnet crypto funds.
     - `require("send-crypto").newPrivateKey();`

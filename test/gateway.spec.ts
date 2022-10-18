@@ -1,4 +1,4 @@
-import { Solana } from "@renproject/chains";
+import { Moonbeam, Solana } from "@renproject/chains";
 import { getERC20Instance } from "@renproject/chains-ethereum/src/contracts";
 import BigNumber from "bignumber.js";
 import chai from "chai";
@@ -20,6 +20,7 @@ import RenJS from "packages/ren/src";
 import { GatewayParams } from "packages/ren/src/params";
 import { RenNetwork } from "packages/utils/src";
 
+import { LogLevel } from "../packages/ren/build/utils/config";
 import { defaultGatewayHandler } from "./utils/defaultGatewayHandler";
 import { initializeChain } from "./utils/testUtils";
 
@@ -425,16 +426,16 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it.only("AVAX/toGoerli", async () => {
+    it("AVAX/fromKava", async () => {
         const network = RenNetwork.Testnet;
-        const renJS = new RenJS(network);
+        const renJS = new RenJS(network, { logLevel: LogLevel.Debug });
 
         const asset = Avalanche.assets.AVAX;
-        const from = initializeChain(Avalanche, network);
-        const to = initializeChain(Goerli, network);
+        const from = initializeChain(Moonbeam, network);
+        const to = initializeChain(Avalanche, network);
         renJS.withChains(to, from);
 
-        const amount = new BigNumber(1).shiftedBy(18);
+        const amount = new BigNumber(0.001).shiftedBy(18);
 
         // const fees = await renJS.getFees({
         //     asset,
@@ -442,19 +443,18 @@ describe("Gateway", () => {
         //     to: to,
         // });
 
+        console.log(await to.signer.getAddress());
+
         const gatewayParams: GatewayParams = {
             asset: asset,
             from: from.Account({ amount }),
-            // from: from.Transaction({
-            //     txid: "VKzZnqT-sO9kKt43HgCE4Jc18Zd3q5pHddDwK2-2Xw9QMSfqGKS6g-QcPNVMcKMddf16nC0wQf3y25UQU1eeCg",
-            // }),
-            to: to.Address(await to.signer.getAddress()),
+            to: to.Account(),
         };
 
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it.skip("USDT/toCatalog", async () => {
+    it.only("USDT/toCatalog", async () => {
         const network = RenNetwork.Testnet;
 
         const from = initializeChain(Goerli, network);
@@ -468,46 +468,46 @@ describe("Gateway", () => {
             polygon,
         );
 
-        console.log(await catalog.getRenAsset(from.assets.DAI));
+        // console.log(await catalog.getRenAsset(from.assets.DAI));
 
-        console.log(await from.signer!.getAddress());
+        // console.log(await from.signer!.getAddress());
 
-        console.log(
-            Goerli.assets.USDT,
-            (await from.getBalance(Goerli.assets.USDT))
-                .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDT)))
-                .toFixed(),
-        );
-        console.log(
-            Goerli.assets.DAI,
-            (await from.getBalance(Goerli.assets.DAI))
-                .shiftedBy(-(await from.assetDecimals(Goerli.assets.DAI)))
-                .toFixed(),
-        );
-        console.log(
-            Goerli.assets.USDC,
-            (await from.getBalance(Goerli.assets.USDC))
-                .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDC)))
-                .toFixed(),
-        );
+        // console.log(
+        //     Goerli.assets.USDT,
+        //     (await from.getBalance(Goerli.assets.USDT))
+        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDT)))
+        //         .toFixed(),
+        // );
+        // console.log(
+        //     Goerli.assets.DAI,
+        //     (await from.getBalance(Goerli.assets.DAI))
+        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets.DAI)))
+        //         .toFixed(),
+        // );
+        // console.log(
+        //     Goerli.assets.USDC,
+        //     (await from.getBalance(Goerli.assets.USDC))
+        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDC)))
+        //         .toFixed(),
+        // );
 
         const options: Array<[string, EthereumBaseChain]> = [
-            // [Goerli.assets.USDT, catalog],
-            // [Goerli.assets.USDC, catalog],
-            // [Goerli.assets.DAI, catalog],
-            [Goerli.assets.USDT, bsc],
-            [Goerli.assets.USDC, bsc],
-            [Goerli.assets.DAI, bsc],
-            [Goerli.assets.USDT, polygon],
-            [Goerli.assets.USDC, polygon],
-            [Goerli.assets.DAI, polygon],
+            [Goerli.assets.USDT, catalog],
+            [Goerli.assets.USDC, catalog],
+            [Goerli.assets.DAI, catalog],
+            // [Goerli.assets.USDT, bsc],
+            // [Goerli.assets.USDC, bsc],
+            // [Goerli.assets.DAI, bsc],
+            // [Goerli.assets.USDT, polygon],
+            // [Goerli.assets.USDC, polygon],
+            // [Goerli.assets.DAI, polygon],
         ];
 
         for (const [asset, to] of options) {
             // const asset = Ethereum.assets.USDT;
             const decimals = await from.assetDecimals(asset);
 
-            const amount = 100.2;
+            const amount = 10.2;
 
             const gatewayParams = {
                 asset,

@@ -10,7 +10,7 @@ import { fetchDeposits, getHeight } from "../src/utils/lotus";
 
 chai.should();
 
-loadDotEnv();
+loadDotEnv({ path: "../../../.env" });
 
 describe("Filecoin", () => {
     it("mint to contract", () => {

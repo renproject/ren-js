@@ -58,6 +58,7 @@ import {
     mapLockLogToInputChainTransaction,
     mapTransferLogToInputChainTransaction,
     resolveEVMNetworkConfig,
+    resolveRpcEndpoints,
     txHashFromBytes,
     txHashToBytes,
     txHashToChainTransaction,
@@ -114,7 +115,7 @@ export class EthereumBaseChain
         config,
     }: {
         network: EVMNetworkInput;
-        provider: EthProvider;
+        provider?: EthProvider;
         signer?: EthSigner;
         config?: EthereumClassConfig;
     }) {
@@ -128,7 +129,9 @@ export class EthereumBaseChain
 
         // Ignore not configured error.
         this.provider = undefined as never;
-        this.withProvider(provider);
+        this.withProvider(
+            provider || resolveRpcEndpoints(this.network.config.rpcUrls)[0],
+        );
         if (signer) {
             this.withSigner(signer);
         }

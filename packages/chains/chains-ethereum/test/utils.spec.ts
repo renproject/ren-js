@@ -16,6 +16,7 @@ describe("Ethereum utils", () => {
     it("addressIsValid", () => {
         const ethereum = new Ethereum({
             network: "testnet",
+            defaultTestnet: "kovan",
             provider: new providers.JsonRpcProvider(
                 Ethereum.configMap["testnet"].config.rpcUrls[0],
             ),
@@ -56,6 +57,7 @@ describe("Utils", () => {
     it("validateTransaction", () => {
         const ethereum = new Ethereum({
             network: "testnet",
+            defaultTestnet: "kovan",
             provider: { _isProvider: true } as unknown as EthProvider,
         });
 

@@ -15,7 +15,7 @@ import {
     mapLockLogToInputChainTransaction,
 } from "../src/utils/generic";
 
-loadDotEnv();
+loadDotEnv({ path: "../../../.env" });
 
 chai.should();
 
@@ -37,7 +37,7 @@ describe("Logs", () => {
             receipt.logs,
             logLockABI,
         ).map((e) =>
-            mapLockLogToInputChainTransaction("Ethereun", "BTC", e, ""),
+            mapLockLogToInputChainTransaction("Ethereun", "BTC", e.event, ""),
         );
         console.debug(lockDetails);
     });

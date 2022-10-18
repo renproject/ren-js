@@ -7,7 +7,7 @@ import { Filfox } from "../src/utils/filfox";
 
 chai.should();
 
-loadDotEnv();
+loadDotEnv({ path: "../../../.env" });
 
 describe.skip("Filecoin explorers", () => {
     it("mint to contract", async () => {

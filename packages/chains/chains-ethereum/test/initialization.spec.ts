@@ -6,7 +6,7 @@ import { config as loadDotEnv } from "dotenv";
 
 import { Ethereum } from "../src/ethereum";
 
-loadDotEnv();
+loadDotEnv({ path: "../../../.env" });
 
 chai.should();
 

@@ -28,8 +28,8 @@ export const decodeRenVMSelector = (
     const regex =
         // Regular Expression to match selectors in the form of
         // ASSET/fromCHAINtoCHAIN, ASSET/fromCHAIN or ASSET/toCHAIN.
-        // ^(  ASSET )/[      [from(        CHAIN      ) _   to(   CHAIN  )] OR [from( CHAIN )] OR ( to(  CHAIN  ))]$
-        /^([a-zA-Z]+)\/(?:(?:(?:from([a-zA-Z]+?(?=_to)))\_(?:to([a-zA-Z]+))?)|(?:from([a-zA-Z]+))|(?:to([a-zA-Z]+)))$/;
+        // ^(  ASSET  )/[      [from(        CHAIN      ) _   to(   CHAIN  )] OR [from( CHAIN )] OR ( to(  CHAIN  ))]$
+        /^([a-zA-Z_]+)\/(?:(?:(?:from([a-zA-Z]+?(?=_to)))\_(?:to([a-zA-Z]+))?)|(?:from([a-zA-Z]+))|(?:to([a-zA-Z]+)))$/;
     const match = regex.exec(selector);
     if (!match) {
         throw new Error(`Invalid selector format '${selector}'.`);

@@ -32,7 +32,7 @@ export interface EIP3085Config {
     chainId: string;
 
     /** One or more URLs pointing to block explorer web sites for the chain. */
-    blockExplorerUrls: string[];
+    blockExplorerUrls: string[] | null;
 
     /** A human-readable name for the chain. */
     chainName: string;

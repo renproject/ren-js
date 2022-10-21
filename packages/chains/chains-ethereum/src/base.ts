@@ -122,7 +122,10 @@ export class EthereumBaseChain
         this.network = resolveEVMNetworkConfig(this.configMap, network);
         this.chain = this.network.selector;
         this.explorer = StandardEVMExplorer(
-            this.network.config.blockExplorerUrls[0],
+            this.network.config.blockExplorerUrls &&
+                this.network.config.blockExplorerUrls.length
+                ? this.network.config.blockExplorerUrls[0]
+                : "",
         );
         this._logger = (config && config.logger) || defaultLogger;
         this._config = config;
@@ -427,7 +430,7 @@ export class EthereumBaseChain
                 ) {
                     // Ignore
                 } else {
-                    console.warn(error);
+                    this._logger.warn(error);
                 }
                 return false;
             }

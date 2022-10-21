@@ -1,4 +1,4 @@
-import { Moonbeam, Solana } from "@renproject/chains";
+import { Solana } from "@renproject/chains";
 import { getERC20Instance } from "@renproject/chains-ethereum/src/contracts";
 import BigNumber from "bignumber.js";
 import chai from "chai";
@@ -426,16 +426,18 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("AVAX/fromKava", async () => {
+    it("gETH/toCatalog", async () => {
         const network = RenNetwork.Testnet;
         const renJS = new RenJS(network, { logLevel: LogLevel.Debug });
 
-        const asset = Avalanche.assets.AVAX;
-        const from = initializeChain(Moonbeam, network);
-        const to = initializeChain(Avalanche, network);
+        const asset = Goerli.assets.gETH;
+        const from = initializeChain(Goerli, network);
+        const to = initializeChain(Catalog, network);
         renJS.withChains(to, from);
 
-        const amount = new BigNumber(0.001).shiftedBy(18);
+        const decimals = await from.assetDecimals(asset);
+
+        const amount = new BigNumber(0.001).shiftedBy(decimals);
 
         // const fees = await renJS.getFees({
         //     asset,
@@ -454,7 +456,7 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it.only("USDT/toCatalog", async () => {
+    it("USDT/toCatalog", async () => {
         const network = RenNetwork.Testnet;
 
         const from = initializeChain(Goerli, network);

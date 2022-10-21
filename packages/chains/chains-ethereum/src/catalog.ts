@@ -15,7 +15,7 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainName: "Catalog Mainnet",
             nativeCurrency: { name: "DCE EVM", symbol: "dceETH", decimals: 18 },
             rpcUrls: ["https://mainnet.catalog.fi/rpc"],
-            blockExplorerUrls: [""],
+            blockExplorerUrls: null,
         },
 
         addresses: {
@@ -35,7 +35,7 @@ const configMap: EthereumBaseChain["configMap"] = {
             chainName: "Catalog Testnet",
             nativeCurrency: { name: "DCE EVM", symbol: "dceETH", decimals: 18 },
             rpcUrls: ["https://rpc.catalog.fi/testnet"],
-            blockExplorerUrls: [""],
+            blockExplorerUrls: null,
         },
 
         addresses: {

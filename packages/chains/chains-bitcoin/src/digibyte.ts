@@ -26,9 +26,6 @@ const DigiByteMainnet: BitcoinNetworkConfig = {
     explorer: StandardBitcoinExplorer("https://digiexplorer.info/"),
     p2shPrefix: new Uint8Array([0x3f]),
     providers: [
-        new Blockbook(
-            "https://multichain-web-proxy.herokuapp.com/digibyte-mainnet",
-        ),
         new Blockbook("https://digiexplorer.info/api"),
         new Blockbook("https://insight.digibyte.host/api"), // TODO: test again, currently broken
     ],

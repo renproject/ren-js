@@ -74,7 +74,7 @@ const FilecoinMainnet: FilecoinNetworkConfig = {
     explorer: "https://filfox.info/en",
 
     rpc: {
-        apiAddress: `https://multichain-web-proxy.herokuapp.com/mainnet`,
+        apiAddress: `https://api.node.glif.io`,
     },
 
     filfoxAPI: "https://filfox.info/api/v1/",
@@ -95,7 +95,7 @@ const FilecoinTestnet: FilecoinNetworkConfig = {
     explorer: "https://calibration.filscan.io",
 
     rpc: {
-        apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
+        apiAddress: `https://api.calibration.node.glif.io`,
     },
 };
 

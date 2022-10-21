@@ -98,7 +98,7 @@ describe("Filecoin", () => {
 describe.skip("Filecoin", () => {
     it("lotus", async () => {
         const client = new FilecoinClient({
-            apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
+            apiAddress: `https://api.calibration.node.glif.io`,
         });
 
         const height = await getHeight(client);

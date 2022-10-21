@@ -172,7 +172,7 @@ export const sendFunds = async (
         Buffer.from(utils.fromHex(process.env.TESTNET_PRIVATE_KEY)),
         {
             network: "testnet",
-            apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
+            apiAddress: "https://api.calibration.node.glif.io",
             terra: {
                 URL: "https://bombay-fcd.terra.dev",
             },

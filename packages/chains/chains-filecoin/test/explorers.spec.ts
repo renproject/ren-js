@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import { join } from "path";
+
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
 
@@ -7,7 +9,7 @@ import { Filfox } from "../src/utils/filfox";
 
 chai.should();
 
-loadDotEnv({ path: "../../../.env" });
+loadDotEnv({ path: join(__dirname, "../../../../.env") });
 
 describe.skip("Filecoin explorers", () => {
     it("mint to contract", async () => {

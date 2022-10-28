@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import { join } from "path";
+
 import FilecoinClient from "@glif/filecoin-rpc-client";
 import { utils } from "@renproject/utils";
 import chai, { expect } from "chai";
@@ -10,7 +12,7 @@ import { fetchDeposits, getHeight } from "../src/utils/lotus";
 
 chai.should();
 
-loadDotEnv({ path: "../../../.env" });
+loadDotEnv({ path: join(__dirname, "../../../../.env") });
 
 describe("Filecoin", () => {
     it("mint to contract", () => {

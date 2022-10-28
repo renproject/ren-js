@@ -52,10 +52,15 @@ export class Catalog extends EthereumBaseChain {
     // Static members.
     public static chain = "Catalog" as const;
     public static configMap = configMap;
-    public static assets = {};
+    public static assets = {
+        [RenNetwork.Mainnet]: {},
+        [RenNetwork.Testnet]: {},
+    };
 
     public configMap = configMap;
-    public assets = Catalog.assets;
+    public assets:
+        | typeof Catalog.assets[RenNetwork.Mainnet]
+        | typeof Catalog.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -65,5 +70,9 @@ export class Catalog extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Catalog.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

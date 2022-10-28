@@ -60,11 +60,14 @@ export class Optimism extends EthereumBaseChain {
     public static chain = "Optimism" as const;
     public static configMap = configMap;
     public static assets = {
-        oETH: "oETH" as const,
+        [RenNetwork.Mainnet]: { oETH: "oETH" as const },
+        [RenNetwork.Testnet]: { oETH: "oETH" as const },
     };
 
     public configMap = configMap;
-    public assets = Optimism.assets;
+    public assets:
+        | typeof Optimism.assets[RenNetwork.Mainnet]
+        | typeof Optimism.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -74,5 +77,9 @@ export class Optimism extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Optimism.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

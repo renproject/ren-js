@@ -72,11 +72,14 @@ export class Polygon extends EthereumBaseChain {
     public static chain = "Polygon" as const;
     public static configMap = configMap;
     public static assets = {
-        MATIC: "MATIC" as const,
+        [RenNetwork.Mainnet]: { MATIC: "MATIC" as const },
+        [RenNetwork.Testnet]: { MATIC: "MATIC" as const },
     };
 
     public configMap = configMap;
-    public assets = Polygon.assets;
+    public assets:
+        | typeof Polygon.assets[RenNetwork.Mainnet]
+        | typeof Polygon.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -86,5 +89,9 @@ export class Polygon extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Polygon.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

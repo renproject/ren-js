@@ -27,6 +27,7 @@ import {
 import { Filecoin } from "@renproject/chains-filecoin";
 import { Solana } from "@renproject/chains-solana";
 import { Terra } from "@renproject/chains-terra";
+import { RenNetwork } from "@renproject/utils";
 
 export const chains = {
     Arbitrum,
@@ -87,7 +88,13 @@ export enum Asset {
 }
 
 export const assets = Object.values(chains).reduce<string[]>(
-    (acc, chain) => acc.concat(Object.values(chain.assets)),
+    (acc, chain) =>
+        acc.concat(
+            Object.values(
+                chain.assets[RenNetwork.Mainnet] ||
+                    chain.assets[RenNetwork.Testnet],
+            ),
+        ),
     [],
 );
 

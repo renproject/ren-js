@@ -29,41 +29,9 @@ const ethereumMainnetConfig: EVMNetworkConfig = {
     },
 };
 
-const kovanConfig: EVMNetworkConfig = {
-    selector: "Ethereum",
-    isTestnet: true,
-
-    nativeAsset: { name: "Kovan Ether", symbol: "ETH", decimals: 18 },
-    averageConfirmationTime: 15,
-
-    config: {
-        chainId: "0x2a",
-        chainName: "Kovan",
-        nativeCurrency: {
-            name: "Kovan Ether",
-            symbol: "KOV",
-            decimals: 18,
-        },
-        rpcUrls: [
-            "https://kovan.poa.network",
-            "http://kovan.poa.network:8545",
-            "https://kovan.infura.io/v3/${INFURA_API_KEY}",
-            "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
-            "wss://kovan.infura.io/ws/v3/${INFURA_API_KEY}",
-            "wss://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
-            "ws://kovan.poa.network:8546",
-        ],
-        blockExplorerUrls: ["https://kovan.ethplorer.io"],
-    },
-
-    addresses: {
-        GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
-        BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
-    },
-};
-
 const goerliConfig: EVMNetworkConfig = {
     selector: "Goerli",
+    isTestnet: true,
 
     nativeAsset: { name: "Görli Ether", symbol: "gETH", decimals: 18 },
     averageConfirmationTime: 15,
@@ -77,7 +45,7 @@ const goerliConfig: EVMNetworkConfig = {
             decimals: 18,
         },
         rpcUrls: [
-            "https://rpc.goerli.mudit.blog/",
+            "https://web3-trial.cloudflare-eth.com/v1/goerli",
             "https://goerli.infura.io/v3/${INFURA_API_KEY}",
             "https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}",
             "wss://goerli.infura.io/v3/${INFURA_API_KEY}",
@@ -94,7 +62,7 @@ const goerliConfig: EVMNetworkConfig = {
 
 export const defaultConfigMap: EthereumBaseChain["configMap"] = {
     [RenNetwork.Mainnet]: ethereumMainnetConfig,
-    [RenNetwork.Testnet]: kovanConfig,
+    [RenNetwork.Testnet]: goerliConfig,
 };
 
 export const goerliConfigMap: EthereumBaseChain["configMap"] = {
@@ -105,43 +73,7 @@ export const goerliConfigMap: EthereumBaseChain["configMap"] = {
 export enum EthereumTestnet {
     Goerli = "goerli",
     Görli = "goerli",
-    Kovan = "kovan",
 }
-
-const defaultAssets = {
-    ETH: "ETH" as const,
-    DAI: "DAI" as const,
-    REN: "REN" as const,
-    USDC: "USDC" as const,
-    USDT: "USDT" as const,
-    EURT: "EURT" as const,
-    BUSD: "BUSD" as const,
-    MIM: "MIM" as const,
-    CRV: "CRV" as const,
-    LINK: "LINK" as const,
-    UNI: "UNI" as const,
-    SUSHI: "SUSHI" as const,
-    FTT: "FTT" as const,
-    ROOK: "ROOK" as const,
-    BADGER: "BADGER" as const,
-    KNC: "KNC" as const,
-};
-
-const goerliAssets = {
-    ETH: "gETH" as const,
-    DAI: "DAI_Goerli" as const,
-    REN: "REN_Goerli" as const,
-    USDC: "USDC_Goerli" as const,
-    USDT: "USDT_Goerli" as const,
-
-    // Goerli only
-    gETH: "gETH" as const,
-    REN_Goerli: "REN_Goerli" as const,
-    DAI_Goerli: "DAI_Goerli" as const,
-    USDC_Goerli: "USDC_Goerli" as const,
-    USDT_Goerli: "USDT_Goerli" as const,
-    ETH_Goerli: "gETH" as const,
-};
 
 /**
  * The Ethereum RenJS implementation.
@@ -151,19 +83,52 @@ export class Ethereum extends EthereumBaseChain {
     public static chain = "Ethereum" as const;
     public static configMap = defaultConfigMap;
     public static assets = {
-        ...goerliAssets,
-        ...defaultAssets,
+        [RenNetwork.Mainnet]: {
+            ETH: "ETH" as const,
+            DAI: "DAI" as const,
+            REN: "REN" as const,
+            USDC: "USDC" as const,
+            USDT: "USDT" as const,
+            EURT: "EURT" as const,
+            BUSD: "BUSD" as const,
+            MIM: "MIM" as const,
+            CRV: "CRV" as const,
+            LINK: "LINK" as const,
+            UNI: "UNI" as const,
+            SUSHI: "SUSHI" as const,
+            FTT: "FTT" as const,
+            ROOK: "ROOK" as const,
+            BADGER: "BADGER" as const,
+            KNC: "KNC" as const,
+        },
+        [RenNetwork.Testnet]: {
+            ETH: "gETH" as const,
+            DAI: "DAI_Goerli" as const,
+            REN: "REN_Goerli" as const,
+            USDC: "USDC_Goerli" as const,
+            USDT: "USDT_Goerli" as const,
+
+            // Goerli only
+            gETH: "gETH" as const,
+            REN_Goerli: "REN_Goerli" as const,
+            DAI_Goerli: "DAI_Goerli" as const,
+            USDC_Goerli: "USDC_Goerli" as const,
+            USDT_Goerli: "USDT_Goerli" as const,
+            ETH_Goerli: "gETH" as const,
+        },
     };
 
     public configMap = Ethereum.configMap;
-    public assets = Ethereum.assets;
+    public assets:
+        | typeof Ethereum.assets[RenNetwork.Mainnet]
+        | typeof Ethereum.assets[RenNetwork.Testnet];
 
     /**
      * Create a new Ethereum instance.
      *
      * @param params Ethereum constructor parameters
      * @param params.network A RenVM network string or an EVM config object.
-     * @param params.testnet Optionally specify a default Ethereum testnet.
+     * @param params.defaultTestnet Optionally specify a default Ethereum testnet.
      * @param params.provider A Web3 or Ethers.js provider.
      * @param params.signer A Web3 or Ethers.js signer.
      * @param params.config Pass optional configurations, e.g. a logger
@@ -175,24 +140,18 @@ export class Ethereum extends EthereumBaseChain {
     }: ConstructorParameters<typeof EthereumBaseChain>[0] & {
         defaultTestnet: EthereumTestnet | `${EthereumTestnet}`;
     }) {
-        super({
-            ...params,
-            network: resolveEVMNetworkConfig(
-                defaultTestnet === EthereumTestnet.Görli
-                    ? goerliConfigMap
-                    : defaultConfigMap,
-                network,
-            ),
-        });
-        this.configMap =
+        const configMap =
             defaultTestnet === EthereumTestnet.Görli
                 ? goerliConfigMap
                 : defaultConfigMap;
-        this.assets = (
-            defaultTestnet === EthereumTestnet.Görli &&
-            network === RenNetwork.Testnet
-                ? goerliAssets
-                : defaultAssets
-        ) as typeof this.assets;
+        super({
+            ...params,
+            network: resolveEVMNetworkConfig(configMap, network),
+        });
+        this.configMap = configMap;
+        this.assets =
+            Ethereum.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

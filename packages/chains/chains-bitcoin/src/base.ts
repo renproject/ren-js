@@ -290,10 +290,7 @@ export abstract class BitcoinBaseChain
             // Ignore error and fallback to getUTXOs.
         }
 
-        while (true) {
-            if (listenerCancelled()) {
-                return;
-            }
+        while (!listenerCancelled()) {
             try {
                 const utxos = await this.api.fetchUTXOs(address);
                 utxos.map((tx) =>

@@ -59,7 +59,7 @@ describe("Gateway", () => {
 
     it("recover", async () => {
         const network = RenNetwork.Mainnet;
-        const asset = Ethereum.assets.ETH;
+        const asset = Ethereum.assets[network].ETH;
         const from = initializeChain(Ethereum, network);
         const to = initializeChain(Catalog, network, {
             preserveAddressFormat: true,
@@ -122,7 +122,7 @@ describe("Gateway", () => {
         const network = RenNetwork.Testnet;
         const renJS = new RenJS(network);
 
-        const asset = Ethereum.assets.DAI;
+        const asset = Ethereum.assets[network].DAI;
         const from = initializeChain(Ethereum, network);
         const to = initializeChain(Avalanche, network);
 
@@ -201,7 +201,7 @@ describe("Gateway", () => {
     it("ETH: Ethereum to Arbitrum", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.ETH;
+        const asset = Ethereum.assets[network].ETH;
         const from = initializeChain(Ethereum, network);
         const to = initializeChain(Arbitrum, network);
 
@@ -218,7 +218,7 @@ describe("Gateway", () => {
 
     it("FIL/toPolygon", async () => {
         const network = RenNetwork.Testnet;
-        const asset = Filecoin.assets.FIL;
+        const asset = Filecoin.assets[network].FIL;
         const from = initializeChain(Filecoin, network);
         const to = initializeChain(Polygon, network);
         const renJS = new RenJS(network).withChains(from, to);
@@ -253,7 +253,7 @@ describe("Gateway", () => {
     it("FIL/fromSolana", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Filecoin.assets.FIL;
+        const asset = Filecoin.assets[network].FIL;
         const from = initializeChain(Solana, network);
         const to = initializeChain(Filecoin, network);
 
@@ -277,7 +277,7 @@ describe("Gateway", () => {
     it("DOGE/fromSolana", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Dogecoin.assets.DOGE;
+        const asset = Dogecoin.assets[network].DOGE;
         const from = initializeChain(Solana, network);
         const to = initializeChain(Dogecoin, network);
 
@@ -299,7 +299,7 @@ describe("Gateway", () => {
 
     // it("LUNA/toSolana", async () => {
     //     const network = RenNetwork.Testnet;
-    //     const asset = Terra.assets.LUNA;
+    //     const asset = Terra.assets[network].LUNA;
     //     const from = initializeChain<Terra>(Terra);
     //     const to = initializeChain(Solana, network);
     //     const renJS = new RenJS(network).withChains(from, to);
@@ -322,7 +322,7 @@ describe("Gateway", () => {
         //     const network = RenNetwork.Testnet;
         //     const renJS = new RenJS(network);
 
-        //     const asset = Terra.assets.LUNA;
+        //     const asset = Terra.assets[network].LUNA;
         //     const solana = initializeChain(Solana, network);
         //     const terra = initializeChain<Terra>(Terra);
         //     renJS.withChains(terra, solana);
@@ -347,7 +347,7 @@ describe("Gateway", () => {
 
         it("AVAX/toSolana", async () => {
             const network = RenNetwork.Testnet;
-            const asset = Avalanche.assets.AVAX;
+            const asset = Avalanche.assets[network].AVAX;
             const from = initializeChain(Avalanche, network);
             const to = initializeChain(Solana, network);
             const renJS = new RenJS(network).withChains(from, to);
@@ -399,7 +399,7 @@ describe("Gateway", () => {
 
     it.skip("DOGE/toSolana", async () => {
         const network = RenNetwork.Testnet;
-        const asset = Dogecoin.assets.DOGE;
+        const asset = Dogecoin.assets[network].DOGE;
         const from = initializeChain(Dogecoin, network);
         const to = initializeChain(Solana, network);
         const renJS = new RenJS(network).withChains(from, to);
@@ -426,12 +426,12 @@ describe("Gateway", () => {
         await defaultGatewayHandler(await renJS.gateway(gatewayParams));
     }).timeout(100000000000);
 
-    it("gETH/toCatalog", async () => {
+    it.only("ETH/toCatalog", async () => {
         const network = RenNetwork.Testnet;
         const renJS = new RenJS(network, { logLevel: LogLevel.Debug });
 
-        const asset = Goerli.assets.gETH;
-        const from = initializeChain(Goerli, network);
+        const asset = Goerli.assets[network].ETH;
+        const from = initializeChain(Ethereum, network);
         const to = initializeChain(Catalog, network);
         renJS.withChains(to, from);
 
@@ -449,7 +449,10 @@ describe("Gateway", () => {
 
         const gatewayParams: GatewayParams = {
             asset: asset,
-            from: from.Account({ amount }),
+            from: from.Account({
+                amount,
+                payloadConfig: { detectPreviousDeposits: true },
+            }),
             to: to.Account(),
         };
 
@@ -475,38 +478,38 @@ describe("Gateway", () => {
         // console.log(await from.signer!.getAddress());
 
         // console.log(
-        //     Goerli.assets.USDT,
-        //     (await from.getBalance(Goerli.assets.USDT))
-        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDT)))
+        //     Goerli.assets[network].USDT,
+        //     (await from.getBalance(Goerli.assets[network].USDT))
+        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets[network].USDT)))
         //         .toFixed(),
         // );
         // console.log(
-        //     Goerli.assets.DAI,
-        //     (await from.getBalance(Goerli.assets.DAI))
-        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets.DAI)))
+        //     Goerli.assets[network].DAI,
+        //     (await from.getBalance(Goerli.assets[network].DAI))
+        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets[network].DAI)))
         //         .toFixed(),
         // );
         // console.log(
-        //     Goerli.assets.USDC,
-        //     (await from.getBalance(Goerli.assets.USDC))
-        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets.USDC)))
+        //     Goerli.assets[network].USDC,
+        //     (await from.getBalance(Goerli.assets[network].USDC))
+        //         .shiftedBy(-(await from.assetDecimals(Goerli.assets[network].USDC)))
         //         .toFixed(),
         // );
 
         const options: Array<[string, EthereumBaseChain]> = [
-            [Goerli.assets.USDT, catalog],
-            [Goerli.assets.USDC, catalog],
-            [Goerli.assets.DAI, catalog],
-            // [Goerli.assets.USDT, bsc],
-            // [Goerli.assets.USDC, bsc],
-            // [Goerli.assets.DAI, bsc],
-            // [Goerli.assets.USDT, polygon],
-            // [Goerli.assets.USDC, polygon],
-            // [Goerli.assets.DAI, polygon],
+            [Goerli.assets[network].USDT, catalog],
+            [Goerli.assets[network].USDC, catalog],
+            [Goerli.assets[network].DAI, catalog],
+            // [Goerli.assets[network].USDT, bsc],
+            // [Goerli.assets[network].USDC, bsc],
+            // [Goerli.assets[network].DAI, bsc],
+            // [Goerli.assets[network].USDT, polygon],
+            // [Goerli.assets[network].USDC, polygon],
+            // [Goerli.assets[network].DAI, polygon],
         ];
 
         for (const [asset, to] of options) {
-            // const asset = Ethereum.assets.USDT;
+            // const asset = Ethereum.assets[network].USDT;
             const decimals = await from.assetDecimals(asset);
 
             const amount = 10.2;
@@ -558,7 +561,7 @@ describe("Gateway", () => {
         const options: EthereumBaseChain[] = [catalog, bsc, polygon, ethereum];
 
         for (const to of options) {
-            // const asset = Ethereum.assets.USDT;
+            // const asset = Ethereum.assets[network].USDT;
 
             const gatewayParams = {
                 asset,
@@ -587,7 +590,7 @@ describe("Gateway", () => {
     it("REN/toSolana", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.REN;
+        const asset = Ethereum.assets[network].REN;
         const from = initializeChain(Solana, network);
         const to = initializeChain(Ethereum, network);
 
@@ -607,7 +610,7 @@ describe("Gateway", () => {
     it("DAI/toBinanceSmartChain", async () => {
         const network = RenNetwork.Testnet;
 
-        const asset = Ethereum.assets.DAI;
+        const asset = Ethereum.assets[network].DAI;
         const ethereum = initializeChain(Ethereum, network);
         const bsc = initializeChain(BinanceSmartChain, network);
 

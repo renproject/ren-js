@@ -60,14 +60,21 @@ export class DigiByte extends BitcoinBaseChain {
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: DigiByteMainnet,
         [RenNetwork.Testnet]: DigiByteTestnet,
-        [RenNetwork.Devnet]: DigiByteTestnet,
     };
     public configMap = DigiByte.configMap;
 
     public static assets = {
-        DGB: "DGB",
+        [RenNetwork.Mainnet]: {
+            DGB: "DGB",
+        },
+        [RenNetwork.Testnet]: {
+            DGB: "DGB",
+        },
     };
-    public assets = DigiByte.assets;
+
+    public assets:
+        | typeof DigiByte.assets[RenNetwork.Mainnet]
+        | typeof DigiByte.assets[RenNetwork.Testnet];
 
     public validateAddress = (address: string): boolean => {
         try {
@@ -93,5 +100,9 @@ export class DigiByte extends BitcoinBaseChain {
         super({
             network: resolveBitcoinNetworkConfig(DigiByte.configMap, network),
         });
+        this.assets =
+            DigiByte.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

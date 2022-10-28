@@ -63,18 +63,29 @@ export class Zcash extends BitcoinBaseChain {
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: ZcashMainnet,
         [RenNetwork.Testnet]: ZcashTestnet,
-        [RenNetwork.Devnet]: ZcashTestnet,
     };
     public configMap = Zcash.configMap;
 
     public static assets = {
-        ZEC: "ZEC",
+        [RenNetwork.Mainnet]: {
+            ZEC: "ZEC",
+        },
+        [RenNetwork.Testnet]: {
+            ZEC: "ZEC",
+        },
     };
-    public assets = Zcash.assets;
+
+    public assets:
+        | typeof Zcash.assets[RenNetwork.Mainnet]
+        | typeof Zcash.assets[RenNetwork.Testnet];
 
     public constructor({ network }: { network: BitcoinNetworkInput }) {
         super({
             network: resolveBitcoinNetworkConfig(Zcash.configMap, network),
         });
+        this.assets =
+            Zcash.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

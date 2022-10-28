@@ -1,7 +1,6 @@
-import { Contract, Signer } from "ethers";
-
 import { Provider } from "@ethersproject/providers";
 import { utils } from "@renproject/utils";
+import { Contract, Signer } from "ethers";
 
 import { AbiItem } from "../utils/abi";
 import BasicBridgeJSON from "./ABIs/BasicBridge.json";

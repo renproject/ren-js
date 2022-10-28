@@ -96,10 +96,13 @@ export class BinanceSmartChain extends EthereumBaseChain {
     public static chain = "BinanceSmartChain" as const;
     public static configMap = configMap;
     public static assets = {
-        BNB: "BNB" as const,
+        [RenNetwork.Mainnet]: { BNB: "BNB" as const },
+        [RenNetwork.Testnet]: { BNB: "BNB" as const },
     };
 
-    public assets = BinanceSmartChain.assets;
+    public assets:
+        | typeof BinanceSmartChain.assets[RenNetwork.Mainnet]
+        | typeof BinanceSmartChain.assets[RenNetwork.Testnet];
     public configMap = configMap;
 
     public constructor({
@@ -110,5 +113,9 @@ export class BinanceSmartChain extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            BinanceSmartChain.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

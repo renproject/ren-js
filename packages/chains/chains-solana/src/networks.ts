@@ -35,8 +35,6 @@ export const resolveNetwork = (
                 return renMainnet;
             case RenNetwork.Testnet:
                 return renTestnet;
-            case RenNetwork.Devnet:
-                return renDevnet;
         }
         throw new Error(`Unrecognized solana network ${networkInput}.`);
     }
@@ -90,26 +88,4 @@ export const renTestnet: SolNetworkConfig = {
         GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
     },
     genesisHash: "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
-};
-
-export const renDevnet: SolNetworkConfig = {
-    name: RenNetwork.Devnet,
-    symbol: "SOL",
-    chain: "testnet",
-    isTestnet: true,
-    chainLabel: "Testnet",
-
-    nativeAsset: {
-        name: "Solana",
-        symbol: "SOL",
-        decimals: 18,
-    },
-    averageConfirmationTime: 0.5,
-
-    endpoint: "https://api.testnet.solana.com",
-    chainExplorer: "https://explorer.solana.com",
-    addresses: {
-        GatewayRegistry: "REGrPFKQhRneFFdUV3e9UDdzqUJyS6SKj88GdXFCRd2",
-    },
-    genesisHash: "4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY",
 };

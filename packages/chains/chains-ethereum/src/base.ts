@@ -53,6 +53,7 @@ import {
     findInputByNonce,
     findMintBySigHash,
     findReleaseBySigHash,
+    getPastLogs,
     mapBurnLogToInputChainTransaction,
     mapBurnToChainLogToInputChainTransaction,
     mapLockLogToInputChainTransaction,
@@ -1280,6 +1281,93 @@ export class EthereumBaseChain
             defaultTxindex: "0",
             explorerLink: this.transactionExplorerLink,
         });
+    };
+
+    public watchForDeposits = async (
+        asset: string,
+        fromPayload: EVMPayloadInterface,
+        address: string,
+        onInput: (input: InputChainTransaction) => void,
+        _removeInput: (input: InputChainTransaction) => void,
+        listenerCancelled: () => boolean,
+    ): Promise<void> => {
+        if (fromPayload.chain !== this.chain) {
+            throw new Error(
+                `Invalid payload for chain ${fromPayload.chain} instead of ${this.chain}.`,
+            );
+        }
+
+        if (
+            !fromPayload.payloadConfig ||
+            !fromPayload.payloadConfig.detectPreviousDeposits
+        ) {
+            while (!listenerCancelled()) {
+                // Nothing more to do.
+                await utils.sleep(1 * utils.sleep.SECONDS);
+            }
+        }
+
+        const logTransferredABI = findABIMethod(
+            TransferWithLogABI,
+            "LogTransferred",
+        );
+
+        // If the payload is a transaction, submit it to onInput and then loop
+        // indefinitely.
+        if (fromPayload.type === "transaction") {
+            const receipt = await this.provider.getTransactionReceipt(
+                (fromPayload as EVMTxPayload).params.tx.txHash,
+            );
+            const transferEvents = filterLogs<LogTransferredEvent>(
+                receipt.logs,
+                logTransferredABI,
+            ).map((e) =>
+                mapTransferLogToInputChainTransaction(
+                    this.chain,
+                    asset,
+                    e.event,
+                    this.transactionExplorerLink({
+                        txHash: e.log.transactionHash,
+                    }) || "",
+                ),
+            );
+            transferEvents.map(onInput);
+
+            while (!listenerCancelled()) {
+                // Nothing more to do.
+                await utils.sleep(1 * utils.sleep.SECONDS);
+            }
+        } else {
+            const registry = getGatewayRegistryInstance(
+                this.provider,
+                this.network.addresses.GatewayRegistry,
+            );
+            const transferWithLogAddress = await registry.getTransferContract();
+
+            const transferEvents = (
+                await getPastLogs<LogTransferredEvent>(
+                    this.provider,
+                    transferWithLogAddress,
+                    logTransferredABI,
+                    [
+                        null,
+                        utils.Ox(utils.toNBytes(utils.fromHex(address), 32)),
+                        null,
+                    ],
+                    this.network.logRequestLimit,
+                )
+            ).map((e) =>
+                mapTransferLogToInputChainTransaction(
+                    this.chain,
+                    asset,
+                    e.event,
+                    this.transactionExplorerLink({
+                        txHash: e.log.transactionHash,
+                    }) || "",
+                ),
+            );
+            transferEvents.map(onInput);
+        }
     };
 
     /* ====================================================================== */

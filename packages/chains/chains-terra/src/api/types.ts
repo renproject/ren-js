@@ -4,6 +4,7 @@ export interface TerraNetworkConfig {
     selector: string;
     chainId: string;
     addressPrefix: string;
+    isTestnet?: boolean;
 
     nativeAsset: {
         name: string;

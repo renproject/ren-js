@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import { join } from "path";
+
 import { RenNetwork } from "@renproject/utils";
 import chai from "chai";
 import { config as loadDotEnv } from "dotenv";
@@ -15,7 +17,7 @@ import {
     mapLockLogToInputChainTransaction,
 } from "../src/utils/generic";
 
-loadDotEnv({ path: "../../../.env" });
+loadDotEnv({ path: join(__dirname, "../../../../.env") });
 
 chai.should();
 

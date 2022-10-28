@@ -100,10 +100,13 @@ export interface EVMPayloadInterface<Name extends string = string, T = any> {
     };
 
     payloadConfig?: {
+        detectPreviousDeposits?: boolean;
+
         /**
          * Whether the `to` field passed to the RenVM transaction should remain
          * preserved, for resuming a transaction that was created with a
-         * non-standard address format (no 0x prefix, or no checksum)
+         * non-standard address format (no 0x prefix, or no checksum). This is
+         * used by the RenVM Explorer.
          */
         preserveAddressFormat?: boolean;
     };

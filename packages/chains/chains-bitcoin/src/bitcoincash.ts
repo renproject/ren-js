@@ -69,14 +69,21 @@ export class BitcoinCash extends BitcoinBaseChain {
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: BitcoinCashMainnet,
         [RenNetwork.Testnet]: BitcoinCashTestnet,
-        [RenNetwork.Devnet]: BitcoinCashTestnet,
     };
     public configMap = BitcoinCash.configMap;
 
     public static assets = {
-        BCH: "BCH",
+        [RenNetwork.Mainnet]: {
+            BCH: "BCH",
+        },
+        [RenNetwork.Testnet]: {
+            BCH: "BCH",
+        },
     };
-    public assets = BitcoinCash.assets;
+
+    public assets:
+        | typeof BitcoinCash.assets[RenNetwork.Mainnet]
+        | typeof BitcoinCash.assets[RenNetwork.Testnet];
 
     public validateAddress = (address: string): boolean => {
         try {
@@ -106,5 +113,9 @@ export class BitcoinCash extends BitcoinBaseChain {
                 network,
             ),
         });
+        this.assets =
+            BitcoinCash.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

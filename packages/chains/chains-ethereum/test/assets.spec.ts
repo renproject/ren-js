@@ -1,16 +1,18 @@
 /* eslint-disable no-console */
 
+import { join } from "path";
+
 import { RenNetwork } from "@renproject/utils";
 import chai, { expect } from "chai";
 import { config as loadDotEnv } from "dotenv";
 
 import { Goerli, resolveRpcEndpoints } from "../src";
 
-loadDotEnv({ path: "../../../.env" });
+loadDotEnv({ path: join(__dirname, "../../../../.env") });
 
 chai.should();
 
-describe.only("asset", () => {
+describe("asset", () => {
     it("Fetch lock and mint assets", async () => {
         const chain = new Goerli({
             provider: resolveRpcEndpoints(
@@ -26,6 +28,6 @@ describe.only("asset", () => {
         expect(await chain.getLockAsset("DAI_Goerli")).to.not.be.empty;
         expect(await chain.getLockAsset("USDC_Goerli")).to.not.be.empty;
         expect(await chain.getLockAsset("REN_Goerli")).to.not.be.empty;
-        expect(await chain.getLockAsset("gUSD")).to.not.be.empty;
+        expect(await chain.getLockAsset("USDT_Goerli")).to.not.be.empty;
     });
 });

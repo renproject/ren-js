@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-ethereum",
-    "version": "3.5.1",
+    "version": "3.5.2",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -45,7 +45,7 @@
         "@ethersproject/abi": "5.7.0",
         "@ethersproject/bytes": "5.7.0",
         "@ethersproject/providers": "5.7.2",
-        "@renproject/utils": "^3.5.1",
+        "@renproject/utils": "^3.5.2",
         "@types/elliptic": "6.4.14",
         "bignumber.js": "9.0.2",
         "elliptic": "6.5.4",

@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-terra",
-    "version": "3.5.1",
+    "version": "3.5.2",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,7 +42,7 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@renproject/utils": "^3.5.1",
+        "@renproject/utils": "^3.5.2",
         "@terra-money/terra.js": "3.1.5",
         "@types/elliptic": "6.4.14",
         "bech32": "2.0.0",

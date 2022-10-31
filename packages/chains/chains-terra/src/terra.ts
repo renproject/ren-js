@@ -40,6 +40,7 @@ export const TerraTestnet: TerraNetworkConfig = {
     selector: "Terra",
     chainId: "bombay-12",
     addressPrefix: "terra",
+    isTestnet: true,
 
     nativeAsset: {
         name: "Luna",
@@ -55,7 +56,6 @@ export const TerraTestnet: TerraNetworkConfig = {
 export const TerraConfigMap = {
     [RenNetwork.Mainnet]: TerraMainnet,
     [RenNetwork.Testnet]: TerraTestnet,
-    [RenNetwork.Devnet]: TerraTestnet,
 };
 
 export type TerraInputPayload =
@@ -98,9 +98,12 @@ export class Terra
 
     // The assets native to Terra.
     public static assets = {
-        LUNA: "LUNA",
+        [RenNetwork.Mainnet]: { LUNA: "LUNA" as const },
+        [RenNetwork.Testnet]: { LUNA: "LUNA" as const },
     };
-    public assets = Terra.assets;
+    public assets:
+        | typeof Terra.assets[RenNetwork.Mainnet]
+        | typeof Terra.assets[RenNetwork.Testnet];
 
     public validateAddress = (address: string): boolean => {
         assertType<string>("string", { address: address });
@@ -189,6 +192,10 @@ export class Terra
         this.network = networkConfig;
         this.chain = this.network.selector;
         this.api = new TerraDev(this.network);
+        this.assets =
+            Terra.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 
     public isLockAsset = (asset: string): boolean => {
@@ -213,7 +220,7 @@ export class Terra
      */
     public assetDecimals = (asset: string): number => {
         switch (asset) {
-            case Terra.assets.LUNA:
+            case this.assets.LUNA:
                 return 6;
         }
         throw new Error(`Unsupported asset ${String(asset)}.`);

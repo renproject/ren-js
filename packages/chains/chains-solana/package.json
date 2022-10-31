@@ -1,6 +1,6 @@
 {
     "name": "@renproject/chains-solana",
-    "version": "3.5.0",
+    "version": "3.5.2",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/renproject/ren-js.git"
@@ -42,7 +42,7 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@renproject/utils": "^3.5.0",
+        "@renproject/utils": "^3.5.2",
         "@scure/bip39": "1.1.0",
         "@solana/spl-token": "0.2.0",
         "@solana/web3.js": "1.50.1",

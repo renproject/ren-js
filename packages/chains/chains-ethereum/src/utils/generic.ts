@@ -192,9 +192,9 @@ export const findInputByNonce = async (
             return mapBurnLogToInputChainTransaction(
                 chain,
                 asset,
-                burnLogs[0],
+                burnLogs[0].event,
                 transactionExplorerLink({
-                    txHash: burnLogs[0].transactionHash,
+                    txHash: burnLogs[0].log.transactionHash,
                 }) || "",
             );
         }
@@ -215,9 +215,9 @@ export const findInputByNonce = async (
             return mapBurnToChainLogToInputChainTransaction(
                 chain,
                 asset,
-                burnToChainLogs[0],
+                burnToChainLogs[0].event,
                 transactionExplorerLink({
-                    txHash: burnToChainLogs[0].transactionHash,
+                    txHash: burnToChainLogs[0].log.transactionHash,
                 }) || "",
             );
         }
@@ -237,9 +237,9 @@ export const findInputByNonce = async (
             return mapLockLogToInputChainTransaction(
                 chain,
                 asset,
-                logLockLogs[0],
+                logLockLogs[0].event,
                 transactionExplorerLink({
-                    txHash: logLockLogs[0].transactionHash,
+                    txHash: logLockLogs[0].log.transactionHash,
                 }) || "",
             );
         }
@@ -274,7 +274,7 @@ export const findMintBySigHash = async (
             if (mintEvents.length > 1) {
                 console.warn(`Found more than one mint log.`);
             }
-            return mintEvents[0].transactionHash;
+            return mintEvents[0].log.transactionHash;
         }
     } catch (error) {
         // If there's no sigHash, the status function call can't be called as a
@@ -326,7 +326,7 @@ export const findReleaseBySigHash = async (
             if (newReleaseEvents.length > 1) {
                 console.warn(`Found more than one release log.`);
             }
-            return newReleaseEvents[0].transactionHash;
+            return newReleaseEvents[0].log.transactionHash;
         }
     } catch (error) {
         // If there's no sigHash, the status function call can't be called as a
@@ -376,13 +376,13 @@ export const filterLogs = <T extends TypedEvent>(
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getPastLogs = async <T extends TypedEvent>(
+export const getPastLogs = async <T extends TypedEvent>(
     provider: Provider,
     contractAddress: string,
     eventABI: AbiItem,
     filter: Array<string | null>,
     blockLimit?: number,
-): Promise<T[]> => {
+): Promise<Array<{ event: T; log: ethers.providers.Log }>> => {
     let fromBlock = 1;
     let toBlock: string | number = "latest";
     if (blockLimit) {
@@ -399,7 +399,7 @@ const getPastLogs = async <T extends TypedEvent>(
         topics: [utils.Ox(getEventTopic(eventABI)), ...filter],
     });
 
-    return filterLogs<T>(events, eventABI).map((e) => e.event);
+    return filterLogs<T>(events, eventABI);
 };
 
 // /**
@@ -570,9 +570,7 @@ export const resolveEVMNetworkConfig = (
 ): EVMNetworkConfig => {
     if (!renNetwork) {
         const defaultNetwork =
-            configMap[RenNetwork.Mainnet] ||
-            configMap[RenNetwork.Testnet] ||
-            configMap[RenNetwork.Devnet];
+            configMap[RenNetwork.Mainnet] || configMap[RenNetwork.Testnet];
         if (!defaultNetwork) {
             throw new Error(`Must provide network.`);
         }

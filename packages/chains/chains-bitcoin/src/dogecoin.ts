@@ -54,14 +54,21 @@ export class Dogecoin extends BitcoinBaseChain {
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: DogecoinMainnet,
         [RenNetwork.Testnet]: DogecoinTestnet,
-        [RenNetwork.Devnet]: DogecoinTestnet,
     };
     public configMap = Dogecoin.configMap;
 
     public static assets = {
-        DOGE: "DOGE",
+        [RenNetwork.Mainnet]: {
+            DOGE: "DOGE",
+        },
+        [RenNetwork.Testnet]: {
+            DOGE: "DOGE",
+        },
     };
-    public assets = Dogecoin.assets;
+
+    public assets:
+        | typeof Dogecoin.assets[RenNetwork.Mainnet]
+        | typeof Dogecoin.assets[RenNetwork.Testnet];
 
     public validateAddress = (address: string): boolean => {
         try {
@@ -86,5 +93,9 @@ export class Dogecoin extends BitcoinBaseChain {
         super({
             network: resolveBitcoinNetworkConfig(Dogecoin.configMap, network),
         });
+        this.assets =
+            Dogecoin.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

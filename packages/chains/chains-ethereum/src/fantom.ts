@@ -59,11 +59,14 @@ export class Fantom extends EthereumBaseChain {
     public static chain = "Fantom" as const;
     public static configMap = configMap;
     public static assets = {
-        FTM: "FTM" as const,
+        [RenNetwork.Mainnet]: { FTM: "FTM" as const },
+        [RenNetwork.Testnet]: { FTM: "FTM" as const },
     };
 
     public configMap = Fantom.configMap;
-    public assets = Fantom.assets;
+    public assets:
+        | typeof Fantom.assets[RenNetwork.Mainnet]
+        | typeof Fantom.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -73,5 +76,9 @@ export class Fantom extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Fantom.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

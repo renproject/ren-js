@@ -64,7 +64,8 @@ export class Solana
     public static chain = "Solana" as const;
     public chain = Solana.chain;
     public static assets = {
-        SOL: "SOL",
+        [RenNetwork.Mainnet]: { SOL: "SOL" as const },
+        [RenNetwork.Testnet]: { SOL: "SOL" as const },
     };
     public assets: { [asset: string]: string } = {};
 
@@ -95,6 +96,10 @@ export class Solana
             typeof provider === "string" || !provider
                 ? new Connection(provider || this.network.endpoint)
                 : provider;
+        this.assets =
+            Solana.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
         this._logger = config && config.logger ? config.logger : defaultLogger;
     }
 

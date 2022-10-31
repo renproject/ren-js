@@ -64,11 +64,14 @@ export class Avalanche extends EthereumBaseChain {
     public static chain = "Avalanche" as const;
     public static configMap = configMap;
     public static assets = {
-        AVAX: "AVAX" as const,
+        [RenNetwork.Mainnet]: { AVAX: "AVAX" as const },
+        [RenNetwork.Testnet]: { AVAX: "AVAX" as const },
     };
 
     public configMap = configMap;
-    public assets = Avalanche.assets;
+    public assets:
+        | typeof Avalanche.assets[RenNetwork.Mainnet]
+        | typeof Avalanche.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -78,5 +81,9 @@ export class Avalanche extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Avalanche.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

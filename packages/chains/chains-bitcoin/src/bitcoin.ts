@@ -74,18 +74,29 @@ export class Bitcoin extends BitcoinBaseChain {
     public static configMap: BitcoinNetworkConfigMap = {
         [RenNetwork.Mainnet]: BitcoinMainnet,
         [RenNetwork.Testnet]: BitcoinTestnet,
-        [RenNetwork.Devnet]: BitcoinTestnet,
     };
     public configMap = Bitcoin.configMap;
 
     public static assets = {
-        BTC: "BTC",
+        [RenNetwork.Mainnet]: {
+            BTC: "BTC",
+        },
+        [RenNetwork.Testnet]: {
+            BTC: "BTC",
+        },
     };
-    public assets = Bitcoin.assets;
+
+    public assets:
+        | typeof Bitcoin.assets[RenNetwork.Mainnet]
+        | typeof Bitcoin.assets[RenNetwork.Testnet];
 
     public constructor({ network }: { network: BitcoinNetworkInput }) {
         super({
             network: resolveBitcoinNetworkConfig(Bitcoin.configMap, network),
         });
+        this.assets =
+            Bitcoin.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

@@ -58,11 +58,14 @@ export class Moonbeam extends EthereumBaseChain {
     public static chain = "Moonbeam" as const;
     public static configMap = configMap;
     public static assets = {
-        GLMR: "GLMR" as const,
+        [RenNetwork.Mainnet]: { GLMR: "GLMR" as const },
+        [RenNetwork.Testnet]: { GLMR: "GLMR" as const },
     };
 
     public configMap = configMap;
-    public assets = Moonbeam.assets;
+    public assets:
+        | typeof Moonbeam.assets[RenNetwork.Mainnet]
+        | typeof Moonbeam.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -72,5 +75,9 @@ export class Moonbeam extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Moonbeam.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

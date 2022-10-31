@@ -101,7 +101,7 @@ export const initializeChain = <T extends ChainCommon>(
                         INFURA_API_KEY: process.env.INFURA_KEY,
                     },
                 ),
-                defaultTestnet: "kovan",
+                defaultTestnet: "goerli",
                 config,
             }) as ChainCommon as T;
 
@@ -172,7 +172,7 @@ export const sendFunds = async (
         Buffer.from(utils.fromHex(process.env.TESTNET_PRIVATE_KEY)),
         {
             network: "testnet",
-            apiAddress: "https://multichain-web-proxy.herokuapp.com/testnet",
+            apiAddress: "https://api.calibration.node.glif.io",
             terra: {
                 URL: "https://bombay-fcd.terra.dev",
             },

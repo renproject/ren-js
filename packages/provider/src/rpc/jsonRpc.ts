@@ -1,10 +1,4 @@
-import {
-    defaultLogger,
-    Logger,
-    LogLevel,
-    SyncOrPromise,
-    utils,
-} from "@renproject/utils";
+import { defaultLogger, Logger, SyncOrPromise, utils } from "@renproject/utils";
 import axios, { AxiosResponse } from "axios";
 
 const generatePayload = (method: string, params?: unknown) => ({
@@ -79,16 +73,7 @@ export class JsonRpcProvider<
 
         const payload = generatePayload(method, request);
 
-        if (
-            // Check level before doing expensive JSON call.
-            this.logger.getLevel &&
-            this.logger.getLevel() <= LogLevel.Debug
-        ) {
-            this.logger.debug(
-                "[request]",
-                JSON.stringify(payload, null, "    "),
-            );
-        }
+        this.logger.debug("[request]", JSON.stringify(payload, null, "    "));
         try {
             const response = await utils.tryNTimes(
                 async () =>
@@ -117,15 +102,11 @@ export class JsonRpcProvider<
             if (response.data.result === undefined) {
                 throw new Error(`Empty result returned from node.`);
             }
-            if (
-                this.logger.getLevel &&
-                this.logger.getLevel() <= LogLevel.Debug
-            ) {
-                this.logger.debug(
-                    "[response]",
-                    JSON.stringify(response.data.result, null, "    "),
-                );
-            }
+            this.logger.debug(
+                "[response]",
+                JSON.stringify(response.data.result, null, "    "),
+            );
+
             return response.data.result;
         } catch (error: unknown) {
             // Emit debug log of the endpoint and payload.

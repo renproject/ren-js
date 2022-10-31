@@ -11,7 +11,7 @@ import { expect } from "chai";
 
 import { Solana } from "../src/index";
 import { RenVMMessageLayout } from "../src/layouts";
-import { renDevnet, renTestnet } from "../src/networks";
+import { renTestnet } from "../src/networks";
 import { signerFromPrivateKey } from "../src/utils";
 
 const testPK = Buffer.from(
@@ -41,8 +41,8 @@ describe("Solana", () => {
     describe("Chain initialization", () => {
         it("should initialize with a nodejs provider", () => {
             const solana = new Solana({
-                network: renDevnet,
-                provider: new Connection(renDevnet.endpoint),
+                network: renTestnet,
+                provider: new Connection(renTestnet.endpoint),
                 signer: signerFromPrivateKey(testPK),
             });
             expect(solana.network.isTestnet).to.equal(true);
@@ -50,8 +50,8 @@ describe("Solana", () => {
 
         it("should be able to check if an asset is supported", async () => {
             const solana = new Solana({
-                network: renDevnet,
-                provider: new Connection(renDevnet.endpoint),
+                network: renTestnet,
+                provider: new Connection(renTestnet.endpoint),
                 signer: signerFromPrivateKey(testPK),
             });
             // await solana.initialize("devnet");
@@ -61,13 +61,13 @@ describe("Solana", () => {
 
         it("should be able to return the program address for an asset", async () => {
             const solana = new Solana({
-                network: renDevnet,
-                provider: new Connection(renDevnet.endpoint),
+                network: renTestnet,
+                provider: new Connection(renTestnet.endpoint),
                 signer: signerFromPrivateKey(testPK),
             });
             const res = await solana.getMintGateway("BTC");
             expect(res).to.equal(
-                "BTC5yiRuonJKcQvD9j9QwYKPx4MCGbvkWfvHFyBJG6RY",
+                "FsEACSS3nKamRKdJBaBDpZtDXWrHR2nByahr4ReoYMBH",
             );
         });
 

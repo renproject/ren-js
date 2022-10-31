@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import { join } from "path";
+
 import FilecoinClient from "@glif/filecoin-rpc-client";
 import { utils } from "@renproject/utils";
 import chai, { expect } from "chai";
@@ -10,7 +12,7 @@ import { fetchDeposits, getHeight } from "../src/utils/lotus";
 
 chai.should();
 
-loadDotEnv();
+loadDotEnv({ path: join(__dirname, "../../../../.env") });
 
 describe("Filecoin", () => {
     it("mint to contract", () => {
@@ -98,7 +100,7 @@ describe("Filecoin", () => {
 describe.skip("Filecoin", () => {
     it("lotus", async () => {
         const client = new FilecoinClient({
-            apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
+            apiAddress: `https://api.calibration.node.glif.io`,
         });
 
         const height = await getHeight(client);

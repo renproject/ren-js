@@ -60,11 +60,14 @@ export class Kava extends EthereumBaseChain {
     public static chain = "Kava" as const;
     public static configMap = configMap;
     public static assets = {
-        KAVA: "KAVA" as const,
+        [RenNetwork.Mainnet]: { KAVA: "KAVA" as const },
+        [RenNetwork.Testnet]: { KAVA: "KAVA" as const },
     };
 
     public configMap = configMap;
-    public assets = Kava.assets;
+    public assets:
+        | typeof Kava.assets[RenNetwork.Mainnet]
+        | typeof Kava.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -74,5 +77,9 @@ export class Kava extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Kava.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

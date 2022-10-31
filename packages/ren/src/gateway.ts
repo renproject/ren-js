@@ -548,8 +548,18 @@ export class Gateway<
                     nonce,
                 };
 
+                // Check if `this.in` can be re-used or if a new DefaultTxWaiter
+                // should be created.
                 let inTx = this.in;
-                if (!inTx) {
+                if (
+                    // No inTx.
+                    !inTx ||
+                    // inTx is for another transaction.
+                    (inTx.progress.transaction &&
+                        (inTx.progress.transaction.txHash !== inputTx.txHash ||
+                            inTx.progress.transaction.txindex !==
+                                inputTx.txindex))
+                ) {
                     inTx = new DefaultTxWaiter({
                         chainTransaction: inputTx,
                         chain: this.fromChain,
@@ -641,37 +651,32 @@ export class Gateway<
         }
 
         while (true) {
-            const listenerCancelled = () =>
-                this.eventEmitter.listenerCount("transaction") === 0;
-
             try {
+                const listenerCancelled = () =>
+                    this.eventEmitter.listenerCount("transaction") === 0;
+
+                // Change the return type of `this.processDeposit` to `void`.
+                const onDeposit = (deposit: InputChainTransaction): void => {
+                    try {
+                        // TODO: Handle error.
+                        this.processDeposit(deposit).catch(
+                            this.config.logger.error,
+                        );
+                    } catch (error: unknown) {
+                        this.config.logger.error(error);
+                    }
+                };
+
+                // TODO: Flag deposits that have been cancelled, updating their status.
+                const cancelDeposit = () => {};
+
                 // If there are no listeners, continue. TODO: Exit loop entirely
                 // until a lister is added again.
                 if (listenerCancelled()) {
                     await utils.sleep(1 * utils.sleep.SECONDS);
                     continue;
                 }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: unknown) {
-                this.config.logger.error(utils.extractError(error));
-            }
 
-            // Change the return type of `this.processDeposit` to `void`.
-            const onDeposit = (deposit: InputChainTransaction): void => {
-                try {
-                    // TODO: Handle error.
-                    this.processDeposit(deposit).catch(
-                        this.config.logger.error,
-                    );
-                } catch (error: unknown) {
-                    this.config.logger.error(error);
-                }
-            };
-
-            // TODO: Flag deposits that have been cancelled, updating their status.
-            const cancelDeposit = () => {};
-
-            try {
                 await this.fromChain.watchForDeposits(
                     this.params.asset,
                     this.params.from,

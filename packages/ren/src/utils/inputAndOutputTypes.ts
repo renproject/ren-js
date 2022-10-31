@@ -24,7 +24,19 @@ export const getInputAndOutputTypes = async ({
     outputType: OutputType;
     selector: string;
 }> => {
-    if (await toChain.isLockAsset(asset)) {
+    const [
+        isLockAssetOnFromChain,
+        isLockAssetOnToChain,
+        isMintAssetOnFromChain,
+        isMintAssetOnToChain,
+    ] = await Promise.all([
+        fromChain.isLockAsset(asset),
+        toChain.isLockAsset(asset),
+        isContractChain(fromChain) && fromChain.isMintAsset(asset),
+        isContractChain(toChain) && toChain.isMintAsset(asset),
+    ]);
+
+    if (isLockAssetOnToChain) {
         // Burn and release
 
         if (!isContractChain(fromChain)) {
@@ -35,7 +47,7 @@ export const getInputAndOutputTypes = async ({
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        if (!(await fromChain.isMintAsset(asset))) {
+        if (!isMintAssetOnFromChain) {
             throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${fromChain.chain}.`,
@@ -48,7 +60,7 @@ export const getInputAndOutputTypes = async ({
             outputType: OutputType.Release,
             selector: `${asset}/from${fromChain.chain}`,
         };
-    } else if (await fromChain.isLockAsset(asset)) {
+    } else if (isLockAssetOnFromChain) {
         // Lock and mint
 
         if (!isContractChain(toChain)) {
@@ -59,7 +71,7 @@ export const getInputAndOutputTypes = async ({
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        if (!(await toChain.isMintAsset(asset))) {
+        if (!isMintAssetOnToChain) {
             throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${toChain.chain}.`,
@@ -83,7 +95,7 @@ export const getInputAndOutputTypes = async ({
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        if (!(await toChain.isMintAsset(asset))) {
+        if (!isMintAssetOnToChain) {
             throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${toChain.chain}.`,
@@ -100,7 +112,7 @@ export const getInputAndOutputTypes = async ({
                 RenJSError.PARAMETER_ERROR,
             );
         }
-        if (!(await fromChain.isMintAsset(asset))) {
+        if (!isMintAssetOnFromChain) {
             throw ErrorWithCode.updateError(
                 new Error(
                     `Asset '${asset}' is not supported on ${fromChain.chain}.`,

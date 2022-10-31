@@ -40,6 +40,7 @@ export interface FilecoinNetworkConfig {
     averageConfirmationTime: number;
     addressPrefix: string;
     explorer: string;
+    isTestnet?: boolean;
 
     // RPC details
     rpc: {
@@ -74,7 +75,7 @@ const FilecoinMainnet: FilecoinNetworkConfig = {
     explorer: "https://filfox.info/en",
 
     rpc: {
-        apiAddress: `https://multichain-web-proxy.herokuapp.com/mainnet`,
+        apiAddress: `https://api.node.glif.io`,
     },
 
     filfoxAPI: "https://filfox.info/api/v1/",
@@ -82,6 +83,7 @@ const FilecoinMainnet: FilecoinNetworkConfig = {
 
 const FilecoinTestnet: FilecoinNetworkConfig = {
     selector: "Filecoin",
+    isTestnet: true,
 
     nativeAsset: {
         name: "Filecoin",
@@ -95,7 +97,7 @@ const FilecoinTestnet: FilecoinNetworkConfig = {
     explorer: "https://calibration.filscan.io",
 
     rpc: {
-        apiAddress: `https://multichain-web-proxy.herokuapp.com/testnet`,
+        apiAddress: `https://api.calibration.node.glif.io`,
     },
 };
 
@@ -126,14 +128,16 @@ export class Filecoin
     public static chain = "Filecoin" as const;
     public chain: string;
     public static assets = {
-        FIL: "FIL",
+        [RenNetwork.Mainnet]: { FIL: "FIL" as const },
+        [RenNetwork.Testnet]: { FIL: "FIL" as const },
     };
-    public assets = Filecoin.assets;
+    public assets:
+        | typeof Filecoin.assets[RenNetwork.Mainnet]
+        | typeof Filecoin.assets[RenNetwork.Testnet];
 
     public static configMap = {
         [RenNetwork.Mainnet]: FilecoinMainnet,
         [RenNetwork.Testnet]: FilecoinTestnet,
-        [RenNetwork.Devnet]: FilecoinTestnet,
     };
     public configMap = Filecoin.configMap;
 
@@ -164,6 +168,10 @@ export class Filecoin
 
         this.network = networkConfig;
         this.chain = this.network.selector;
+        this.assets =
+            Filecoin.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
         this.clientOptions = options || {};
 
         this.client = new FilecoinClient(this.network.rpc);

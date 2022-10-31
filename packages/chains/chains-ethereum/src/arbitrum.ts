@@ -68,11 +68,14 @@ export class Arbitrum extends EthereumBaseChain {
     public static chain = "Arbitrum" as const;
     public static configMap = configMap;
     public static assets = {
-        ArbETH: "ArbETH" as const,
+        [RenNetwork.Mainnet]: { ArbETH: "ArbETH" as const },
+        [RenNetwork.Testnet]: { ArbETH: "ArbETH" as const },
     };
 
     public configMap = configMap;
-    public assets = Arbitrum.assets;
+    public assets:
+        | typeof Arbitrum.assets[RenNetwork.Mainnet]
+        | typeof Arbitrum.assets[RenNetwork.Testnet];
 
     public constructor({
         network,
@@ -82,5 +85,9 @@ export class Arbitrum extends EthereumBaseChain {
             ...params,
             network: resolveEVMNetworkConfig(configMap, network),
         });
+        this.assets =
+            Arbitrum.assets[
+                this.network.isTestnet ? RenNetwork.Testnet : RenNetwork.Mainnet
+            ];
     }
 }

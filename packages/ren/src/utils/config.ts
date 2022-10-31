@@ -37,7 +37,6 @@ export const defaultRenJSConfig = {
 };
 
 // Check that defaultRenJSConfig is a valid RenJSConfig object, while
-// still allowing typescript to infer its type from is value.
-// Therefore it knows that `defaultRenJSConfig.logger` is not potentially
-// undefined.
+// still allowing typescript to infer its type from is value, so that it knows
+// that `defaultRenJSConfig.logger` is not potentially undefined.
 const _check: RenJSConfig = defaultRenJSConfig;

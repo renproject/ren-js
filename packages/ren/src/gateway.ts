@@ -372,20 +372,6 @@ export class Gateway<
                     gHash: gHash,
                 };
 
-                // Submit the gateway details to the back-up submitGateway
-                // endpoint.
-                void utils
-                    .POST(
-                        "https://validate-mint.herokuapp.com/",
-                        JSON.stringify({
-                            gateway: gatewayAddress,
-                            gatewayDetails,
-                        }),
-                    )
-                    .catch(() => {
-                        /* Ignore error. */
-                    });
-
                 try {
                     // Submit the gateway details to the submitGateway endpoint.
                     await utils.tryNTimes(async () => {

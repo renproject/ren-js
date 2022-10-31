@@ -204,7 +204,10 @@ export class EthereumBaseChain
         this.provider = Provider.isProvider(web3Provider)
             ? web3Provider
             : typeof web3Provider === "string"
-            ? new ethers.providers.JsonRpcProvider(web3Provider)
+            ? new ethers.providers.JsonRpcProvider({
+                  url: web3Provider,
+                  timeout: 30 * 1000,
+              })
             : // TODO: Set chainId instead of "any"?
               new ethers.providers.Web3Provider(web3Provider, "any");
         if (!this.signer) {

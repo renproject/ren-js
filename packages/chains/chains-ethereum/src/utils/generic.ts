@@ -707,7 +707,11 @@ export const getEVMProvider = (
     signer: EthSigner;
 } => {
     const urls = resolveRpcEndpoints(networkConfig.config.rpcUrls, variables);
-    const provider = new ethers.providers.JsonRpcProvider(urls[0]);
+    console.log(networkConfig.selector, urls);
+    const provider = new ethers.providers.JsonRpcProvider({
+        url: urls[0],
+        timeout: 30 * 1000,
+    });
 
     const signer =
         key.privateKey !== undefined

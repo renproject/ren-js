@@ -32,25 +32,29 @@ const configMap: EthereumBaseChain["configMap"] = {
     [RenNetwork.Testnet]: {
         selector: "Optimism",
 
-        nativeAsset: { name: "Optimism Ether", symbol: "oETH", decimals: 18 },
+        nativeAsset: {
+            name: "Optimism Görli Ether",
+            symbol: "oETH",
+            decimals: 18,
+        },
         averageConfirmationTime: 5,
         logRequestLimit: 10000,
 
         config: {
             chainId: "0x45",
-            chainName: "Optimism",
+            chainName: "Optimism Görli",
             nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
             rpcUrls: [
-                "https://kovan.optimism.io/",
-                "https://opt-kovan.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
-                "wss://opt-kovan.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+                "https://goerli.optimism.io",
+                "https://opt-goerli.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+                "wss://opt-goerli.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
             ],
-            blockExplorerUrls: ["https://kovan-optimistic.etherscan.io"],
+            blockExplorerUrls: ["https://goerli-optimism.etherscan.io"],
         },
 
         addresses: {
             GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
-            BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
+            BasicBridge: "0x081636b68aBD7695006e0baE4d8663b91EC5Cfc1",
         },
     },
 };

@@ -34,7 +34,7 @@ const configMap: EthereumBaseChain["configMap"] = {
         isTestnet: true,
 
         nativeAsset: {
-            name: "Arbitrum Rinkeby Ether",
+            name: "Arbitrum Görli Ether",
             symbol: "ArbETH",
             decimals: 18,
         },
@@ -42,20 +42,24 @@ const configMap: EthereumBaseChain["configMap"] = {
 
         config: {
             chainId: "0x66eeb",
-            chainName: "Arbitrum Rinkeby",
+            chainName: "Arbitrum Görli",
             nativeCurrency: {
-                name: "Arbitrum Rinkeby Ether",
+                name: "Arbitrum Görli Ether",
                 symbol: "ARETH",
                 decimals: 18,
             },
-            rpcUrls: ["https://rinkeby.arbitrum.io/rpc"],
-            blockExplorerUrls: ["https://testnet.arbiscan.io"],
+            rpcUrls: [
+                "https://goerli-rollup.arbitrum.io/rpc",
+                "https://arb-goerli.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+                "wss://arb-goerli.g.alchemy.com/v2/${ALCHEMY_API_KEY}",
+            ],
+            blockExplorerUrls: ["https://goerli.arbiscan.io"],
         },
 
         logRequestLimit: 20000,
         addresses: {
             GatewayRegistry: "0x5076a1F237531fa4dC8ad99bb68024aB6e1Ff701",
-            BasicBridge: "0xcb6bD6B6c7D7415C0157e393Bb2B6Def7555d518",
+            BasicBridge: "0x081636b68aBD7695006e0baE4d8663b91EC5Cfc1",
         },
     },
 };

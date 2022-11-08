@@ -1,5 +1,6 @@
 import { Buffer } from "buffer";
 
+import { RenVMProvider } from "@renproject/provider";
 import {
     CrossChainParams,
     ParamsQueryConfig,
@@ -14,11 +15,11 @@ import {
     TransactionInput,
 } from "@renproject/provider/methods";
 import {
-    BlockState,
     ParamsQueryBlockState,
     ResponseQueryBlockState,
 } from "@renproject/provider/methods/ren_queryBlockState";
 import { Provider } from "@renproject/provider/rpc/jsonRpc";
+import { estimateTransactionFee } from "@renproject/ren/build/utils/fees";
 import {
     Chain,
     decodeRenVMSelector,
@@ -26,7 +27,6 @@ import {
     generateSHash,
     generateSighash,
     isDepositChain,
-    pack,
     PackPrimitive,
     PackStructType,
     PackTypeDefinition,
@@ -42,8 +42,6 @@ import { OrderedMap } from "immutable";
 
 import { MockChain } from "./MockChain";
 import { randomBytes } from "./utils";
-
-const BIP_DENOMINATOR = 10000;
 
 export const responseQueryParamsType: PackStructType = {
     struct: [
@@ -212,47 +210,22 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
             );
         }
 
-        const blockState: BlockState = pack.unmarshal.unmarshalTypedPackValue(
-            this.handle_queryBlockState({ contract: asset }).state,
-        );
-        const { gasLimit, gasCap, dustAmount } = blockState[asset];
-
-        const mintAndBurnFees = blockState[asset].fees.chains.filter(
-            (chainFees) => chainFees.chain === toChain.chain,
-        )[0];
-
-        const subtractTransferFee =
-            (isDepositChain(fromChain) &&
-                (await fromChain.isDepositAsset(asset))) ||
-            (isDepositChain(toChain) && (await toChain.isDepositAsset(asset)));
-
-        const transferFee = subtractTransferFee
-            ? gasLimit.times(gasCap).plus(dustAmount).plus(1)
-            : new BigNumber(0);
-
-        const mintFee =
-            mintAndBurnFees && mintAndBurnFees.mintFee
-                ? mintAndBurnFees.mintFee.toNumber()
-                : 15;
-        const burnFee =
-            mintAndBurnFees && mintAndBurnFees.burnFee
-                ? mintAndBurnFees.burnFee.toNumber()
-                : 15;
-
         const transferRequired =
             isDepositChain(toChain) && (await toChain.isDepositAsset(asset));
+
+        const amountIn = inputs.amount;
+
+        const { estimateOutput } = await estimateTransactionFee(
+            new RenVMProvider(this),
+            asset,
+            fromChain,
+            toChain,
+        );
+        const amountOut = estimateOutput(amountIn);
 
         let completedTransaction: ResponseQueryTx;
         if (transferRequired) {
             // BURN //
-
-            const amountIn = inputs.amount;
-            const amountOut = new BigNumber(amountIn)
-                .times(BIP_DENOMINATOR - burnFee)
-                .dividedBy(BIP_DENOMINATOR)
-                .minus(transferFee)
-                .decimalPlaces(0)
-                .toFixed();
 
             let txid = request.tx.in.v.txid;
             let txindex = request.tx.in.v.txindex;
@@ -302,14 +275,7 @@ export class MockProvider implements Provider<RPCParams, RPCResponses> {
                 );
             }
 
-            const amountIn = inputs.amount;
             const sHash = generateSHash(`${asset}/to${toChain.chain}`);
-
-            const amountOut = new BigNumber(amountIn)
-                .minus(transferFee)
-                .times(BIP_DENOMINATOR - mintFee)
-                .dividedBy(BIP_DENOMINATOR)
-                .decimalPlaces(0);
 
             // Generate signature
             const sigHash = generateSighash(pHash, amountOut, to, sHash, nHash);

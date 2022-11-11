@@ -17,7 +17,7 @@ import { estimateTransactionFee, GatewayFees } from "./utils/fees";
 
 export { Gateway } from "./gateway";
 export { GatewayTransaction } from "./gatewayTransaction";
-export { GatewayFees } from "./utils/fees";
+export { GatewayFees, estimateTransactionFee } from "./utils/fees";
 export { RenVMTxSubmitter } from "./renVMTxSubmitter";
 
 /**

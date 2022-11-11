@@ -19,7 +19,7 @@ import {
     ResponseQueryBlockState,
 } from "@renproject/provider/methods/ren_queryBlockState";
 import { Provider } from "@renproject/provider/rpc/jsonRpc";
-import { estimateTransactionFee } from "@renproject/ren/build/utils/fees";
+import { estimateTransactionFee } from "@renproject/ren";
 import {
     Chain,
     decodeRenVMSelector,

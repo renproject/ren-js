@@ -261,11 +261,13 @@ export const txHashToChainTransaction = (
  * Fetch the burn ID from a transaction.
  * TODO: Improve detecting which account is the burn ID - on mainnet it is the
  * fourth and on devnet it's the third?
+ * @returns A list of potential burn public keys (different contract versions
+ * have different account orders)
  */
 export const getBurnPublicKey = async (
     provider: Connection,
     txHash: string,
-): Promise<[PublicKey, PublicKey]> => {
+): Promise<PublicKey[]> => {
     const tx = await provider.getTransaction(txHash, {
         commitment: "confirmed",
     });
@@ -274,6 +276,7 @@ export const getBurnPublicKey = async (
     }
 
     return [
+        tx.transaction.message.accountKeys[2],
         tx.transaction.message.accountKeys[3],
         tx.transaction.message.accountKeys[4],
     ];
@@ -285,8 +288,7 @@ export const getBurnPublicKey = async (
 export const getNonceFromBurnId = async (
     provider: Connection,
     mintGateway: PublicKey,
-    burnId: PublicKey,
-    burnIdAlt: PublicKey,
+    burnIds: PublicKey[],
 ): Promise<number> => {
     const mintGatewayStateAddress = (
         await PublicKey.findProgramAddress(
@@ -305,20 +307,26 @@ export const getNonceFromBurnId = async (
     const gatewayState = GatewayLayout.decode(encodedGatewayState.data);
 
     // Calculate
-    const maximum = new BigNumber(gatewayState.burn_count.toString())
+    const maximum = utils
+        .fromBytes(gatewayState.burn_count, "le")
         .plus(1)
         .toNumber();
 
-    for (let i = 0; i <= maximum; i++) {
+    // Start from the maximum nonce so that more recent transactions are faster
+    // to handle - although the difference should be negligible unless the
+    // number of on-chain burns becomes very large.
+    for (let i = maximum; i >= 0; i--) {
         const leNonce = utils.toNBytes(i, 8, "le");
         const burnIdI: PublicKey = (
             await PublicKey.findProgramAddress([leNonce], mintGateway)
         )[0];
-        if (burnIdI.equals(burnId) || burnIdI.equals(burnIdAlt)) {
+
+        // Check if the burn ID with nonce `i` equals one of the expecterd IDs.
+        if (burnIds.filter((burnId) => burnId.equals(burnIdI)).length) {
             return i;
         }
     }
-    throw new Error(`Burn with ID ${burnId.toBase58()} not found.`);
+    throw new Error(`Burn with ID ${burnIds[0].toBase58()} not found.`);
 };
 
 /**
@@ -423,10 +431,13 @@ export const getBurnFromTxid = async (
             ({ txid: string } | { txHash: string }),
     ) => string | undefined,
 ): Promise<InputChainTransaction | undefined> => {
-    const [burnId, burnIdAlt] = await getBurnPublicKey(provider, txHash);
-    nonce = utils.isDefined(nonce)
-        ? nonce
-        : await getNonceFromBurnId(provider, mintGateway, burnId, burnIdAlt);
+    // If no nonce has been passed in, try to identify the transaction's burn
+    // nonce.
+    if (!utils.isDefined(nonce)) {
+        const burnIds = await getBurnPublicKey(provider, txHash);
+        nonce = await getNonceFromBurnId(provider, mintGateway, burnIds);
+    }
+
     return getBurnFromNonce(
         provider,
         chain,
